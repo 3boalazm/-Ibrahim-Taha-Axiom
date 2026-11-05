@@ -40,7 +40,12 @@
       "rady2019biased",
       "taha2019handling",
       "rady2019shrinkage",
-      "rady2018ridge"
+      "rady2018ridge",
+      "taha2026panels",
+      "taha2026logistic",
+      "taha2026fit",
+      "taha2026normality",
+      "taha2026uncertainty"
     ],
     "selectedKeys": [
       "taha2026analytical",
@@ -53,7 +58,9 @@
       "penalized-count-regression",
       "beta-regression",
       "bayesian-estimation",
-      "applied-quantitative-studies"
+      "applied-quantitative-studies",
+      "panel-data-and-cointegration",
+      "statistical-reporting-and-software"
     ]
   },
   "projects": {
@@ -65,7 +72,10 @@
   },
   "courses": {
     "approvedIds": [
-      "sadat-teaching-assistant",
+      "mathematics-1",
+      "statistics-1",
+      "statistics-2",
+      "operations-research",
       "statistics-training"
     ]
   },
@@ -183,6 +193,46 @@
       "from": "publication:rady2019shrinkage",
       "to": "talk:conference-2019-zinb-liu",
       "evidence": "Approved by the project owner on 2026-11-05; conference paper of the 54th Annual Conference on Statistics."
+    },
+    {
+      "from": "publication:taha2026panels",
+      "to": "area:panel-data-and-cointegration",
+      "evidence": "The entry is the researcher's own book-length guide on panel data models."
+    },
+    {
+      "from": "publication:taha2025comprehensivea",
+      "to": "area:panel-data-and-cointegration",
+      "evidence": "The entry is the researcher's own guide to the ARDL bounds testing approach to cointegration."
+    },
+    {
+      "from": "publication:taha2026fit",
+      "to": "area:statistical-reporting-and-software",
+      "evidence": "The entry is the researcher's own guide to goodness-of-fit thresholds."
+    },
+    {
+      "from": "publication:taha2026normality",
+      "to": "area:statistical-reporting-and-software",
+      "evidence": "The entry is the researcher's own guide to normality testing."
+    },
+    {
+      "from": "publication:taha2026logistic",
+      "to": "area:statistical-reporting-and-software",
+      "evidence": "The entry is the researcher's own R-based book on logistic regression."
+    },
+    {
+      "from": "publication:taha2026regression",
+      "to": "area:penalized-count-regression",
+      "evidence": "The handbook covers 250+ regression models, the broadest statement of the researcher's regression work."
+    },
+    {
+      "from": "publication:taha2026uncertainty",
+      "to": "area:bayesian-estimation",
+      "evidence": "The paper compares Bayesian statistics with four other approaches under uncertainty."
     }
-  ]
+  ],
+  "metrics": {
+    "approved": true,
+    "source": "research-metrics.json",
+    "note": "Platform metrics are snapshots, not permanent facts: figures are printed with the platform and retrieval date, and must be re-verified (or the block removed) at the next content review. Never present them as institutional or official metrics."
+  }
 }

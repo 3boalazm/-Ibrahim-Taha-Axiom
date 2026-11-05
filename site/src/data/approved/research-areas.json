@@ -1,7 +1,10 @@
 [
   {
     "id": "penalized-count-regression",
-    "title": { "en": "Penalized and shrinkage estimation for count regression", "ar": null },
+    "title": {
+      "en": "Penalized and shrinkage estimation for count regression",
+      "ar": null
+    },
     "summary": {
       "en": "Ridge, Liu-type, biased, LASSO and elastic-net estimators for negative binomial, zero-inflated and Conway–Maxwell–Poisson regression under multicollinearity and high dimensionality, studied through simulation and real-data applications.",
       "ar": null
@@ -9,7 +12,10 @@
   },
   {
     "id": "beta-regression",
-    "title": { "en": "Shrinkage estimators for beta regression", "ar": null },
+    "title": {
+      "en": "Shrinkage estimators for beta regression",
+      "ar": null
+    },
     "summary": {
       "en": "Ridge and two-parameter estimators for beta regression models with bounded responses, compared by simulation and applied to real data.",
       "ar": null
@@ -17,15 +23,46 @@
   },
   {
     "id": "bayesian-estimation",
-    "title": { "en": "Bayesian estimation", "ar": null },
-    "summary": { "en": "Prior selection in Bayesian estimation.", "ar": null }
+    "title": {
+      "en": "Bayesian estimation",
+      "ar": null
+    },
+    "summary": {
+      "en": "Prior selection in Bayesian estimation.",
+      "ar": null
+    }
   },
   {
     "id": "applied-quantitative-studies",
-    "title": { "en": "Applied quantitative studies in management and education", "ar": null },
+    "title": {
+      "en": "Applied quantitative studies in management and education",
+      "ar": null
+    },
     "summary": {
       "en": "Structural equation modelling (PLS-SEM) and related methods applied to technology acceptance, green creativity, cybersecurity behaviour in e-learning, and green human resource management.",
       "ar": null
+    }
+  },
+  {
+    "id": "panel-data-and-cointegration",
+    "title": {
+      "en": "Panel data and cointegration analysis",
+      "ar": null
+    },
+    "summary": {
+      "en": "Panel-data estimators and the ARDL bounds-testing approach to cointegration: pooling cross-sectional and time dimensions, controlling for unobserved heterogeneity, and testing long-run relationships between economic variables — taught and written up in two open book-length guides.",
+      "ar": "مقدِّرات بيانات البانل واختبار الحدود ARDL للتكامل المشترك: الجمع بين البُعد المقطعي والبُعد الزمني، والتحكم في عدم التجانس غير المُلاحَظ، واختبار العلاقات طويلة الأجل بين المتغيرات الاقتصادية — وهو ما جُمع في دليلين مفتوحين."
+    }
+  },
+  {
+    "id": "statistical-reporting-and-software",
+    "title": {
+      "en": "Statistical reporting, model fit and R",
+      "ar": null
+    },
+    "summary": {
+      "en": "The reporting layer around a model: goodness-of-fit thresholds for regression and structural-equation models, normality testing with skewness and kurtosis, and reproducible analysis in R and SPSS — the material behind a large volume of applied reports.",
+      "ar": "الطبقة التي تحيط بالنموذج: حدود مؤشرات جودة المطابقة لنماذج الانحدار والمعادلات البنائية، واختبار التوزيع الطبيعي بالالتواء والتفرطح، والتحليل القابل للتكرار بلغة R وSPSS — وهي المادة التي يقوم عليها عدد كبير من التقارير التطبيقية."
     }
   }
 ]

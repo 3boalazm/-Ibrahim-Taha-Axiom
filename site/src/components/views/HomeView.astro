@@ -11,6 +11,7 @@ import Picture from '../media/Picture.astro';
 import { PICTURES } from '../../utils/imagery';
 import { PRIMARY, SECTION_ORDER, SECTION_PATHS, SITE_NAME, pageCopy, sectionCount, sectionNumber } from '../../config/site';
 import { manifest, pick, profile, projects, researchAreas, courses } from '../../utils/content';
+import { metrics, primaryMetrics, secondaryMetrics } from '../../utils/metrics';
 import { publications, selectedPublications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
@@ -40,13 +41,13 @@ const leadText = summary && !summary.fallback ? summary.text : copy.lead;
 
 /* Editorial figure band: real, countable numbers from approved data only. */
 const figures = [
-  { value: String(publications.length), label: ar ? 'منشورًا علميًا' : 'scholarly publications' },
-  { value: String(researchAreas.length), label: ar ? 'مجالات بحثية' : 'research areas' },
-  { value: String(projects.length), label: ar ? 'مشروعات بحثية' : 'research projects' },
-  { value: '450+', label: ar ? 'تقرير تحليل إحصائي' : 'statistical reports' },
+  { value: String(publications.length), label: ar ? 'عملًا منشورًا في السجل' : 'works in the record', note: ar ? 'المعتمدة على هذا الموقع' : 'approved on this site' },
+  { value: String(secondaryMetrics.figures.publications), label: ar ? 'مادة على ResearchGate' : 'items on ResearchGate', note: `${ar ? 'حتى' : 'as of'} ${secondaryMetrics.retrieved}` },
+  { value: String(secondaryMetrics.figures.citations), label: ar ? 'استشهادًا (ResearchGate)' : 'citations (ResearchGate)', note: `${ar ? 'حتى' : 'as of'} ${secondaryMetrics.retrieved}` },
+  { value: `h ${primaryMetrics.hIndex}`, label: ar ? 'مؤشر هيرش (OpenAlex)' : 'h-index (OpenAlex)', note: `${primaryMetrics.works} ${ar ? 'عملًا مُفهرسًا' : 'indexed works'}` },
 ];
 
-/* The four research areas, each paired with an abstract image (no human figures). */
+/* Research areas, each paired with an abstract image (no human figures). */
 const areaImage: Record<string, { src: string; alt: string }> = {
   'penalized-count-regression': {
     src: '/images/surface.webp',
@@ -182,10 +183,54 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
           <li class="figures__item in-view">
             <span class="figures__value ltr">{f.value}</span>
             <span class="figures__label">{f.label}</span>
+            <span class="figures__note">{f.note}</span>
           </li>
         ))
       }
     </ul>
+  </section>
+
+  <!-- ---------------------------------------------------------- metrics -->
+  <section class="metrics container" aria-labelledby="metrics-heading">
+    <div class="metrics__inner">
+      <div class="metrics__copy">
+        <p class="kicker">{ar ? 'الأثر' : 'Impact'}</p>
+        <h2 id="metrics-heading">{ar ? 'أرقامٌ بمصادرها، لا أرقامًا مجرَّدة.' : 'Numbers with their sources attached.'}</h2>
+        <p>
+          {ar
+            ? 'لكل رقمٍ مصدره وتاريخ استخراجه. أرقام المنصّات لا تُقارن ببعضها: ResearchGate يحسب ما رُفع، وOpenAlex يحسب ما فُهرس.'
+            : 'Every figure names its platform and the date it was read. Platform counts are not comparable: ResearchGate counts uploads, OpenAlex counts indexed works.'}
+        </p>
+      </div>
+      <dl class="metrics__list">
+        <div>
+          <dt>{metrics.source}</dt>
+          <dd class="ltr">
+            {primaryMetrics.citations} {ar ? 'استشهادًا' : 'citations'} · h {primaryMetrics.hIndex} · i10 {primaryMetrics.i10Index}
+          </dd>
+          <dd class="metrics__meta">
+            <a href={metrics.url} rel="me noopener">{metrics.sourceLabel}</a> · {metrics.retrieved}
+          </dd>
+        </div>
+        {metrics.secondary.map((s) => (
+          <div>
+            <dt>{s.source}</dt>
+            <dd class="ltr">
+              {s.figures.publications} {ar ? 'مادة' : 'items'} · {s.figures.citations} {ar ? 'استشهادًا' : 'citations'} ·{' '}
+              {s.figures.reads.toLocaleString('en-US')} {ar ? 'قراءة' : 'reads'}
+            </dd>
+            <dd class="metrics__meta">
+              <a href={s.url} rel="me noopener">{s.source}</a> · {s.retrieved}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+    <p class="metrics__note">
+      {ar
+        ? 'أرقام المنصّات لا تُقارن ببعضها: ResearchGate يحسب ما رُفع من كتب وأدلة وتقارير ومسوّدات، وOpenAlex يحسب الأعمال المُفهرسة. وكل رقمٍ معروض هنا مقترنٌ بمصدره وتاريخ استخراجه، وليس أيٌّ منها مؤشرًا مؤسسيًا رسميًا.'
+        : metrics.note}
+    </p>
   </section>
 
   <!-- ------------------------------------------------------------- research -->
@@ -196,7 +241,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
           <header class="section-head">
             <p class="kicker">{ar ? 'البحث' : 'Research'}</p>
             <h2 id="research-heading" class="section-head__title">
-              {ar ? 'أربعة أسئلة، ومنهجٌ واحد صارم.' : 'Four questions, one rigorous method.'}
+              {ar ? 'أسئلة متعددة، ومنهجٌ واحد صارم.' : 'Several questions, one rigorous method.'}
             </h2>
             <a class="arrow-link" href={localePath(lang, '/research/')}>
               {ar ? 'كل المجالات البحثية' : 'All research areas'}
@@ -242,14 +287,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
   <section class="showcase" aria-labelledby="showcase-heading">
     <div class="container showcase__inner">
       <div class="showcase__media frame">
-        <img
-          src="/images/surface.webp"
-          width="1024"
-          height="1536"
-          alt={ar ? 'سطح انحدار زجاجي شفاف تحيط به نقاط بيانات نحاسية دقيقة' : 'A translucent regression surface with tiny brass data points'}
-          loading="lazy"
-          decoding="async"
-        />
+        <Picture picture={PICTURES.tangent} lang={lang} />
       </div>
       <div class="showcase__copy">
         <p class="kicker">{ar ? 'المنهج' : 'The method'}</p>
@@ -366,7 +404,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
             </a>
           </div>
           <div class="teaching__media frame frame--zoom">
-            <Picture picture={PICTURES.ribbon} lang={lang} />
+            <Picture picture={PICTURES.sine} lang={lang} />
           </div>
           <ol class="teaching__list" role="list">
             {courses.map((c, i) => (
@@ -683,7 +721,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
   }
   .figures__item {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--space-1);
     padding-inline-start: var(--space-4);
     border-inline-start: 2px solid var(--color-rule-strong);
   }
@@ -699,6 +737,100 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
   .figures__label {
     font-family: var(--font-ui);
     font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .figures__note {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+
+  /* ---------------------------------------------------------------- metrics */
+  .metrics {
+    padding-block-end: clamp(var(--space-6), 4vw, var(--space-8));
+  }
+  .metrics__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: clamp(var(--space-5), 4vw, var(--space-7));
+    align-items: start;
+    padding: clamp(var(--space-5), 4vw, var(--space-7));
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-surface-1);
+    box-shadow: var(--shadow-card);
+  }
+  .metrics__copy {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+  }
+  .metrics__copy h2 {
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.12;
+  }
+  .metrics__copy p:not(.kicker) {
+    max-inline-size: 40ch;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .metrics__list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+  }
+  .metrics__list > div {
+    display: grid;
+    gap: var(--space-1);
+    padding-block-end: var(--space-4);
+    border-block-end: var(--border-hairline);
+  }
+  .metrics__list > div:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+  .metrics__list dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-brass);
+  }
+  :lang(ar) .metrics__list dt {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: var(--step--1);
+  }
+  .metrics__list dd {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+  .metrics__meta {
+    font-size: var(--step--2) !important;
+    color: var(--color-ink-3) !important;
+  }
+  .metrics__meta a {
+    color: inherit;
+    text-decoration: none;
+    border-block-end: 1px solid var(--color-rule);
+  }
+  .metrics__meta a:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .metrics__note {
+    margin-block-start: var(--space-3);
+    max-inline-size: 78ch;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.6;
     color: var(--color-ink-3);
   }
 
@@ -858,7 +990,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     align-items: center;
   }
   .showcase__media {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 3 / 2;
     border-radius: var(--radius-4);
     box-shadow: var(--shadow-lift);
   }
@@ -1250,6 +1382,9 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     }
   }
   @media (max-width: 56rem) {
+    .metrics__inner {
+      grid-template-columns: 1fr;
+    }
     .hero__body {
       grid-template-columns: 1fr;
     }

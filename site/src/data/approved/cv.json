@@ -3,49 +3,122 @@
   "sections": [
     {
       "id": "positions",
-      "heading": { "en": "Academic positions", "ar": "المناصب الأكاديمية" },
+      "heading": {
+        "en": "Academic positions",
+        "ar": "المناصب الأكاديمية"
+      },
       "items": [
         {
+          "period": "2019–present",
+          "text": {
+            "en": "Research Assistant, Faculty of Graduate Studies for Statistical Research, Cairo University",
+            "ar": null
+          }
+        },
+        {
           "period": "2017–present",
-          "text": { "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance, Sadat Academy for Management Sciences", "ar": null }
+          "text": {
+            "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance, Sadat Academy for Management Sciences",
+            "ar": null
+          }
         }
       ]
     },
     {
       "id": "education",
-      "heading": { "en": "Education", "ar": "التعليم" },
+      "heading": {
+        "en": "Education",
+        "ar": "التعليم"
+      },
       "items": [
         {
           "period": "In progress",
-          "text": { "en": "PhD in Applied Statistics and Econometrics, Faculty of Graduate Studies for Statistical Research, Cairo University", "ar": null }
+          "text": {
+            "en": "PhD in Applied Statistics and Econometrics, Faculty of Graduate Studies for Statistical Research, Cairo University",
+            "ar": null
+          }
         },
         {
           "period": "2019",
-          "text": { "en": "Master's degree, Cairo University. Thesis: Handling Multicollinearity Problem in Generalized Linear Models", "ar": null }
+          "text": {
+            "en": "Master's degree (Statistics), Cairo University. Thesis: Handling Multicollinearity Problem in Generalized Linear Models",
+            "ar": null
+          }
+        },
+        {
+          "period": "2012–2015",
+          "text": {
+            "en": "BSc in Statistics, Al-Azhar University",
+            "ar": null
+          }
         }
       ]
     },
     {
       "id": "research",
-      "heading": { "en": "Research interests", "ar": "الاهتمامات البحثية" },
+      "heading": {
+        "en": "Research interests",
+        "ar": "الاهتمامات البحثية"
+      },
       "items": [
         {
-          "text": { "en": "Applied statistics, econometrics, regression and generalized linear models, multicollinearity, penalized and shrinkage estimation, Bayesian estimation, structural equation modelling", "ar": null }
+          "text": {
+            "en": "Applied statistics, econometrics, regression and generalized linear models, multicollinearity, penalized and shrinkage estimation, Bayesian estimation, structural equation modelling",
+            "ar": null
+          }
         }
       ]
     },
     {
-      "id": "service",
-      "heading": { "en": "Professional and community activity", "ar": "النشاط المهني والمجتمعي" },
+      "heading": {
+        "en": "Teaching",
+        "ar": null
+      },
       "items": [
-        { "text": { "en": "Founder of the Statistical Analysis – Egypt community on Facebook and Telegram", "ar": null } },
-        { "text": { "en": "Statistical consulting: over 450 statistical analysis reports for theses and papers", "ar": null } }
+        {
+          "text": {
+            "en": "Undergraduate Mathematics 1, Statistics 1, Statistics 2 and Operations Research, Sadat Academy for Management Sciences, since 2017 — see the Teaching page for the full list",
+            "ar": null
+          }
+        }
+      ],
+      "id": "teaching"
+    },
+    {
+      "id": "service",
+      "heading": {
+        "en": "Professional and community activity",
+        "ar": "النشاط المهني والمجتمعي"
+      },
+      "items": [
+        {
+          "text": {
+            "en": "Founder of the Statistical Analysis – Egypt community on Facebook and Telegram",
+            "ar": null
+          }
+        },
+        {
+          "text": {
+            "en": "Statistical consulting: over 450 statistical analysis reports for theses and papers",
+            "ar": null
+          }
+        }
       ]
     },
     {
       "id": "software",
-      "heading": { "en": "Statistical software", "ar": "البرمجيات الإحصائية" },
-      "items": [{ "text": { "en": "R, SPSS, Stata, EViews, AMOS, SmartPLS", "ar": null } }]
+      "heading": {
+        "en": "Statistical software",
+        "ar": "البرمجيات الإحصائية"
+      },
+      "items": [
+        {
+          "text": {
+            "en": "R, SPSS, Stata, EViews, AMOS, SmartPLS",
+            "ar": null
+          }
+        }
+      ]
     }
   ]
 }

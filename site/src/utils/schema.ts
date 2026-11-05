@@ -65,6 +65,7 @@ export const ManifestSchema = z
     courses: z.object({ approvedIds: z.array(z.string()) }),
     talks: z.object({ approvedIds: z.array(z.string()) }),
     cv: z.object({ approved: z.boolean() }),
+    metrics: z.object({ approved: z.boolean(), source: z.string(), note: z.string() }),
     relationships: z.array(
       z.object({
         from: z.string().regex(/^(publication|area|project|course|talk):.+$/),
