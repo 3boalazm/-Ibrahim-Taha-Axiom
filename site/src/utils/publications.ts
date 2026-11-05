@@ -224,7 +224,8 @@ function build(entry: (typeof parsed.entries)[number]): Publication {
     publisher: str(f.publisher),
     doi: normDoi(str(f.doi), key),
     url: safeHref(str(f.url), key, 'url'),
-    abstract: str(f.abstract),
+    // Some Crossref (JATS) abstracts begin with a stray "Abstract" section heading; drop only that heading.
+    abstract: str(f.abstract)?.replace(/^Abstract[:.]?\s+(?=[A-Z])/, '') ?? null,
     keywords: Array.isArray(kw) ? kw.map(String) : kw ? String(kw).split(/\s*[,;]\s*/).filter(Boolean) : [],
     links,
     abbr: str(f.abbr),

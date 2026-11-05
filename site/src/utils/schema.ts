@@ -42,6 +42,7 @@ export const PROFILE_FIELDS = [
   'affiliations',
   'education',
   'identifiers',
+  'community',
   'interests',
   'authorMatch',
 ] as const;
@@ -107,6 +108,8 @@ export const ProfileSchema = z.object({
       url: httpUrl,
     }),
   ),
+  /** Public community / outreach links (not academic identifiers). */
+  community: z.array(z.object({ label: RequiredLocalized, url: httpUrl })).default([]),
   interests: z.array(RequiredLocalized),
   authorMatch: z.array(z.object({ last: z.string().min(1), firstInitial: z.string().length(1) })),
 });

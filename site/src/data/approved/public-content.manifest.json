@@ -1,33 +1,65 @@
 {
   "schemaVersion": 1,
-  "status": "no researcher content approved yet",
-  "lastReviewed": null,
-  "reviewedBy": null,
+  "status": "approved for publication by the project owner on behalf of the researcher",
+  "lastReviewed": "2026-11-05",
+  "reviewedBy": "Project owner (GitHub: 3boalazm)",
   "researcherApproval": {
-    "status": "pending",
-    "reference": null
+    "status": "approved",
+    "reference": "Blanket approval of all reviewed Phase 2 data, given in the project chat on 2026-11-05 by the project owner on behalf of the researcher. Personal e-mail and phone remain excluded by policy."
   },
   "profile": {
-    "approvedFields": []
+    "approvedFields": ["name", "role", "summary", "biography", "affiliations", "education", "identifiers", "community", "interests", "authorMatch"]
   },
   "publications": {
-    "approvedKeys": [],
-    "selectedKeys": []
+    "approvedKeys": [
+      "taha2026analytical",
+      "taha2026development",
+      "taha2026sample",
+      "taha2026regression",
+      "abbas2026moderating",
+      "taha2025comprehensive",
+      "taha2025comprehensivea",
+      "taha2025impact",
+      "seliem2024note",
+      "abonazel2023beta",
+      "taha2023role",
+      "abonazel2022two",
+      "elnady2022tam",
+      "rady2019biased",
+      "taha2019handling",
+      "rady2019shrinkage",
+      "rady2018ridge"
+    ],
+    "selectedKeys": ["taha2026analytical", "abonazel2023beta", "abonazel2022two"]
   },
   "researchAreas": {
-    "approvedIds": []
+    "approvedIds": ["penalized-count-regression", "beta-regression", "bayesian-estimation", "applied-quantitative-studies"]
   },
   "projects": {
     "approvedIds": []
   },
   "courses": {
-    "approvedIds": []
+    "approvedIds": ["sadat-teaching-assistant", "statistics-training"]
   },
   "talks": {
     "approvedIds": []
   },
   "cv": {
-    "approved": false
+    "approved": true
   },
-  "relationships": []
+  "relationships": [
+    { "from": "publication:rady2018ridge", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; ridge estimators for negative binomial regression." },
+    { "from": "publication:rady2019shrinkage", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; Liu-type zero-inflated negative binomial estimator." },
+    { "from": "publication:rady2019biased", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; biased estimator for zero-inflated count regression." },
+    { "from": "publication:taha2019handling", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; multicollinearity in generalized linear models (Master's thesis)." },
+    { "from": "publication:taha2026development", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; penalized COM-Poisson regression." },
+    { "from": "publication:taha2026analytical", "to": "area:penalized-count-regression", "evidence": "Research line approved by the project owner on 2026-11-05; elastic-net estimators for COM-Poisson regression." },
+    { "from": "publication:abonazel2023beta", "to": "area:beta-regression", "evidence": "Research line approved by the project owner on 2026-11-05; beta ridge regression estimators." },
+    { "from": "publication:abonazel2022two", "to": "area:beta-regression", "evidence": "Research line approved by the project owner on 2026-11-05; two-parameter estimator for beta regression." },
+    { "from": "publication:seliem2024note", "to": "area:bayesian-estimation", "evidence": "Research line approved by the project owner on 2026-11-05; prior selection in Bayesian estimation." },
+    { "from": "publication:elnady2022tam", "to": "area:applied-quantitative-studies", "evidence": "Research line approved by the project owner on 2026-11-05; technology acceptance (TAM) study." },
+    { "from": "publication:taha2023role", "to": "area:applied-quantitative-studies", "evidence": "Research line approved by the project owner on 2026-11-05; environmental monitoring and green creativity." },
+    { "from": "publication:taha2025impact", "to": "area:applied-quantitative-studies", "evidence": "Research line approved by the project owner on 2026-11-05; cybersecurity behaviour and e-learning (PLS-SEM)." },
+    { "from": "publication:abbas2026moderating", "to": "area:applied-quantitative-studies", "evidence": "Research line approved by the project owner on 2026-11-05; green HRM and sustainable manufacturing (PLS-SEM)." }
+  ]
 }

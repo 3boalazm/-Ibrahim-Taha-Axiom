@@ -1,7 +1,7 @@
 ---
 /** Approved profile fields only (see utils/content.ts). */
 import LangText from '../shared/LangText.astro';
-import { profile } from '../../utils/content';
+import { pick, profile } from '../../utils/content';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
 
@@ -10,14 +10,24 @@ interface Props {
 }
 const { lang } = Astro.props;
 const ui = t(lang);
+const bio = pick(profile.biography, lang);
 ---
 
 <div class="profile">
   <div class="profile__main prose">
     {(profile.name.en || profile.name.ar) && <h2 class="profile__name"><LangText value={profile.name} lang={lang} /></h2>}
     {(profile.role.en || profile.role.ar) && <LangText value={profile.role} lang={lang} as="p" />}
-    {(profile.summary.en || profile.summary.ar) && <LangText value={profile.summary} lang={lang} as="p" note />}
-    {(profile.biography.en || profile.biography.ar) && <LangText value={profile.biography} lang={lang} as="div" note />}
+    {(profile.summary.en || profile.summary.ar) && <p class="profile__summary"><LangText value={profile.summary} lang={lang} /></p>}
+    {
+      bio && (
+        <div class="profile__bio" lang={bio.fallback ? bio.lang : undefined} dir={bio.fallback ? (bio.lang === 'ar' ? 'rtl' : 'ltr') : undefined}>
+          {bio.text.split(/\n\s*\n/).map((para) => (
+            <p>{para}</p>
+          ))}
+        </div>
+      )
+    }
+    {bio?.fallback && <p class="fallback-note">{ui.translationFallback}</p>}
   </div>
   <aside class="profile__facts">
     {
@@ -69,6 +79,22 @@ const ui = t(lang);
       )
     }
     {
+      profile.community.length > 0 && (
+        <section>
+          <h2 class="label">{ui.community}</h2>
+          <ul role="list">
+            {profile.community.map((c) => (
+              <li>
+                <a href={c.url} rel="noopener">
+                  <LangText value={c.label} lang={lang} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+    {
       profile.interests.length > 0 && (
         <section>
           <h2 class="label">{ui.interests}</h2>
@@ -90,6 +116,19 @@ const ui = t(lang);
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     gap: var(--space-7);
+  }
+  .profile__summary {
+    font-size: var(--step-1);
+    color: var(--color-ink-2);
+  }
+  .profile__bio {
+    display: grid;
+    gap: 1em;
+  }
+  .fallback-note {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
   }
   .profile__facts {
     display: grid;

@@ -63,13 +63,14 @@ export const profile: Profile = {
   affiliations: approvedFields.has('affiliations') ? fullProfile.affiliations : [],
   education: approvedFields.has('education') ? fullProfile.education : [],
   identifiers: approvedFields.has('identifiers') ? fullProfile.identifiers : [],
+  community: approvedFields.has('community') ? fullProfile.community : [],
   interests: approvedFields.has('interests') ? fullProfile.interests : [],
   authorMatch: approvedFields.has('authorMatch') ? fullProfile.authorMatch : [],
 };
 export const hasProfileContent =
   !!(profile.name.en || profile.name.ar || profile.role.en || profile.role.ar || profile.summary.en || profile.summary.ar ||
     profile.biography.en || profile.biography.ar) ||
-  profile.affiliations.length + profile.education.length + profile.identifiers.length + profile.interests.length > 0;
+  profile.affiliations.length + profile.education.length + profile.identifiers.length + profile.community.length + profile.interests.length > 0;
 
 // --------------------------------------------------------- other sections
 export const researchAreas = approvedOnly(validate(EntryListSchema, areasRaw, 'approved/research-areas.json'), manifest.researchAreas.approvedIds, 'research areas');

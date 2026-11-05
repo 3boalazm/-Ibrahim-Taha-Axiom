@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PublicationItem from '../publications/PublicationItem.astro';
 import LangText from '../shared/LangText.astro';
 import { PRIMARY, SECTION_ORDER, SECTION_PATHS, SITE_NAME, pageCopy, sectionCount, sectionNumber } from '../../config/site';
-import { manifest, profile } from '../../utils/content';
+import { manifest, pick, profile } from '../../utils/content';
 import { publications, selectedPublications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
@@ -27,6 +27,9 @@ const pending = manifest.researcherApproval.status !== 'approved';
 const words = SITE_NAME.split(' ');
 const axiom = words.pop();
 const hasIdentity = !!(profile.name.en || profile.name.ar || profile.role.en || profile.role.ar);
+// The lead shows the approved summary only in its own language; otherwise the page's own lead.
+const summary = pick(profile.summary, lang);
+const leadText = summary && !summary.fallback ? summary.text : copy.lead;
 ---
 
 <BaseLayout lang={lang} path="/" title={SITE_NAME} description={copy.description}>
@@ -49,7 +52,7 @@ const hasIdentity = !!(profile.name.en || profile.name.ar || profile.role.en || 
       )
     }
     <p class="masthead__lead reveal reveal-2">
-      {(profile.summary.en || profile.summary.ar) ? <LangText value={profile.summary} lang={lang} /> : copy.lead}
+      {leadText}
     </p>
     {
       pending && (

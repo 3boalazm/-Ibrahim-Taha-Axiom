@@ -1,1 +1,31 @@
-[]
+[
+  {
+    "id": "penalized-count-regression",
+    "title": { "en": "Penalized and shrinkage estimation for count regression", "ar": null },
+    "summary": {
+      "en": "Ridge, Liu-type, biased, LASSO and elastic-net estimators for negative binomial, zero-inflated and Conway–Maxwell–Poisson regression under multicollinearity and high dimensionality, studied through simulation and real-data applications.",
+      "ar": null
+    }
+  },
+  {
+    "id": "beta-regression",
+    "title": { "en": "Shrinkage estimators for beta regression", "ar": null },
+    "summary": {
+      "en": "Ridge and two-parameter estimators for beta regression models with bounded responses, compared by simulation and applied to real data.",
+      "ar": null
+    }
+  },
+  {
+    "id": "bayesian-estimation",
+    "title": { "en": "Bayesian estimation", "ar": null },
+    "summary": { "en": "Prior selection in Bayesian estimation.", "ar": null }
+  },
+  {
+    "id": "applied-quantitative-studies",
+    "title": { "en": "Applied quantitative studies in management and education", "ar": null },
+    "summary": {
+      "en": "Structural equation modelling (PLS-SEM) and related methods applied to technology acceptance, green creativity, cybersecurity behaviour in e-learning, and green human resource management.",
+      "ar": null
+    }
+  }
+]

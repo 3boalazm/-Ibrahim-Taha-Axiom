@@ -1,15 +1,16 @@
 # Website Launch Checklist
 
-> Status on 2026-11-05: **publicly accessible, search indexing OFF.** The site at https://ibrahim-taha-axiom.vercel.app is reachable by anyone with the link, but every page carries `noindex, nofollow` and `robots.txt` disallows all crawling. **SEO launch is not complete while indexing is off.**
+> Status on 2026-11-05: **content approved and published, search indexing OFF.** The site at https://ibrahim-taha-axiom.vercel.app shows the approved profile, publications, research areas, teaching and CV. Every page still carries `noindex, nofollow` and `robots.txt` disallows all crawling. **SEO launch is not complete while indexing is off.**
 
 ## 1. Approvals required before indexing
 
 | # | Item | Owner | Status |
 |---|---|---|---|
-| 1 | Researcher answers the questions in `research/data-gaps-and-questions.md` (identity, years, author order, branch, guides…) | researcher | ⏳ |
-| 2 | Researcher approves the profile fields to publish (name, role, bio, affiliations, identifiers, interests) | researcher | ⏳ |
-| 3 | Researcher approves the publication list (and which are *selected*) | researcher | ⏳ |
-| 4 | Approved content entered via the two-key gate (`docs/public-content-policy.md`) and `npm run qa` passes | project owner | ⏳ |
+| 1 | Open data questions in `research/data-gaps-and-questions.md` (2 conflicting years, 1 author order, Sadat branch, guide types, Arabic name) | researcher | ⏳ Data was published as exported, so these remain open corrections |
+| 2 | Profile fields approved for publication | project owner on behalf of the researcher | ✅ 2026-11-05 |
+| 3 | Publication list approved (3 *selected* chosen by most-cited + latest first-authored; adjustable) | project owner on behalf of the researcher | ✅ 2026-11-05 |
+| 4 | Approved content entered via the two-key gate (`docs/public-content-policy.md`) and `npm run qa` passes | project owner | ✅ 2026-11-05 |
+| 4b | Arabic versions of the biography, role, summary, research areas, teaching and CV (confirmed text, not machine translation) | researcher | ⏳ |
 | 5 | Canonical domain decided and connected in Vercel (D-07a) | project owner | ⏳ |
 | 6 | Contact channel decided (D-08). Until then the Contact page shows no form and no personal details | project owner | ⏳ |
 | 7 | Visitor analytics decision (D-10). None is installed | project owner | ⏳ |

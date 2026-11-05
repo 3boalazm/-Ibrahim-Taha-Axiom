@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": "sadat-teaching-assistant",
+    "title": { "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance", "ar": null },
+    "summary": { "en": "Teaching assistant at the Sadat Academy for Management Sciences.", "ar": null },
+    "institution": { "en": "Sadat Academy for Management Sciences", "ar": null },
+    "term": "2017–present",
+    "materials": []
+  },
+  {
+    "id": "statistics-training",
+    "title": { "en": "Statistics and statistical software training", "ar": null },
+    "summary": {
+      "en": "Personalized instruction in statistics, econometrics and statistical software, in Arabic and English: one-on-one online sessions, course material development, R programming and statistical computing, SPSS, Stata and EViews workshops, and statistical inference and probability.",
+      "ar": null
+    },
+    "materials": []
+  }
+]

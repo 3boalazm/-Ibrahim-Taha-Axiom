@@ -1,4 +1,51 @@
 {
   "pdf": null,
-  "sections": []
+  "sections": [
+    {
+      "id": "positions",
+      "heading": { "en": "Academic positions", "ar": "المناصب الأكاديمية" },
+      "items": [
+        {
+          "period": "2017–present",
+          "text": { "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance, Sadat Academy for Management Sciences", "ar": null }
+        }
+      ]
+    },
+    {
+      "id": "education",
+      "heading": { "en": "Education", "ar": "التعليم" },
+      "items": [
+        {
+          "period": "In progress",
+          "text": { "en": "PhD in Applied Statistics and Econometrics, Faculty of Graduate Studies for Statistical Research, Cairo University", "ar": null }
+        },
+        {
+          "period": "2019",
+          "text": { "en": "Master's degree, Cairo University. Thesis: Handling Multicollinearity Problem in Generalized Linear Models", "ar": null }
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "heading": { "en": "Research interests", "ar": "الاهتمامات البحثية" },
+      "items": [
+        {
+          "text": { "en": "Applied statistics, econometrics, regression and generalized linear models, multicollinearity, penalized and shrinkage estimation, Bayesian estimation, structural equation modelling", "ar": null }
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "heading": { "en": "Professional and community activity", "ar": "النشاط المهني والمجتمعي" },
+      "items": [
+        { "text": { "en": "Founder of the Statistical Analysis – Egypt community on Facebook and Telegram", "ar": null } },
+        { "text": { "en": "Statistical consulting: over 450 statistical analysis reports for theses and papers", "ar": null } }
+      ]
+    },
+    {
+      "id": "software",
+      "heading": { "en": "Statistical software", "ar": "البرمجيات الإحصائية" },
+      "items": [{ "text": { "en": "R, SPSS, Stata, EViews, AMOS, SmartPLS", "ar": null } }]
+    }
+  ]
 }

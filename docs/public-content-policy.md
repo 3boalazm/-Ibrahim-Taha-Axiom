@@ -21,7 +21,21 @@ The gate lives in `site/src/utils/content.ts` (profile, research areas, projects
 | `approved/cv.json` | Structured CV + optional PDF path | `cv.approved: true` |
 | `public-settings/launch.json` | Site name, canonical origin, indexing switch | project owner (not researcher data) |
 
-**Current state (2026-11-05):** every approval list is empty. The site shows its full structure with honest "awaiting approval" states and **no researcher-specific records.**
+**Current state (2026-11-05, updated):** the project owner gave a **blanket approval** of all reviewed Phase 2 data on behalf of the researcher. Published now:
+- the profile (name, role, summary and biography taken from the researcher's own earlier site; affiliations and education from ORCID, Google Scholar and publisher PDFs; academic identifiers; community links; ORCID keywords as interests);
+- all **17** publications from the reviewed export, 3 of them *selected*;
+- 4 research areas, with evidence-backed links to their publications;
+- 2 teaching entries (the verified Teaching Assistant role and the researcher's own training description);
+- a structured CV (no PDF).
+
+Still excluded:
+- personal e-mail and phone (policy);
+- talks (no evidence of presentations);
+- projects (none documented);
+- the preprint duplicate and the 3 held-back duplicate guide rows;
+- Arabic translations of researcher text. None exists, so Arabic pages show these sections as an English block with a note.
+
+Where sources disagreed (2 publication years, 1 author order) the exported value follows the documented rule in `research/data-quality-report.md`.
 
 ## 2. Never publish
 

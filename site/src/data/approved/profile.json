@@ -1,11 +1,66 @@
 {
-  "name": { "en": null, "ar": null },
-  "role": { "en": null, "ar": null },
-  "summary": { "en": null, "ar": null },
-  "biography": { "en": null, "ar": null },
-  "affiliations": [],
-  "education": [],
-  "identifiers": [],
-  "interests": [],
-  "authorMatch": []
+  "name": { "en": "Ibrahim Mohamed Taha", "ar": null },
+  "role": { "en": "Statistician & Academic Researcher", "ar": null },
+  "summary": {
+    "en": "Turning complex data into clear, rigorous, publishable insights — and making advanced statistics accessible across the Arab world.",
+    "ar": null
+  },
+  "biography": {
+    "en": "I serve as a Teaching Assistant at the Sadat Academy for Management Sciences in Maadi, Cairo, while pursuing my PhD in Applied Statistics and Econometrics at Cairo University's Faculty of Graduate Studies for Statistical Research (FGSSR).\n\nMy research specializes in penalized estimators in count regression models — Ridge, Liu-type, and Beta regression methods for handling multicollinearity and high-dimensional data. My work has been published in journals including Communications in Statistics, Frontiers in Applied Mathematics & Statistics, and Statistics, Optimization & Information Computing.\n\nBeyond academia, I have completed over 450 statistical analysis reports for theses and papers, and founded the Statistical Analysis – Egypt community across Facebook and Telegram with over 550,000 combined members — making advanced statistics accessible across the Arab world.",
+    "ar": null
+  },
+  "affiliations": [
+    {
+      "organization": { "en": "Sadat Academy for Management Sciences", "ar": null },
+      "department": { "en": "Department of Mathematics, Statistics and Insurance", "ar": null },
+      "role": { "en": "Teaching Assistant", "ar": null },
+      "from": "2017",
+      "to": null
+    },
+    {
+      "organization": { "en": "Faculty of Graduate Studies for Statistical Research, Cairo University", "ar": null },
+      "department": { "en": "Department of Applied Statistics and Econometrics", "ar": null },
+      "role": { "en": "PhD researcher", "ar": null }
+    }
+  ],
+  "education": [
+    {
+      "degree": { "en": "PhD in Applied Statistics and Econometrics (in progress)", "ar": null },
+      "institution": { "en": "Faculty of Graduate Studies for Statistical Research, Cairo University", "ar": null }
+    },
+    {
+      "degree": { "en": "Master's degree. Thesis: Handling Multicollinearity Problem in Generalized Linear Models", "ar": null },
+      "institution": { "en": "Cairo University", "ar": null },
+      "year": 2019
+    }
+  ],
+  "identifiers": [
+    { "type": "ORCID", "value": "0000-0002-6141-5387", "url": "https://orcid.org/0000-0002-6141-5387" },
+    { "type": "Google Scholar", "value": "VgoxbyYAAAAJ", "url": "https://scholar.google.com/citations?user=VgoxbyYAAAAJ" },
+    { "type": "Scopus", "value": "57226774796", "url": "https://www.scopus.com/authid/detail.uri?authorId=57226774796" },
+    { "type": "Scopus", "value": "58577960300", "url": "https://www.scopus.com/authid/detail.uri?authorId=58577960300" },
+    { "type": "ResearcherID", "value": "A-3519-2019", "url": "https://www.webofscience.com/wos/author/record/A-3519-2019" },
+    { "type": "OpenAlex", "value": "A5102868128", "url": "https://openalex.org/A5102868128" },
+    { "type": "ResearchGate", "value": "Ibrahim_Taha11", "url": "https://www.researchgate.net/profile/Ibrahim_Taha11" },
+    { "type": "LinkedIn", "value": "ibrahimaboalazm", "url": "https://www.linkedin.com/in/ibrahimaboalazm/" },
+    { "type": "GitHub", "value": "IbrahimTaha2018", "url": "https://github.com/IbrahimTaha2018" }
+  ],
+  "community": [
+    { "label": { "en": "Statistical Analysis – Egypt (Facebook page)", "ar": null }, "url": "https://www.facebook.com/share/1B3DbXjPh7/" },
+    { "label": { "en": "Statistical Analysis – Egypt (Facebook group)", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" },
+    { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (قناة تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt" }
+  ],
+  "interests": [
+    { "en": "Applied Statistics", "ar": null },
+    { "en": "Econometrics", "ar": null },
+    { "en": "Regression", "ar": null },
+    { "en": "Generalized Linear Models", "ar": null },
+    { "en": "Multicollinearity", "ar": null },
+    { "en": "Structural Equation Modeling", "ar": null },
+    { "en": "SPSS", "ar": null },
+    { "en": "AMOS", "ar": null },
+    { "en": "SmartPLS", "ar": null },
+    { "en": "R Programming", "ar": null }
+  ],
+  "authorMatch": [{ "last": "Taha", "firstInitial": "I" }]
 }
