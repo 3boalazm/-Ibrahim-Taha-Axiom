@@ -72,6 +72,24 @@ export const PICTURES = {
       ar: 'صفحات رقيقة من الزجاج المصنفر والسيراميك الفاتح مكدَّسة ومُزاحة كسطح انحدار متدرّج',
     },
   },
+  portrait: {
+    src: '/images/portrait.webp',
+    width: 1000,
+    height: 1242,
+    alt: {
+      en: 'Portrait of Ibrahim Taha in a navy suit, arms folded, against a bone-plaster studio wall engraved with a sine wave and a normal density curve',
+      ar: 'صورة الدكتور إبراهيم طه ببذلة كحلية وذراعين متشابكتين، أمام حائط جصّي عاجي محفور عليه منحنى جيبي ومنحنى كثافة طبيعي',
+    },
+  },
+  portraitWide: {
+    src: '/images/portrait-wide.webp',
+    width: 1600,
+    height: 900,
+    alt: {
+      en: 'Ibrahim Taha in a navy suit and patterned tie, arms folded, against a bone-plaster wall with an engraved density curve and a thin graph grid',
+      ar: 'إبراهيم طه ببذلة كحلية وربطة عنق منقوشة وذراعين متشابكتين، أمام حائط جصّي عاجي عليه منحنى كثافة محفور وشبكة بيانية رقيقة',
+    },
+  },
   sine: {
     src: '/images/sine.webp',
     width: 1400,

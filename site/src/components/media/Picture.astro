@@ -10,8 +10,10 @@ interface Props {
   ratio?: string;
   eager?: boolean;
   sizes?: string;
+  objectPosition?: string;
+  caption?: string;
 }
-const { picture, lang, class: cls, ratio, eager = false, sizes = '(max-width: 56rem) 100vw, 50vw' } = Astro.props;
+const { picture, lang, class: cls, ratio, eager = false, sizes = '(max-width: 56rem) 100vw, 50vw', objectPosition, caption } = Astro.props;
 ---
 
 <img
@@ -23,6 +25,11 @@ const { picture, lang, class: cls, ratio, eager = false, sizes = '(max-width: 56
   loading={eager ? 'eager' : 'lazy'}
   decoding="async"
   fetchpriority={eager ? 'high' : 'auto'}
-  style={ratio ? `aspect-ratio:${ratio};object-fit:cover;` : undefined}
+  style={[
+    ratio ? `aspect-ratio:${ratio};object-fit:cover;` : null,
+    objectPosition ? `object-position:${objectPosition};` : null,
+  ]
+    .filter(Boolean)
+    .join(' ') || undefined}
   sizes={sizes}
 />

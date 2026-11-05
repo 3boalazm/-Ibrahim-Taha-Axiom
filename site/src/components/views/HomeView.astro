@@ -164,10 +164,10 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
               )
             }
           </div>
-          <div class="identity__media frame">
-            <Picture picture={PICTURES.distributions} lang={lang} />
+          <div class="identity__media frame frame--portrait">
+            <Picture picture={PICTURES.portraitWide} lang={lang} />
             <span class="frame__caption">
-              {ar ? 'منحنيات الكثافة، منحوتةً في الزجاج' : 'Density curves, sculpted in glass'}
+              {ar ? 'بورتريه استوديو' : 'Studio portrait'}
             </span>
           </div>
         </div>
@@ -672,6 +672,11 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     aspect-ratio: 16 / 9;
     border-radius: var(--radius-4);
     box-shadow: var(--shadow-card);
+  }
+  .identity__media :global(img) {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
   }
   .identity__name {
     font-family: var(--font-display);

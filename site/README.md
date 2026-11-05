@@ -54,10 +54,13 @@ All photography lives in `public/images/` (WebP, plus a 1200×630 `og.jpg`) and 
 
 The images are **abstract still lifes generated for this project**, all in one material language — bone/ivory plaster, brushed brass, soft raking light, film grain — so the set reads as a single series: a translucent regression surface, sculpted density curves, a metallic lattice, a writing desk, embossed contours, a glass mosaic ribbon, stacked strata, a brass sine wave on a plinth, a tetrahedron–octahedron–sphere group with a caliper, a grid of frosted-glass cubes, and a tangent rod touching a plaster curve. Each one depicts a statistical or mathematical object, so the imagery carries the subject rather than decorating it. That is a deliberate content rule, not a style preference:
 
-- no depictions of people (no portraits, faces or hands), so no image can be read as a claim about a real person or conflict with a modesty/religious constraint;
+- no depictions of people (no portraits, faces or hands) in any generated asset, so no image can be read as a claim about a real person or conflict with a modesty/religious constraint — the single exception is the researcher's own approved portrait described below;
 - no religious symbols, figurative art of living beings, alcohol or political imagery;
 - no text in any asset, so nothing is misread or mistranslated;
 - no third-party stock licence to track, and no copyright or attribution burden.
+
+### Portrait
+`public/images/portrait.webp` (4:5, About), `portrait-wide.webp` (16:9, home identity band) and `og.jpg` (the 1200×630 share card) all derive from the researcher's own photograph, supplied by the project owner. Only the background was replaced — engraved brass sine wave and normal density curve on bone plaster — so the face, pose and clothing are untouched. The original stays at `public/images/portrait.jpg`; regenerate the crops with ImageMagick rather than re-generating the person, and update both alt texts in `imagery.ts` if the framing changes.
 
 ### Research metrics
 Citation, read and h-index figures are content, not decoration: they change on third-party platforms without notice. They live in `src/data/approved/research-metrics.json` (platform, URL, retrieval date, figures) and are rendered by `src/utils/metrics.ts`, which always prints the platform and the date next to the number. The manifest's `metrics.approved` flag is the gate. Never add a metric that is not in that file, and re-verify the file (or remove the block) at each content review.
