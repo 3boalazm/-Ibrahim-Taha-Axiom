@@ -1,4 +1,5 @@
 ---
+import Mark from './Mark.astro';
 import { localePath } from '../../utils/paths';
 import { SITE_NAME } from '../../config/site';
 import type { Lang } from '../../utils/schema';
@@ -15,16 +16,7 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
 ---
 
 <a class:list={['wordmark', `wordmark--${size}`]} href={localePath(lang, '/')} dir="ltr" lang="en" aria-label={SITE_NAME}>
-  <img
-    class="wordmark__mark"
-    src="/images/avatar.webp"
-    srcset="/images/avatar.webp 160w, /images/avatar@2x.webp 320w"
-    sizes="40px"
-    width="160"
-    height="160"
-    alt=""
-    decoding="async"
-  />
+  <Mark size={size === 'lg' ? '2.9em' : '2.5em'} class="wordmark__mark" />
   <span class="wordmark__text">
     <span class="wordmark__name">{name}</span>
     <span class="wordmark__axiom">{axiom}</span>
@@ -41,17 +33,14 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
     white-space: nowrap;
   }
   .wordmark__mark {
-    inline-size: 2.5em;
-    block-size: 2.5em;
-    border-radius: 50%;
-    flex: none;
-    object-fit: cover;
-    box-shadow: 0 0 0 1px var(--color-rule-strong);
-    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease);
+    color: var(--color-accent);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  :global(:root[data-theme='dark']) .wordmark__mark {
+    color: var(--color-paper);
   }
   .wordmark:hover .wordmark__mark {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 2px var(--color-brass);
+    transform: rotate(-6deg) scale(1.04);
   }
   .wordmark__text {
     display: grid;
@@ -76,10 +65,7 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
   .wordmark:hover .wordmark__name {
     color: var(--color-accent-strong);
   }
-  .wordmark--lg .wordmark__mark {
-    inline-size: 2.9em;
-    block-size: 2.9em;
-  }
+
   .wordmark--lg .wordmark__name {
     font-size: var(--step-2);
   }

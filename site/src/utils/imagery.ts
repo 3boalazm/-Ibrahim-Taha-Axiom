@@ -18,6 +18,15 @@ export interface Picture {
 }
 
 export const PICTURES = {
+  /* The site mark: a normal-density curve on its axis inside a brass ring.
+     Drawn as vector; the alt is empty because the wordmark next to it carries
+     the name and the link already has an accessible name. */
+  mark: {
+    src: '/images/mark.svg',
+    width: 64,
+    height: 64,
+    alt: { en: '', ar: '' },
+  },
   hero: {
     src: '/images/hero.webp',
     width: 2000,

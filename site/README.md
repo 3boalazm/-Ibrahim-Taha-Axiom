@@ -60,19 +60,23 @@ The images are **abstract still lifes generated for this project**, all in one m
 - no third-party stock licence to track, and no copyright or attribution burden.
 
 ### Portrait
-`public/images/portrait.webp` (4:5, About), `portrait-wide.webp` (16:9, home identity band) and `og.jpg` (the 1200×630 share card) all derive from the researcher's own photograph, supplied by the project owner. Only the background was replaced — engraved brass sine wave and normal density curve on bone plaster — so the face, pose and clothing are untouched. The original stays at `public/images/portrait.jpg`; regenerate the crops with ImageMagick rather than re-generating the person, and update both alt texts in `imagery.ts` if the framing changes.
+`public/images/portrait.webp` (4:5, About) and `portrait-wide.webp` (16:9, home identity band) derive from the researcher's own photograph, supplied by the project owner. Only the background was replaced — engraved brass sine wave and normal density curve on bone plaster — so the face, pose and clothing are untouched. The original stays at `public/images/portrait.jpg`; regenerate the crops with ImageMagick rather than re-generating the person, and update both alt texts in `imagery.ts` if the framing changes.
 
 ### Logo and icons
-The brand mark is the researcher's own portrait cut to a disc with a thin brass ring — `public/images/avatar.webp` (160 px) and `avatar@2x.webp` (320 px). It is used in the header next to the wordmark, in the footer brand block, and exposed as the site icon:
+The mark is a **normal-density curve on its axis, inside a brass ring** — the subject of the site drawn as a symbol. It is vector, not a photograph, so it stays crisp at any size and inherits the theme:
+
+- `site/src/components/shared/Mark.astro` renders it **inline**, with the curve on `currentColor` and the ring on `--mark-ring`. Header, footer and anything else uses this component; it never loads an image.
+- `public/images/mark.svg` is the same geometry as a standalone file (for `og`, social avatars, print), and `mark-inverse.svg` is the reversed version for dark surfaces.
+- Geometry lives in `.scratch/mark/build_mark.py` (`Mark` class: sigma, peak, taper, ring radius). Edit the numbers there, rerun it, and copy the regenerated path into `Mark.astro`. The script also regenerates every raster icon, so the vector and the icons cannot drift.
 
 | file | use |
 | --- | --- |
-| `favicon.ico`, `favicon-16.png`, `favicon-32.png` | browser tabs; opaque bone field with a tighter face crop so the disc still reads at 16 px |
-| `apple-touch-icon.png` (180) | iOS home screen; opaque, disc inset so iOS's rounding does not clip the ring |
-| `icon-192.png`, `icon-512.png` + `site.webmanifest` | installable app / Android home screen |
-| `images/avatar.webp`, `images/avatar@2x.webp` | header and footer mark (transparent outside the disc) |
+| `favicon.ico`, `favicon-16/32/48.png` | browser tabs: **pine field, brass ring, bone curve**, with a heavier stroke and a wider taper than the big mark so it survives 16 px |
+| `apple-touch-icon.png` (180) | iOS home screen: pine field, mark inset so iOS corner rounding cannot clip the ring |
+| `icon-192.png`, `icon-512.png` + `site.webmanifest` | installable app, pine background and theme colour |
+| `images/mark.svg`, `mark-inverse.svg` | standalone vector, for share images and anything outside the app |
 
-Every icon is generated from `public/images/portrait.jpg` with ImageMagick — no separate artwork to keep in sync. Icons must stay **opaque** (never transparent): a transparent tab icon turns black in dark browser themes. Below 44rem the header hides the wordmark and shows the avatar alone; the link's `aria-label` always carries the full site name.
+Rules: icons stay **opaque** (a transparent tab icon turns black in dark browser themes); the tab version is drawn for its smallest size rather than scaled down from the large one; below 44rem the header hides the wordmark and shows the mark alone, while the link keeps the full site name as its accessible name.
 
 ### Research metrics
 Citation, read and h-index figures are content, not decoration: they change on third-party platforms without notice. They live in `src/data/approved/research-metrics.json` (platform, URL, retrieval date, figures) and are rendered by `src/utils/metrics.ts`, which always prints the platform and the date next to the number. The manifest's `metrics.approved` flag is the gate. Never add a metric that is not in that file, and re-verify the file (or remove the block) at each content review.

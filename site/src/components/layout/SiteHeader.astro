@@ -1,5 +1,6 @@
 ---
 import LanguageSwitcher from '../navigation/LanguageSwitcher.astro';
+import Mark from '../shared/Mark.astro';
 import ThemeToggle from '../navigation/ThemeToggle.astro';
 import { SECTION_PATHS, SITE_NAME, navKeys, pageCopy } from '../../config/site';
 import { localePath } from '../../utils/paths';
@@ -16,23 +17,14 @@ const items = await Promise.all(
   navKeys.map(async (key) => ({ key, href: localePath(lang, SECTION_PATHS[key]), label: (await pageCopy(key, lang)).navLabel })),
 );
 const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SECTION_PATHS] || (path.startsWith(SECTION_PATHS[key as keyof typeof SECTION_PATHS]) && key !== 'home');
-// The mark is the researcher's own portrait, cut to a disc with a brass ring
-// (public/images/avatar.webp), paired with the wordmark.
+// The mark is the site's own symbol — a normal-density curve on its axis inside
+// a brass ring (public/images/mark.svg) — paired with the wordmark.
 ---
 
 <header class="site-header" data-site-header>
   <div class="container site-header__inner">
     <a class="site-header__brand" href={localePath(lang, '/')} aria-label={SITE_NAME}>
-      <img
-        class="site-header__avatar"
-        src="/images/avatar.webp"
-        srcset="/images/avatar.webp 160w, /images/avatar@2x.webp 320w"
-        sizes="40px"
-        width="160"
-        height="160"
-        alt=""
-        decoding="async"
-      />
+      <Mark size="2.45rem" class="site-header__mark" />
       <span class="site-header__wordmark" aria-hidden="true">
         <span class="site-header__name">Ibrahim Taha</span>
         <span class="site-header__axiom">Axiom</span>
@@ -124,17 +116,18 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     text-decoration: none;
     color: var(--color-ink);
   }
-  .site-header__avatar {
-    inline-size: 2.55rem;
-    block-size: 2.55rem;
-    border-radius: 50%;
+  .site-header__mark {
+    inline-size: 2.45rem;
+    block-size: 2.45rem;
     flex: none;
-    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease);
-    box-shadow: 0 0 0 1px var(--color-rule-strong);
+    transition: transform var(--dur-2) var(--ease-out);
   }
-  .site-header__brand:hover .site-header__avatar {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 2px var(--color-brass);
+  .site-header__brand:hover .site-header__mark {
+    transform: rotate(-6deg) scale(1.04);
+  }
+  /* the curve inherits ink, so the mark inverts with the theme */
+  .site-header__brand {
+    color: var(--color-ink);
   }
   .site-header__wordmark {
     display: grid;
@@ -331,7 +324,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     .site-header__cta {
       display: none;
     }
-    /* the avatar alone carries the brand on phones; the wordmark is still read out */
+    /* the mark alone carries the brand on phones; the wordmark is still read out */
     .site-header__wordmark {
       position: absolute;
       inline-size: 1px;

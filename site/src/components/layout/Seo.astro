@@ -24,13 +24,13 @@ const canonical = new URL(localePath(lang, path), site).href;
 const enUrl = new URL(localePath('en', path), site).href;
 const arUrl = new URL(localePath('ar', path), site).href;
 const fullTitle = title === SITE_NAME ? SITE_NAME : `${title} — ${SITE_NAME}`;
-// One editorial share card for every page: the portrait set in the site's own
-// type on bone paper, so a link preview carries the name, the field and the face.
+// One editorial share card for every page: the site mark on pine beside the
+// name and field, so a link preview carries the brand and the subject.
 const ogImage = new URL('/images/og.jpg', site).href;
 const ogAlt =
   lang === 'ar'
-    ? 'بطاقة مشاركة عليها صورة إبراهيم طه واسمه ومجاله: الإحصاء التطبيقي والقياس الاقتصادي'
-    : 'A share card with the portrait of Ibrahim Taha, his name, and his field: applied statistics and econometrics';
+    ? 'بطاقة مشاركة عليها شعار الموقع، منحنى كثافة طبيعي داخل حلقة نحاسية، مع اسم إبراهيم طه ومجاله: الإحصاء التطبيقي والقياس الاقتصادي'
+    : 'A share card showing the site mark — a normal-density curve inside a brass ring — with the name Ibrahim Taha and his field: applied statistics and econometrics';
 
 const graph: Record<string, unknown>[] = [
   {
