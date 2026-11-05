@@ -1,0 +1,17 @@
+{
+  "source": "OpenAlex",
+  "sourceLabel": "OpenAlex author record A5102868128",
+  "url": "https://openalex.org/A5102868128",
+  "retrieved": "2026-11-05",
+  "scope": "Works indexed for ORCID 0000-0002-6141-5387 in OpenAlex",
+  "figures": { "works": 9, "citations": 119, "hIndex": 4, "i10Index": 2 },
+  "secondary": [
+    {
+      "source": "ResearchGate",
+      "url": "https://www.researchgate.net/profile/Ibrahim-Taha-5",
+      "retrieved": "2026-11-05",
+      "figures": { "publications": 24, "reads": 34967, "citations": 191 }
+    }
+  ],
+  "note": "Platform counts are not comparable: ResearchGate counts uploaded items (books, guides, reports, preprints), OpenAlex counts indexed works. Every figure is shown with its source and retrieval date, and nothing here is an official institutional metric."
+}

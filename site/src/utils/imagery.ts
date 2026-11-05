@@ -72,6 +72,42 @@ export const PICTURES = {
       ar: 'صفحات رقيقة من الزجاج المصنفر والسيراميك الفاتح مكدَّسة ومُزاحة كسطح انحدار متدرّج',
     },
   },
+  sine: {
+    src: '/images/sine.webp',
+    width: 1400,
+    height: 722,
+    alt: {
+      en: 'A continuous sine wave cast in brushed brass, resting on a plaster plinth',
+      ar: 'موجة جيبية متصلة مصبوبة في النحاس المصقول، مستقرة على قاعدة من الجص',
+    },
+  },
+  polyhedra: {
+    src: '/images/polyhedra.webp',
+    width: 900,
+    height: 1350,
+    alt: {
+      en: 'A pyramid, an octahedron and a sphere in ivory ceramic and brass on a plaster surface',
+      ar: 'هرمٌ ومُجسَّم ثماني الوجوه وكرة من السيراميك العاجي والنحاس على سطح من الجص',
+    },
+  },
+  matrix: {
+    src: '/images/matrix.webp',
+    width: 900,
+    height: 1350,
+    alt: {
+      en: 'A three-dimensional grid of frosted-glass cubes divided by thin brass lines',
+      ar: 'شبكة ثلاثية الأبعاد من مكعبات الزجاج المصنفر تفصل بينها خطوط نحاسية رقيقة',
+    },
+  },
+  tangent: {
+    src: '/images/tangent.webp',
+    width: 1300,
+    height: 867,
+    alt: {
+      en: 'A polished brass rod touching a plaster curve at a single point marked by a small sphere',
+      ar: 'قضيب نحاسي مصقول يلمس منحنى من الجبس في نقطة واحدة تُحدِّدها كرة صغيرة',
+    },
+  },
   study: {
     src: '/images/study.webp',
     width: 1024,
@@ -98,6 +134,8 @@ export const AREA_PICTURES: Record<string, Picture> = {
   'beta-regression': PICTURES.distributions,
   'bayesian-estimation': PICTURES.lattice,
   'applied-quantitative-studies': PICTURES.study,
+  'panel-data-and-cointegration': PICTURES.strata,
+  'statistical-reporting-and-software': PICTURES.matrix,
 };
 
 export const areaPicture = (id: string): Picture | undefined => AREA_PICTURES[id];

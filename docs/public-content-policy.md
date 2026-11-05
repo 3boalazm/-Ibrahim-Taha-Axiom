@@ -76,6 +76,7 @@ Add `{ "from": "publication:<key>", "to": "area:<id>", "evidence": "<why this li
 - Images contain **no people**, no religious or political symbols, no figurative depictions of living beings, no alcohol, and no text. This is a hard rule: it keeps the site clear of modesty and religious-content concerns, and it prevents any image from being read as a claim about the researcher or about other people.
 - **No portrait of the researcher** is published until a photograph is explicitly approved and supplied. The site never implies a stock face is the researcher.
 - Alt text is bilingual and lives in `site/src/utils/imagery.ts`; it describes the picture literally. Decorative-only backgrounds use `alt=""`.
+- **Research metrics** (citations, reads, h-index, i10, publication counts from ResearchGate, OpenAlex, Scopus or Google Scholar) are published only from `site/src/data/approved/research-metrics.json`, always with the platform name and the retrieval date, and never described as an institutional or official measure. Platform counts disagree by design — ResearchGate counts uploads, OpenAlex counts indexed works — so they are labelled, not reconciled, and re-verified at every content review.
 - Third-party stock photography is not used. If it ever is, its licence, source and attribution go into `THIRD_PARTY_NOTICES.md` and the image must pass the same content rules above.
 
 ## 6. Audit trail

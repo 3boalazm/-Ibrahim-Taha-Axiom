@@ -6,7 +6,7 @@
     "ar": null
   },
   "biography": {
-    "en": "I serve as a Teaching Assistant at the Sadat Academy for Management Sciences in Maadi, Cairo, while pursuing my PhD in Applied Statistics and Econometrics at Cairo University's Faculty of Graduate Studies for Statistical Research (FGSSR).\n\nMy research specializes in penalized estimators in count regression models — Ridge, Liu-type, and Beta regression methods for handling multicollinearity and high-dimensional data. My work has been published in journals including Communications in Statistics, Frontiers in Applied Mathematics & Statistics, and Statistics, Optimization & Information Computing.\n\nBeyond academia, I have completed over 450 statistical analysis reports for theses and papers, and founded the Statistical Analysis – Egypt community across Facebook and Telegram with over 550,000 combined members — making advanced statistics accessible across the Arab world.",
+    "en": "I serve as a Teaching Assistant at the Sadat Academy for Management Sciences in Maadi, Cairo, and as a Research Assistant at the Faculty of Graduate Studies for Statistical Research, Cairo University, where I am also pursuing my PhD in Applied Statistics and Econometrics.\n\nMy research specializes in penalized estimators in count regression models — Ridge, Liu-type, and Beta regression methods for handling multicollinearity and high-dimensional data — and extends to panel-data and cointegration models, panel and logistic regression in R, and the reporting standards behind model-fit and normality testing. My work has been published in journals including Communications in Statistics, Frontiers in Applied Mathematics & Statistics, and Statistics, Optimization & Information Computing.\n\nBeyond academia, I have completed over 450 statistical analysis reports for theses and papers, and founded the Statistical Analysis – Egypt community across Facebook and Telegram with over 550,000 combined members — making advanced statistics accessible across the Arab world.",
     "ar": null
   },
   "affiliations": [
@@ -32,6 +32,11 @@
       "degree": { "en": "Master's degree. Thesis: Handling Multicollinearity Problem in Generalized Linear Models", "ar": null },
       "institution": { "en": "Cairo University", "ar": null },
       "year": 2019
+    },
+    {
+      "degree": { "en": "BSc in Statistics", "ar": null },
+      "institution": { "en": "Al-Azhar University", "ar": null },
+      "year": 2015
     }
   ],
   "identifiers": [

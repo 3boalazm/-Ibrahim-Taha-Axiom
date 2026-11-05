@@ -52,12 +52,15 @@ The direction is **dark-forest editorial**: a full-bleed image masthead with the
 ## Imagery
 All photography lives in `public/images/` (WebP, plus a 1200×630 `og.jpg`) and every alt text is bilingual and kept in `src/utils/imagery.ts` — never inline in a component.
 
-The images are **abstract still lifes generated for this project**: glass regression surfaces, sculpted density curves, a metal lattice, a writing desk, embossed contours. That is a deliberate content rule, not a style preference:
+The images are **abstract still lifes generated for this project**, all in one material language — bone/ivory plaster, brushed brass, soft raking light, film grain — so the set reads as a single series: a translucent regression surface, sculpted density curves, a metallic lattice, a writing desk, embossed contours, a glass mosaic ribbon, stacked strata, a brass sine wave on a plinth, a tetrahedron–octahedron–sphere group with a caliper, a grid of frosted-glass cubes, and a tangent rod touching a plaster curve. Each one depicts a statistical or mathematical object, so the imagery carries the subject rather than decorating it. That is a deliberate content rule, not a style preference:
 
 - no depictions of people (no portraits, faces or hands), so no image can be read as a claim about a real person or conflict with a modesty/religious constraint;
 - no religious symbols, figurative art of living beings, alcohol or political imagery;
 - no text in any asset, so nothing is misread or mistranslated;
 - no third-party stock licence to track, and no copyright or attribution burden.
+
+### Research metrics
+Citation, read and h-index figures are content, not decoration: they change on third-party platforms without notice. They live in `src/data/approved/research-metrics.json` (platform, URL, retrieval date, figures) and are rendered by `src/utils/metrics.ts`, which always prints the platform and the date next to the number. The manifest's `metrics.approved` flag is the gate. Never add a metric that is not in that file, and re-verify the file (or remove the block) at each content review.
 
 When real photographs are added later, they must be approved like any other researcher data (see [`../docs/public-content-policy.md`](../docs/public-content-policy.md)) and their alt text added to `imagery.ts`.
 

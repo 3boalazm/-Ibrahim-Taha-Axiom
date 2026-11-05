@@ -1,17 +1,96 @@
 [
   {
-    "id": "sadat-teaching-assistant",
-    "title": { "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance", "ar": null },
-    "summary": { "en": "Teaching assistant at the Sadat Academy for Management Sciences.", "ar": null },
-    "institution": { "en": "Sadat Academy for Management Sciences", "ar": null },
+    "id": "mathematics-1",
+    "title": {
+      "en": "Mathematics 1",
+      "ar": null
+    },
+    "summary": {
+      "en": "Undergraduate mathematics: functions, limits, differentiation and its applications.",
+      "ar": null
+    },
+    "institution": {
+      "en": "Sadat Academy for Management Sciences",
+      "ar": null
+    },
+    "level": {
+      "en": "Undergraduate",
+      "ar": null
+    },
+    "term": "2017–present",
+    "materials": []
+  },
+  {
+    "id": "statistics-1",
+    "title": {
+      "en": "Statistics 1",
+      "ar": null
+    },
+    "summary": {
+      "en": "Descriptive statistics and probability: summarising data, distributions and the foundations of inference.",
+      "ar": null
+    },
+    "institution": {
+      "en": "Sadat Academy for Management Sciences",
+      "ar": null
+    },
+    "level": {
+      "en": "Undergraduate",
+      "ar": null
+    },
+    "term": "2017–present",
+    "materials": []
+  },
+  {
+    "id": "statistics-2",
+    "title": {
+      "en": "Statistics 2",
+      "ar": null
+    },
+    "summary": {
+      "en": "Estimation, hypothesis testing, and regression analysis for applied management problems.",
+      "ar": null
+    },
+    "institution": {
+      "en": "Sadat Academy for Management Sciences",
+      "ar": null
+    },
+    "level": {
+      "en": "Undergraduate",
+      "ar": null
+    },
+    "term": "2017–present",
+    "materials": []
+  },
+  {
+    "id": "operations-research",
+    "title": {
+      "en": "Operations Research",
+      "ar": null
+    },
+    "summary": {
+      "en": "Linear programming, modelling and optimisation methods for managerial decisions.",
+      "ar": null
+    },
+    "institution": {
+      "en": "Sadat Academy for Management Sciences",
+      "ar": null
+    },
+    "level": {
+      "en": "Undergraduate",
+      "ar": null
+    },
     "term": "2017–present",
     "materials": []
   },
   {
     "id": "statistics-training",
-    "title": { "en": "Statistics and statistical software training", "ar": null },
+    "title": {
+      "en": "Statistics and statistical-software workshops",
+      "ar": null
+    },
     "summary": {
-      "en": "Personalized instruction in statistics, econometrics and statistical software, in Arabic and English: one-on-one online sessions, course material development, R programming and statistical computing, SPSS, Stata and EViews workshops, and statistical inference and probability.",
+      "en": "One-to-one and group training in statistics, econometrics and statistical software, in Arabic and English: R programming and statistical computing, SPSS, Stata and EViews workshops, and statistical inference and probability.",
       "ar": null
     },
     "materials": []

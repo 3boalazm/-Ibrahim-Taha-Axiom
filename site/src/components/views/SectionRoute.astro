@@ -54,14 +54,14 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
 
 /* Header picture per section (all abstract still lifes, no people). */
 const headerPicture = {
-  about: PICTURES.study,
-  research: PICTURES.surface,
-  publications: PICTURES.distributions,
+  about: PICTURES.polyhedra,
+  research: PICTURES.sine,
+  publications: PICTURES.matrix,
   projects: PICTURES.lattice,
   teaching: PICTURES.study,
-  talks: PICTURES.lattice,
+  talks: PICTURES.tangent,
   books: PICTURES.distributions,
-  cv: PICTURES.surface,
+  cv: PICTURES.strata,
   contact: PICTURES.contours,
 }[page];
 
@@ -76,7 +76,11 @@ const headerStats =
       ? [{ value: String(researchAreas.length), label: ar ? 'مجالات' : 'areas' }]
       : page === 'talks'
         ? [{ value: String(talks.length), label: ar ? 'محاضرة' : 'talks' }]
-        : [];
+        : page === 'books'
+          ? [{ value: String(books.length), label: ar ? 'كتاب' : 'books' }]
+          : page === 'teaching'
+            ? [{ value: String(courses.length), label: ar ? 'مادة دراسية' : 'courses' }]
+            : [];
 
 /* Contact: typed inquiry links (a mailto with a clear subject, no backend needed). */
 const inquiries = ar
