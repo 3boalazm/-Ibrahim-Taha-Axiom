@@ -98,7 +98,7 @@
 
 ## 4. Draft IA for Ibrahim Taha Axiom (structure only, for review)
 
-> Labels are placeholders. Bilingual routing is shown as an option pending decision D-03.
+> Labels are placeholders. Languages are approved (D-03): **English is the default locale, plus Arabic (RTL).** Proposed URL scheme (D-03a, pending): English unprefixed, so `{lang}/` is empty (`/publications/`), and Arabic under `/ar/` (`/ar/publications/`). Language switcher on every page links to the counterpart page.
 
 ```
 /{lang}/                          Home: identity, research focus, featured work, latest updates

@@ -5,7 +5,7 @@
 
 ## 1. Recommendation in one paragraph
 
-Build a **new, static-first site on Astro (direction A)**, written from scratch. Use **Astro Scholar** as the engineering and UX reference, **al-folio** as the academic feature and data-model reference, and **Academic Pages** as the URL and collection-structure reference. Design **bilingual routing and RTL in from day one** (if D-03 confirms Arabic). Keep all content as **schema-validated files** in the repo. Produce **research metrics** with a scheduled job that pulls terms-compliant APIs into versioned JSON. Keep a clear seam for **server features later** (contact form endpoint now, CMS and admin later) so we never have to re-platform.
+Build a **new, static-first site on Astro (direction A)**, written from scratch. Use **Astro Scholar** as the engineering and UX reference, **al-folio** as the academic feature and data-model reference, and **Academic Pages** as the URL and collection-structure reference. Design **bilingual routing and RTL in from day one** (D-03 approved: English default + Arabic). Keep all content as **schema-validated files** in the repo. Produce **research metrics** with a scheduled job that pulls terms-compliant APIs into versioned JSON. Keep a clear seam for **server features later** (contact form endpoint now, CMS and admin later) so we never have to re-platform.
 
 ## 2. Why not the alternatives (short)
 - **Forking al-folio (B):** gives the most features on day one, but brings a Ruby toolchain (absent on this machine), runtime spread across about 19 external gems, per-page-only RTL, no bilingual routing, and a hard path to an admin dashboard.
@@ -21,7 +21,7 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
                 │ validated by typed schemas (fail loudly)
 ┌───────────────▼──────────────── Build (Node) ─────────────────────────┐
 │ BibTeX parser → normalized records → CSL citation rendering            │
-│ content collections → pages per locale (/ar, /en)                      │
+│ content collections → pages per locale (en: /, ar: /ar/)               │
 │ OG image generation · sitemap · RSS · JSON-LD · citation_* meta        │
 │ Pagefind index (per locale)                                            │
 └───────────────┬───────────────────────────────────────────────────────┘
@@ -55,7 +55,7 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
 | CMS (later) | Git-based CMS (e.g., Keystatic / Decap / TinaCMS) | Works with file content, no DB | D-09 |
 
 ## 5. Phase 2 entry criteria (proposed)
-1. Decisions D-03 (languages), D-04 (stack), D-05 (publication source), D-11 (MVP scope) approved.
+1. Decisions approved: D-03 languages ✅ (2026-11-05: English default + Arabic). Still pending: D-04 (stack), D-05 (publication source), D-11 (MVP scope).
 2. Repository visibility and licence decided (D-12).
 3. Technical spikes approved: bilingual RTL skeleton, BibTeX → CSL pipeline with test fixtures (synthetic, clearly marked as test data, never shown on the site), Pagefind Arabic check.
 

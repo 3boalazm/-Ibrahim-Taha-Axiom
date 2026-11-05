@@ -82,7 +82,7 @@
 | Mixed-direction bibliographies (Arabic + English entries) | ❌ | ❌ | ❌ |
 | Arabic-aware search | n/a | n/a | Pagefind supports Arabic stemming/segmenting (to verify in Phase 2) |
 
-**Conclusion:** no reference is RTL-ready as a whole site. If Arabic is required, RTL has to be designed in from the start (logical CSS, `dir` per locale, bidi-safe components, Arabic typography). It cannot be retrofitted from any of the three.
+**Conclusion:** no reference is RTL-ready as a whole site. Arabic is now confirmed (D-03, English default + Arabic), so RTL has to be designed in from the start (logical CSS, `dir` per locale, bidi-safe components, Arabic typography). It cannot be retrofitted from any of the three.
 
 ## 5. Things to avoid (UX)
 - Very long top navigation and demo-only pages that remain in production (AF `plugins`, `dropdown`; AP `markdown` guide).

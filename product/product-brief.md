@@ -48,7 +48,7 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 
 | Area | Requirement |
 |---|---|
-| Localization | Probably bilingual Arabic/English with full RTL, to be confirmed (D-03). If confirmed: parallel routes, translated UI strings, logical CSS, an Arabic typeface, and bidi-safe mixed-language bibliographies. |
+| Localization | **Bilingual: English (default) + Arabic with full RTL** (D-03, approved 2026-11-05). Parallel routes per locale, translated UI strings, logical CSS, an Arabic typeface, bidi-safe mixed-language bibliographies, and hreflang with English as `x-default`. URL scheme (D-03a) and missing-translation policy (D-03b) are pending. |
 | SEO | Per-page metadata, generated OG images, sitemap, robots, canonical and hreflang, JSON-LD (Person, ScholarlyArticle, Course, Event), Google Scholar meta tags. |
 | Accessibility | WCAG 2.2 AA target, keyboard-first interactions, `prefers-reduced-motion`, axe checks in CI. |
 | Performance | Static-first. Core Web Vitals "good" on mobile. No blocking third-party scripts. |
@@ -59,7 +59,7 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 
 ## 5. MVP proposal (to confirm in D-11)
 
-**In:** M1 (full), M2 (list, detail, search, cite/export), M3 (articles, teaching, talks, books), the M4 snapshot page (if data sources are approved), M5 (contact form), bilingual/RTL (if confirmed), SEO, accessibility and performance baselines.
+**In:** M1 (full), M2 (list, detail, search, cite/export), M3 (articles, teaching, talks, books), the M4 snapshot page (if data sources are approved), M5 (contact form), bilingual English/Arabic with RTL, SEO, accessibility and performance baselines.
 **Later:** M6 CMS (Phase A), M4 interactive dashboard, newsletter, comments, talk map, reading list, notebooks.
 **Out:** multiple colour palettes, scraping-based metrics, social-network embeds that track users.
 

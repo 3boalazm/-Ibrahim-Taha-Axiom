@@ -87,7 +87,7 @@ Columns: **AF** = al-folio · **AP** = Academic Pages · **AS** = Astro Scholar 
 | Open Graph / Twitter | 🟡 (3, off by default) | ✅ (3) | ✅ (5) | AS | Must | AS generates an OG image per page. |
 | JSON-LD (Person, ScholarlyArticle) | 🟡 (3, off by default) | 🟡 (2) | ❌ | AF | Must | |
 | Google Scholar `citation_*` meta | ❌ | ❌ | ❌ | — | Must | Gap in all three. Needs per-publication pages. |
-| hreflang for bilingual pages | ❌ | ❌ | ❌ | — | Must* | *If bilingual (decision D-03). |
+| hreflang for bilingual pages | ❌ | ❌ | ❌ | — | Must | Bilingual confirmed (D-03); English is `x-default`. |
 
 ## F. Experience & presentation
 
@@ -109,7 +109,7 @@ Columns: **AF** = al-folio · **AP** = Academic Pages · **AS** = Astro Scholar 
 | Parallel language versions (AR/EN routing) | ❌ | ❌ | ❌ | — | Must* | Gap in all three. |
 | Arabic typography / fonts | ❌ | ❌ | ❌ | — | Must* | |
 
-\* Depends on the language decision (D-03).
+\* Confirmed: D-03 approved a bilingual site, English (default) + Arabic.
 
 ## H. Content management
 
