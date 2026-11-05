@@ -7,6 +7,7 @@
  *  3. robots.txt matches the launch setting
  *  4. no private/staging/raw files or personal contact data in dist/
  *  5. WCAG contrast of design-token colour pairs (light + dark)
+ *  6. the lab ships its payload and no statistics code in the client bundle
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -134,6 +135,25 @@ for (const [theme, set] of [['light', light], ['dark', dark]]) {
     const r = ratio(set[fg], set[bg]);
     contrast.push(`${theme.padEnd(5)} ${fg} on ${bg}: ${r.toFixed(2)} (min ${min})`);
     if (r < min) errors.push(`contrast ${theme}: ${fg} on ${bg} = ${r.toFixed(2)} < ${min}`);
+  }
+}
+
+// ---------------------------------------------------------------- 6 (the lab)
+// The interactive page must ship its precomputed payload and must not ship the
+// statistics module: the browser is not allowed to fit models.
+const labPages = pages.filter((f) => f === 'lab/index.html' || f === 'ar/lab/index.html');
+for (const page of labPages) {
+  const html = readFileSync(join(DIST, page), 'utf8');
+  if (!html.includes('id="lab-payload"')) errors.push(`${page}: lab payload island missing`);
+  if (!html.includes('data-lab-range')) errors.push(`${page}: lab control missing`);
+}
+for (const file of files.filter((f) => f.endsWith('.js'))) {
+  const js = readFileSync(join(DIST, file), 'utf8');
+  // The bundler minifies, so match on names that could survive: the seeded
+  // generator and the fitting entry points. "VIF" is legitimately printed in the
+  // slider's aria-valuetext, so it is not a signal of leaked model code.
+  if (/(mulberry32|datasetAt|buildRoutes|ridgeFit|sumSq)/.test(js)) {
+    errors.push(`${file}: statistics code leaked into the client bundle`);
   }
 }
 

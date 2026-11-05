@@ -18,16 +18,17 @@ export const SECTION_PATHS: Record<PageKey, string> = {
   talks: '/talks/',
   books: '/books/',
   cv: '/cv/',
+  lab: '/lab/',
   contact: '/contact/',
 };
 
 /** Editorial order used for the home "contents" and section numbers. */
-export const SECTION_ORDER: PageKey[] = ['about', 'research', 'publications', 'projects', 'teaching', 'talks', 'books', 'cv', 'contact'];
+export const SECTION_ORDER: PageKey[] = ['about', 'research', 'publications', 'projects', 'teaching', 'talks', 'books', 'cv', 'lab', 'contact'];
 
 /** Core sections are always in the navigation (with honest empty states). */
-export const PRIMARY: PageKey[] = ['about', 'research', 'publications', 'teaching', 'contact'];
+export const PRIMARY: PageKey[] = ['about', 'research', 'publications', 'teaching', 'lab', 'contact'];
 /** Secondary sections join the navigation only once they have approved content. */
-export const SECONDARY: PageKey[] = ['projects', 'talks', 'books', 'cv'];
+export const SECONDARY: PageKey[] = ['projects', 'talks', 'books', 'cv'];   // lab joins the primary set above
 
 /** Number of approved items per section; null = not a countable section. */
 export function sectionCount(key: PageKey): number | null {
@@ -48,6 +49,8 @@ export function sectionCount(key: PageKey): number | null {
       return books.length;
     case 'cv':
       return hasCvContent ? 1 : 0;
+    case 'lab':
+      return 3; // three estimators live in the experiment
     default:
       return null;
   }

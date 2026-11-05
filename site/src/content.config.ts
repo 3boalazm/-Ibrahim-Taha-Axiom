@@ -2,7 +2,7 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-export const PAGE_KEYS = ['home', 'about', 'research', 'publications', 'projects', 'teaching', 'talks', 'books', 'cv', 'contact'] as const;
+export const PAGE_KEYS = ['home', 'about', 'research', 'publications', 'projects', 'teaching', 'talks', 'books', 'cv', 'contact', 'lab'] as const;
 
 /**
  * Page copy for every section, one Markdown file per page and language.
