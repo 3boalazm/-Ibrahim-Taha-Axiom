@@ -1,6 +1,6 @@
 # Preliminary Architecture Recommendation
 
-> Phase 1 · 2026-11-05 · **Status: recommendation for discussion, not a final decision (D-04).**
+> Phase 1 · 2026-11-05 · **Status: direction approved (D-04, 2026-11-05: fresh Astro build).** The library choices in §4 are still candidates, to be validated in Phase 2 spikes.
 > Basis: [technical-comparison.md](../research/technical-comparison.md) (scoring A 55 / C 45 / B 39) and [feature-matrix.md](../research/feature-matrix.md).
 
 ## 1. Recommendation in one paragraph
@@ -55,7 +55,7 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
 | CMS (later) | Git-based CMS (e.g., Keystatic / Decap / TinaCMS) | Works with file content, no DB | D-09 |
 
 ## 5. Phase 2 entry criteria (proposed)
-1. Decisions approved: D-03 languages ✅ (2026-11-05: English default + Arabic). Still pending: D-04 (stack), D-05 (publication source), D-11 (MVP scope).
+1. Decisions approved: D-03 languages ✅ (English default + Arabic) and D-04 stack ✅ (Astro), both 2026-11-05. Still pending: D-05 (publication source), D-11 (MVP scope).
 2. Repository visibility and licence decided (D-12).
 3. Technical spikes approved: bilingual RTL skeleton, BibTeX → CSL pipeline with test fixtures (synthetic, clearly marked as test data, never shown on the site), Pagefind Arabic check.
 

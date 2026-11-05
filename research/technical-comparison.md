@@ -55,7 +55,7 @@
 | Future CMS / admin dashboard | Hard (static Ruby; Git-CMS possible) | Hard | **Easiest** (Astro can add server routes; Git-based CMSs integrate well) |
 | Maintainability by a small team | Medium (gem coupling) | Low | **High** |
 
-## 4. Candidate directions (preliminary; not a final stack decision)
+## 4. Candidate directions (D-04 approved direction A on 2026-11-05)
 
 | Direction | Description | Pros | Cons |
 |---|---|---|---|
@@ -75,7 +75,7 @@
 | Toolchain fit (this machine, Node present) | 1 | 5 | 2 | 5 |
 | **Weighted total** (max 65) | | **55** | **39** | **45** |
 
-Ranking: A (55) > C (45) > B (39). Recommendation details are in [`../product/architecture-recommendation.md`](../product/architecture-recommendation.md). This is **preliminary** and needs approval (decision D-04).
+Ranking: A (55) > C (45) > B (39). Recommendation details are in [`../product/architecture-recommendation.md`](../product/architecture-recommendation.md). Direction A was **approved on 2026-11-05** (decision D-04).
 
 ## 5. Reuse map (ideas, not code merges)
 

@@ -70,4 +70,4 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 - Both language versions render correctly in RTL and LTR with no layout regressions (visual tests).
 
 ## 7. Explicitly not decided in Phase 1
-Final tech stack, hosting, domain, visual design and brand, content, data sources, and the CMS product. See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).
+Hosting, domain, visual design and brand, content, data sources, and the CMS product. (Already approved: bilingual EN default + AR, D-03; Astro as the stack direction, D-04.) See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).

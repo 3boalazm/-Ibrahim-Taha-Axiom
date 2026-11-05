@@ -17,7 +17,7 @@
 - **Astro Scholar** هو الأحدث والأسرع والأفضل في تجربة القراءة، لكنه ضعيف أكاديميًا ومعالجة BibTeX فيه هشّة.
 - **لا يوجد أي مشروع جاهز للعربية/RTL كموقع كامل، ولا أي مشروع فيه نموذج تواصل أو لوحة مقاييس أو CMS.** هذه فجوات يغطيها منتجنا.
 - 🟢 **معتمد:** الموقع ثنائي اللغة، الإنجليزية افتراضية + العربية مع RTL كامل (D-03).
-- **التوصية المبدئية (تحتاج موافقة):** بناء جديد على Astro، مع نقل نماذج البيانات الأكاديمية من al-folio وAcademic Pages، وتصميم ثنائي اللغة وRTL من البداية.
+- 🟢 **معتمد:** بناء جديد على Astro (D-04)، مع نقل نماذج البيانات الأكاديمية من al-folio وAcademic Pages، وتصميم ثنائي اللغة وRTL من البداية.
 
 ## Structure
 
@@ -39,7 +39,7 @@ ibrahim-taha-axiom/
 │   └── licensing-review.md            licences, third-party assets, service terms
 ├── product/
 │   ├── product-brief.md               vision, audiences, modules M1–M6, MVP proposal
-│   └── architecture-recommendation.md preliminary recommendation (not final)
+│   └── architecture-recommendation.md architecture direction (Astro approved; libraries pending spikes)
 └── docs/
     └── decisions-pending.md           decisions that need approval (Arabic)
 ```
