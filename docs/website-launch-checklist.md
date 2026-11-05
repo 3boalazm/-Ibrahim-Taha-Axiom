@@ -15,6 +15,8 @@
 | 6 | Contact channel (D-08) | project owner | ✅ Direct e-mail and phone published (approved 2026-11-05). A contact form remains optional and is not built |
 | 7 | Visitor analytics decision (D-10). None is installed | project owner | ⏳ |
 | 8 | Final review of the English and Arabic copy in `site/src/content/` | researcher + owner | ⏳ |
+| 9 | Visual review of the redesigned pages (home, about, research, publications, teaching, contact, 404) on a phone and a laptop, in both languages and both themes | project owner | ⏳ |
+| 10 | A short-launch note for social sharing: confirm the share image `site/public/images/og.jpg` and the wording of the home title/lead | project owner | ⏳ |
 
 ## 2. The one-step change that enables indexing
 
@@ -34,6 +36,12 @@ Commit and push. On the next deployment:
 - canonical URLs, hreflang and the sitemap use `canonicalOrigin`.
 
 The build refuses `allowIndexing: true` without a `canonicalOrigin`, so the domain must be set in the same edit (or earlier). To pause indexing again, set `allowIndexing` back to `false`.
+
+## 2b. Standing content rules for the visual layer
+
+- Images stay **abstract and impersonal** (`docs/public-content-policy.md` §5). No portrait of the researcher is published until a supplied photograph is approved.
+- The figures band on the home page must keep matching the approved data counts: publications, research areas, projects come from the data files; "450+ statistical reports" comes from the researcher's own biography text. If a count changes, the band changes with it — never edit a figure by hand.
+- English and Arabic share one design; Arabic runs RTL from `dir="rtl"` with no mirrored CSS, and Arabic typography uses Noto Kufi Arabic for display and IBM Plex Sans Arabic for interface text.
 
 ## 3. Pre-launch QA (run every time)
 

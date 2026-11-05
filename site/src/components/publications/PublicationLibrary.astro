@@ -55,7 +55,7 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
         <h2 class="year-group__year ltr" id={`year-${g.year ?? 'nd'}`}>
           {g.year ?? 'n.d.'}
         </h2>
-        <div class="year-group__items">
+        <div>
           {g.items.map((p) => (
             <PublicationItem pub={p} lang={lang} />
           ))}
@@ -175,6 +175,9 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
   .library__n {
     opacity: 0.6;
     font-variant-numeric: tabular-nums;
+  }
+  .library__selected {
+    margin-block-end: 0.15rem;
   }
   .library__count {
     margin-inline-start: auto;

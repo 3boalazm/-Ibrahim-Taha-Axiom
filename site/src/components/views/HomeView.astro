@@ -59,8 +59,10 @@ const areaImage: Record<string, { src: string; alt: string }> = {
     alt: ar ? 'منحنيات كثافة احتمالية منحوتة في الزجاج على سطح من الجص الفاتح' : 'Density curves sculpted in glass on a pale plaster surface',
   },
   'bayesian-estimation': {
-    src: '/images/lattice.webp',
-    alt: ar ? 'شبكة شبكية معدنية دقيقة في فضاء أخضر داكن' : 'A precise metal lattice in a deep green void',
+    src: '/images/strata.webp',
+    alt: ar
+      ? 'صفحات رقيقة من الزجاج المصنفر والسيراميك الفاتح مكدَّسة كسطح انحدار متدرّج'
+      : 'Thin sheets of frosted glass and pale ceramic stacked like a stepped regression plane',
   },
   'applied-quantitative-studies': {
     src: '/images/study.webp',
@@ -177,7 +179,7 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     <ul class="figures__list" role="list">
       {
         figures.map((f, i) => (
-          <li class="figures__item in-view" style={`animation-delay:${i * 60}ms`}>
+          <li class="figures__item in-view">
             <span class="figures__value ltr">{f.value}</span>
             <span class="figures__label">{f.label}</span>
           </li>
@@ -504,13 +506,18 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: 0.45em 0.85em;
-    border: 1px solid rgb(244 242 233 / 0.28);
+    padding: 0.45em 0.9em;
+    border: 1px solid rgb(244 242 233 / 0.3);
     border-radius: var(--radius-pill);
-    background: rgb(244 242 233 / 0.08);
+    background: rgb(10 24 18 / 0.42);
     backdrop-filter: blur(10px);
     color: #f4f2e9;
-    letter-spacing: 0.1em;
+    font-size: var(--step--2);
+    letter-spacing: 0.13em;
+  }
+  :lang(ar) .hero__eyebrow {
+    letter-spacing: 0;
+    font-size: var(--step--1);
   }
   .hero__dot {
     inline-size: 0.4rem;
@@ -520,10 +527,14 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     box-shadow: 0 0 0 3px rgb(203 176 121 / 0.22);
   }
   .hero__year {
+    padding: 0.4em 0.8em;
+    border-radius: var(--radius-pill);
+    background: rgb(10 24 18 / 0.38);
+    backdrop-filter: blur(10px);
     font-family: var(--font-mono);
     font-size: var(--step--2);
     letter-spacing: 0.08em;
-    color: rgb(244 242 233 / 0.7);
+    color: rgb(244 242 233 / 0.8);
   }
   .hero__body {
     display: grid;
@@ -901,6 +912,10 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     gap: clamp(var(--space-6), 5vw, var(--space-8));
     align-items: start;
   }
+  .works__selected {
+    display: grid;
+    align-content: start;
+  }
   .works__head {
     display: grid;
     gap: var(--space-3);
@@ -958,6 +973,15 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
     font-size: var(--step--2);
     color: var(--color-ink-3);
     white-space: nowrap;
+  }
+  @media (max-width: 30rem) {
+    .index-panel__list a {
+      grid-template-columns: 1.75rem minmax(0, 1fr);
+    }
+    .index-panel__meta {
+      grid-column: 2;
+      white-space: normal;
+    }
   }
   .index-panel__notice {
     margin-block-start: var(--space-4);
@@ -1079,6 +1103,9 @@ const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
   }
 
   /* -------------------------------------------------------------- reach */
+  .research {
+    scroll-margin-block-start: var(--header-height);
+  }
   .community__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));

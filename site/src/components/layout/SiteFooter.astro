@@ -136,6 +136,15 @@ const headline =
     padding-block: clamp(var(--space-7), 6vw, var(--space-9)) var(--space-7);
     border-block-end: 1px solid color-mix(in srgb, var(--color-paper) 16%, transparent);
   }
+  .site-footer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .site-footer__copy,
+  .site-footer__counts {
+    margin: 0;
+  }
   .site-footer__headline {
     max-inline-size: 22ch;
     font-family: var(--font-display);

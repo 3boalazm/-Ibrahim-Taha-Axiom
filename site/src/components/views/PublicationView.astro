@@ -181,6 +181,10 @@ const meta: [string, string | null, boolean][] = [
 </BaseLayout>
 
 <style>
+  /* this page supplies a glass author card inside the shared header */
+  :global(.page-header__body) .pub-head {
+    margin-block-start: var(--space-2);
+  }
   .pub-head {
     display: grid;
     gap: var(--space-2);

@@ -241,6 +241,16 @@ const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publ
     border-color: var(--color-ink);
     color: var(--color-paper);
   }
+  .pub__link {
+    text-decoration: none;
+    border-block-end: 1px solid var(--color-rule);
+    padding-block-end: 0.1em;
+    color: var(--color-ink-2);
+  }
+  .pub__link:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
   .pub__doi {
     font-family: var(--font-mono);
     font-size: var(--step--2);

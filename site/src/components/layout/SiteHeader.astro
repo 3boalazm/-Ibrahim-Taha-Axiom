@@ -85,6 +85,7 @@ const monogram = 'IT';
 <style>
   .site-header {
     position: sticky;
+    inset-inline: 0;
     inset-block-start: 0;
     z-index: 50;
     background: color-mix(in srgb, var(--color-paper) 82%, transparent);
@@ -150,6 +151,7 @@ const monogram = 'IT';
     font-weight: 500;
     color: var(--color-ink-2);
     text-decoration: none;
+    white-space: nowrap;
     transition: color var(--dur-1) var(--ease), background var(--dur-2) var(--ease);
   }
   .site-nav a:hover {
@@ -219,9 +221,28 @@ const monogram = 'IT';
     transform: translateY(-2.75px) rotate(-45deg);
   }
 
+  /* Before the nav collapses, tighten the pills so eight sections still fit. */
+  @media (max-width: 74rem) {
+    .site-nav a {
+      padding: 0.5em 0.62em;
+      font-size: var(--step--2);
+    }
+    .site-header__cta span:first-child {
+      display: none;
+    }
+    .site-header__cta {
+      padding: 0.62em 0.8em;
+    }
+  }
   @media (max-width: 60rem) {
     .site-header__tools {
       margin-inline-start: auto;
+    }
+    .site-header__cta span:first-child {
+      display: inline;
+    }
+    .site-header__cta {
+      padding: 0.62em 1.05em;
     }
     .menu-button {
       display: inline-flex;
