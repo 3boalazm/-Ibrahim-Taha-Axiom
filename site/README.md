@@ -1,8 +1,16 @@
-# site/ — future Astro website (deployed on Vercel)
+# site/ — Astro website (deployed on Vercel)
 
-This folder will hold the Astro app once the build phase starts. **It contains no website code yet** — only the Vercel configuration, so a Vercel project can be connected now without producing failed or empty deployments.
+**Current state: temporary placeholder.** Two pages ("under construction"): English at `/` and Arabic (RTL) at `/ar/`. They exist only to verify the deployment pipeline end to end. They carry no researcher content and are **not** the final design, which is built in a later phase.
 
-- `vercel.json`: Astro preset, `npm ci` / `npm run build`, trailing slashes (matching the IA draft), baseline security headers.
-- **Ignored build step:** while `site/package.json` does not exist, every Git push is skipped by Vercel ("Canceled by Ignored Build Step"). The first commit that adds the Astro app starts real deployments automatically.
+- Astro 7.3.8 (static output), Node 26.x (`engines`).
+- `astro.config.mjs`: English default, Arabic under `/ar/` (D-03; URL scheme D-03a still pending), trailing slashes.
+- `public/robots.txt` blocks all crawlers and every page has `noindex`. **Remove both at launch.**
+- `vercel.json`: Astro preset, `npm ci` / `npm run build`, security headers, and an ignored-build-step guard (skips the build if `package.json` is ever missing).
 
-Setup steps and settings are documented in [`../docs/deployment.md`](../docs/deployment.md).
+```bash
+npm ci
+npm run dev      # http://localhost:4321/
+npm run build    # output in dist/
+```
+
+Deployment settings and environment variables: [`../docs/deployment.md`](../docs/deployment.md).

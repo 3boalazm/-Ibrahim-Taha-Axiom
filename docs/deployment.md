@@ -1,6 +1,8 @@
 # Deployment & Environment — Vercel
 
-> Decision D-07 (hosting): **Vercel**, approved 2026-11-05. Domain (D-07a) and which Vercel project to use (D-07b) are pending.
+> Decision D-07 (hosting): **Vercel**, approved 2026-11-05. D-07b resolved the same day: a **new** Vercel project `ibrahim-taha-axiom` connected to this repository (the earlier project for the previous site is untouched). Domain (D-07a) is pending.
+>
+> Current deployment: a temporary EN/AR placeholder (see [`../site/README.md`](../site/README.md)), protected by Vercel Authentication (only team members can view it) and marked `noindex`.
 
 ## Layout
 
@@ -24,10 +26,10 @@ Only `site/` is deployed. Everything else in the repository is outside the Verce
 | Root Directory | `site` |
 | Framework preset | Astro (also set in `site/vercel.json`) |
 | Install / Build command | `npm ci` / `npm run build` (from `site/vercel.json`) |
-| Node.js version | 24.x (to be pinned with `engines.node` in `site/package.json` when the app is created) |
-| Ignored Build Step | from `site/vercel.json`: skip until `site/package.json` exists |
+| Node.js version | 26.x (pinned with `engines.node` in `site/package.json`) |
+| Ignored Build Step | from `site/vercel.json`: skip if `site/package.json` is missing |
 | Preview deployments | On for pull requests and non-main branches (replaces the gh-pages PR previews used by Astro Scholar) |
-| Deployment Protection | Keep Vercel Authentication on for **preview** deployments; production public once the site launches |
+| Deployment Protection | Currently Vercel Authentication on all deployments except custom domains. Keep it for previews; make production public only at launch |
 
 ## How the Astro app will target Vercel (build phase)
 
@@ -50,12 +52,11 @@ The template is [`.env.example`](../.env.example). Real values go in a local `.e
 
 Rules: variables prefixed `PUBLIC_` are exposed to the browser by Astro, so never put secrets in them. Nothing in `.env*` (except the template) is committed.
 
-## Connecting the repository (one-time, needs the owner's decision D-07b)
+## Connecting the repository (done)
 
-Option 1, new project (recommended): Vercel → Add New → Project → import `3boalazm/-Ibrahim-Taha-Axiom` → set **Root Directory = `site`** → Deploy. Until the Astro app exists, pushes are skipped by the ignored build step, so no empty site is published.
-
-Option 2, reuse the existing project: an earlier Vercel project exists for a previous site built from another repository. Repointing it would replace what that project currently serves; do this only if the earlier site should be retired.
+The project was created with Root Directory `site` and the Astro preset. **Do not import this repository with Vercel's suggested "Services" preset.** It auto-detects the three templates under `references/` and would deploy them as the site. If the project ever needs to be recreated: Add New → Project → import `3boalazm/-Ibrahim-Taha-Axiom` → Root Directory `site` → Application Preset **Astro**.
 
 ## Not done yet (by design)
-- No Vercel project was created or modified.
-- No deployment was triggered; Phase 2 forbids deploying, and there is no website yet.
+- No custom domain (D-07a).
+- No environment variables set on Vercel (none are needed by the placeholder).
+- Production stays behind Vercel Authentication until launch.
