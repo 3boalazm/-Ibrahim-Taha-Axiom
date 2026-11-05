@@ -14,6 +14,12 @@ import { join, relative } from 'node:path';
 const DIST = new URL('../dist/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const launch = JSON.parse(readFileSync(new URL('../src/data/public-settings/launch.json', import.meta.url), 'utf8'));
 const indexing = launch.allowIndexing && launch.canonicalOrigin;
+// Contact details are allowed only if 'contact' is an approved profile field.
+const manifest = JSON.parse(readFileSync(new URL('../src/data/approved/public-content.manifest.json', import.meta.url), 'utf8'));
+const profile = JSON.parse(readFileSync(new URL('../src/data/approved/profile.json', import.meta.url), 'utf8'));
+const contactApproved = manifest.profile.approvedFields.includes('contact');
+const allowedEmails = contactApproved && profile.contact?.email ? [profile.contact.email.toLowerCase()] : [];
+const allowedPhones = contactApproved && profile.contact?.phone ? [profile.contact.phone.replace(/\D/g, '')] : [];
 const errors = [];
 const warn = [];
 
@@ -50,8 +56,13 @@ for (const page of pages) {
       externals.add(href);
       continue;
     }
-    if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
-      if (href.startsWith('mailto:') || href.startsWith('tel:')) errors.push(`${page}: personal contact link ${href}`);
+    if (href.startsWith('#')) continue;
+    if (href.startsWith('mailto:')) {
+      if (!allowedEmails.includes(href.slice(7).toLowerCase())) errors.push(`${page}: unapproved e-mail link ${href}`);
+      continue;
+    }
+    if (href.startsWith('tel:')) {
+      if (!allowedPhones.includes(href.slice(4).replace(/\D/g, ''))) errors.push(`${page}: unapproved phone link ${href}`);
       continue;
     }
     const path = href.split('#')[0].split('?')[0];
@@ -71,8 +82,12 @@ for (const f of files) if (forbiddenName.test(f)) errors.push(`forbidden file in
 const textFiles = files.filter((f) => /\.(html|xml|txt|js|css|json)$/.test(f));
 for (const f of textFiles) {
   const s = readFileSync(join(DIST, f), 'utf8');
-  if (/[\w.+-]+@(gmail|yahoo|hotmail|outlook|sadatacademy)\.[a-z.]+/i.test(s)) errors.push(`${f}: personal e-mail address found`);
-  if (/\+20\s?1\d[\d\s]{7,}/.test(s)) errors.push(`${f}: phone number found`);
+  for (const [m] of s.matchAll(/[\w.+-]+@(gmail|yahoo|hotmail|outlook|sadatacademy)\.[a-z.]+/gi)) {
+    if (!allowedEmails.includes(m.toLowerCase())) errors.push(`${f}: unapproved personal e-mail address ${m}`);
+  }
+  for (const [m] of s.matchAll(/\+20\s?1\d[\d\s-]{7,}\d/g)) {
+    if (!allowedPhones.includes(m.replace(/\D/g, ''))) errors.push(`${f}: unapproved phone number ${m}`);
+  }
 }
 
 // ---------------------------------------------------------------- 5
@@ -105,7 +120,7 @@ for (const [theme, set] of [['light', light], ['dark', dark]]) {
   }
 }
 
-console.log(`QA: ${pages.length} pages, ${files.length} files, ${externals.size} external links, indexing ${indexing ? 'ON' : 'OFF'}`);
+console.log(`QA: ${pages.length} pages, ${files.length} files, ${externals.size} external links, indexing ${indexing ? 'ON' : 'OFF'}, approved contact details: ${contactApproved ? 'yes' : 'no'}`);
 console.log(contrast.map((c) => `  ${c}`).join('\n'));
 if (externals.size) console.log(`External links:\n${[...externals].sort().map((u) => `  ${u}`).join('\n')}`);
 for (const w of warn) console.warn(`WARN ${w}`);

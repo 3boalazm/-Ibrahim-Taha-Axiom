@@ -11,8 +11,8 @@ import ProfileSummary from '../profile/ProfileSummary.astro';
 import PublicationLibrary from '../publications/PublicationLibrary.astro';
 import EntryList from '../research/EntryList.astro';
 import { SECTION_PATHS, pageCopy, sectionCount, sectionNumber, type PageKey } from '../../config/site';
-import { courses, cv, profile, projects, researchAreas, talks } from '../../utils/content';
-import { books, publications } from '../../utils/publications';
+import { courses, cv, manifest, profile, projects, researchAreas, talks } from '../../utils/content';
+import { books, getPublication, publications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -40,6 +40,12 @@ const englishOnly =
     (page === 'teaching' && courses.every((c) => noAr(c.title) && noAr(c.summary))) ||
     (page === 'cv' && !!cv && cv.sections.every((s) => s.items.every((i) => noAr(i.text)))));
 const cl: Lang = englishOnly ? 'en' : lang;
+// Publications linked to a talk through an approved, evidence-backed relationship.
+const talkPapers = (id: string) =>
+  manifest.relationships
+    .filter((r) => r.to === `talk:${id}` && r.from.startsWith('publication:'))
+    .map((r) => getPublication(r.from.slice('publication:'.length)))
+    .filter((p) => p !== undefined);
 const cui = t(cl);
 const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
 ---
@@ -110,6 +116,14 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
                   {tk.location && <LangText value={tk.location} lang={lang} />}
                 </p>
                 <LangText value={tk.summary} lang={lang} as="p" note />
+                {talkPapers(tk.id).map((p) => (
+                  <p class="list__links">
+                    <span class="label">{ui.relatedPaper}</span>
+                    <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
+                      {p.title}
+                    </a>
+                  </p>
+                ))}
                 {tk.slides && (
                   <a href={tk.slides} class="button">
                     {ui.slides}
@@ -156,7 +170,31 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
     {
       page === 'contact' && (
         <>
-          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+          {profile.contact.email || profile.contact.phone ? (
+            <section class="contact-card" aria-labelledby="direct-contact">
+              <h2 id="direct-contact" class="label">{ui.contactDirect}</h2>
+              <dl>
+                {profile.contact.email && (
+                  <div>
+                    <dt>{ui.email}</dt>
+                    <dd>
+                      <a class="ltr" href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
+                    </dd>
+                  </div>
+                )}
+                {profile.contact.phone && (
+                  <div>
+                    <dt>{ui.phone}</dt>
+                    <dd>
+                      <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>{profile.contact.phone}</a>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          ) : (
+            <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+          )}
           {profile.identifiers.length > 0 && (
             <section class="contact-profiles">
               <h2 class="label">{ui.identifiers}</h2>
@@ -257,6 +295,29 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
     font-family: var(--font-ui);
     font-size: var(--step--1);
     color: var(--color-ink-3);
+  }
+  .contact-card {
+    max-inline-size: var(--width-wide);
+    padding: var(--space-6);
+    background: var(--color-surface-1);
+    border: var(--border-hairline);
+    border-inline-start: 3px solid var(--color-accent);
+    border-radius: var(--radius-2);
+  }
+  .contact-card dl {
+    display: grid;
+    gap: var(--space-4);
+    margin-block-start: var(--space-4);
+  }
+  .contact-card dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .contact-card dd {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step-1);
   }
   .contact-profiles {
     margin-block-start: var(--space-6);

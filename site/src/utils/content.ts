@@ -64,6 +64,7 @@ export const profile: Profile = {
   education: approvedFields.has('education') ? fullProfile.education : [],
   identifiers: approvedFields.has('identifiers') ? fullProfile.identifiers : [],
   community: approvedFields.has('community') ? fullProfile.community : [],
+  contact: approvedFields.has('contact') ? fullProfile.contact : {},
   interests: approvedFields.has('interests') ? fullProfile.interests : [],
   authorMatch: approvedFields.has('authorMatch') ? fullProfile.authorMatch : [],
 };

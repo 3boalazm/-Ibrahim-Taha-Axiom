@@ -43,6 +43,17 @@ const relatedFor = (id: string) =>
             {item.url.replace(/^https?:\/\//, '')}
           </a>
         )}
+        {item.links.length > 0 && (
+          <ul class="entry__links" role="list">
+            {item.links.map((l) => (
+              <li>
+                <a href={l.url} rel="noopener">
+                  <LangText value={l.label} lang={lang} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
         {relatedFor(item.id).length > 0 && (
           <div class="entry__related">
             <p class="label">{ui.related}</p>
@@ -82,6 +93,15 @@ const relatedFor = (id: string) =>
   }
   .entry__title {
     font-size: var(--step-2);
+  }
+  .entry__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
   }
   .entry__related {
     padding-inline-start: var(--space-4);

@@ -12,7 +12,7 @@
 | 4 | Approved content entered via the two-key gate (`docs/public-content-policy.md`) and `npm run qa` passes | project owner | ✅ 2026-11-05 |
 | 4b | Arabic versions of the biography, role, summary, research areas, teaching and CV (confirmed text, not machine translation) | researcher | ⏳ |
 | 5 | Canonical domain decided and connected in Vercel (D-07a) | project owner | ⏳ |
-| 6 | Contact channel decided (D-08). Until then the Contact page shows no form and no personal details | project owner | ⏳ |
+| 6 | Contact channel (D-08) | project owner | ✅ Direct e-mail and phone published (approved 2026-11-05). A contact form remains optional and is not built |
 | 7 | Visitor analytics decision (D-10). None is installed | project owner | ⏳ |
 | 8 | Final review of the English and Arabic copy in `site/src/content/` | researcher + owner | ⏳ |
 

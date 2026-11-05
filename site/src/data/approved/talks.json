@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "conference-2019-zinb-liu",
+    "title": { "en": "New shrinkage parameters for Liu-type zero inflated negative binomial estimator", "ar": null },
+    "event": { "en": "54th Annual Conference on Statistics", "ar": null },
+    "date": "2019",
+    "summary": { "en": "Conference paper with E. A. Rady and M. R. Abonazel.", "ar": null }
+  },
+  {
+    "id": "conference-2018-nb-ridge",
+    "title": { "en": "Ridge estimators for the negative binomial regression model with application", "ar": null },
+    "event": { "en": "53rd Annual Conference on Statistics", "ar": null },
+    "date": "2018",
+    "summary": { "en": "Conference paper with E. A. Rady and M. R. Abonazel.", "ar": null }
+  }
+]

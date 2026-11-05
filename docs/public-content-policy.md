@@ -28,19 +28,21 @@ The gate lives in `site/src/utils/content.ts` (profile, research areas, projects
 - 2 teaching entries (the verified Teaching Assistant role and the researcher's own training description);
 - a structured CV (no PDF).
 
+Added later the same day, on the project owner's explicit request:
+- **contact e-mail and phone** (as published on the researcher's own earlier site), shown on the Contact page;
+- **2 talks**, the 2018 and 2019 conference papers. No source says who presented them, so the site does not claim it;
+- **3 projects** built from evidenced work: the penalized COM-Poisson papers with their Zenodo dataset and GitHub data repository, the Statistical Analysis – Egypt community, and the self-published statistical guides.
+
 Still excluded:
-- personal e-mail and phone (policy);
-- talks (no evidence of presentations);
-- projects (none documented);
 - the preprint duplicate and the 3 held-back duplicate guide rows;
-- Arabic translations of researcher text. None exists, so Arabic pages show these sections as an English block with a note.
+- Arabic translations of researcher text. None exists, so Arabic pages show these sections in English (as a block with a note where needed).
 
 Where sources disagreed (2 publication years, 1 author order) the exported value follows the documented rule in `research/data-quality-report.md`.
 
 ## 2. Never publish
 
 - Records whose Phase 2 status is `candidate`, `conflicted`, `incomplete`, `restricted` or `rejected`, unless the researcher has resolved the issue and approved the record.
-- Personal e-mail addresses or phone numbers (the QA script fails the build output if one appears).
+- Personal e-mail addresses or phone numbers, **unless** they are explicitly approved as the profile's `contact` field. `npm run qa` allows only the approved contact values and fails on any other e-mail or phone in the build output. The researcher's contact e-mail and phone were approved by the project owner on 2026-11-05.
 - Unpublished manuscripts, restricted or paywalled PDFs, or publisher PDFs without a compatible licence. Link to the DOI instead. A `pdf` link may point only to a legitimate open-access copy whose licence allows linking (or to a file the researcher owns the rights to, placed in `site/public/files/`).
 - Invented or inferred content: biography, qualifications, affiliations, awards, research interests, teaching history, abstracts, translations, DOIs or citation metrics.
 - Inferred research lines (from Phase 2 `projects.candidates.json`) presented as facts. They become research areas only after the researcher confirms and names them.

@@ -50,6 +50,10 @@
     { "label": { "en": "Statistical Analysis – Egypt (Facebook group)", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" },
     { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (قناة تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt" }
   ],
+  "contact": {
+    "email": "ibrahimaboalazm@gmail.com",
+    "phone": "+20 115 376 6072"
+  },
   "interests": [
     { "en": "Applied Statistics", "ar": null },
     { "en": "Econometrics", "ar": null },

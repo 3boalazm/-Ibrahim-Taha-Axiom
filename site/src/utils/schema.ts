@@ -43,6 +43,7 @@ export const PROFILE_FIELDS = [
   'education',
   'identifiers',
   'community',
+  'contact',
   'interests',
   'authorMatch',
 ] as const;
@@ -110,6 +111,13 @@ export const ProfileSchema = z.object({
   ),
   /** Public community / outreach links (not academic identifiers). */
   community: z.array(z.object({ label: RequiredLocalized, url: httpUrl })).default([]),
+  /** Direct contact details. Shown only when 'contact' is an approved profile field. */
+  contact: z
+    .object({
+      email: z.string().email().optional(),
+      phone: z.string().regex(/^\+?[\d\s-]{7,20}$/).optional(),
+    })
+    .default({}),
   interests: z.array(RequiredLocalized),
   authorMatch: z.array(z.object({ last: z.string().min(1), firstInitial: z.string().length(1) })),
 });
@@ -122,6 +130,7 @@ export const EntrySchema = z.object({
   period: z.string().optional(),
   status: Localized.optional(),
   url: httpUrl.optional(),
+  links: z.array(z.object({ label: RequiredLocalized, url: httpUrl })).default([]),
 });
 export const EntryListSchema = z.array(EntrySchema);
 export type Entry = z.infer<typeof EntrySchema>;

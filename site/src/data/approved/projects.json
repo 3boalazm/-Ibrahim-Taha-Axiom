@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "com-poisson-penalized-estimation",
+    "title": { "en": "Penalized estimation for Conway–Maxwell–Poisson regression", "ar": null },
+    "summary": {
+      "en": "LASSO, adaptive LASSO and correlation-weighted elastic-net estimators for dispersed count data with multicollinear and high-dimensional predictors, published in 2026 with an openly licensed (CC BY 4.0) supplementary dataset.",
+      "ar": null
+    },
+    "period": "2026",
+    "links": [
+      { "label": { "en": "Dataset (Zenodo, CC BY 4.0)", "ar": null }, "url": "https://doi.org/10.5281/zenodo.23120962" },
+      { "label": { "en": "Data repository (GitHub)", "ar": null }, "url": "https://github.com/IbrahimTaha2018/CMP-Correlation-Weighted-Elastic-Net-Data" }
+    ]
+  },
+  {
+    "id": "statistical-analysis-egypt",
+    "title": { "en": "Statistical Analysis – Egypt", "ar": null },
+    "summary": {
+      "en": "An Arabic-language community for statistics education on Facebook and Telegram, founded to make advanced statistics accessible across the Arab world. The Telegram channel had 46,523 members on 5 November 2026.",
+      "ar": null
+    },
+    "links": [
+      { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt" },
+      { "label": { "en": "Facebook page", "ar": null }, "url": "https://www.facebook.com/share/1B3DbXjPh7/" },
+      { "label": { "en": "Facebook group", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" }
+    ]
+  },
+  {
+    "id": "statistical-guides",
+    "title": { "en": "Open statistical guides", "ar": null },
+    "summary": {
+      "en": "Self-published guides on regression and econometric methods, shared on ResearchGate: ridge regression, the ARDL bounds testing approach, sample size calculation, and a regression handbook covering more than 250 models.",
+      "ar": null
+    },
+    "period": "2025–2026",
+    "links": [{ "label": { "en": "ResearchGate profile", "ar": null }, "url": "https://www.researchgate.net/profile/Ibrahim_Taha11" }]
+  }
+]

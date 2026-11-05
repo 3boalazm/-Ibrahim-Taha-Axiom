@@ -12,7 +12,7 @@ npm run preview  # serve dist/
 
 ## Content gate (read this first)
 
-The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. As of 2026-11-05 the profile, 17 publications, 4 research areas, teaching and CV are approved. Talks, projects and books are empty and hidden from navigation. Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
+The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. As of 2026-11-05 the profile (including direct contact details), 17 publications, 4 research areas, 3 projects, 2 talks, teaching and CV are approved. Books is empty and hidden from navigation. Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
 
 ## Structure
 
