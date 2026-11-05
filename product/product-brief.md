@@ -1,6 +1,6 @@
 # Product Brief — Ibrahim Taha Axiom (draft v0.1)
 
-> Phase 1 · 2026-11-05 · **Status: draft for review.**
+> Phase 1 · 2026-11-05 · **Status: approved baseline** (decisions D-03, D-04, D-05, D-11 approved on 2026-11-05). Open items are tracked in [`../docs/decisions-pending.md`](../docs/decisions-pending.md).
 > This brief defines *what* the platform should do. It deliberately contains **no researcher data**: no biography, publications, affiliations or metrics are assumed or imported. Those will be supplied by the researcher in a later phase (decision D-14).
 
 ## 1. Vision
@@ -57,7 +57,7 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 | Content integrity | Schema-validated content. Build fails with a clear message instead of failing silently. No fabricated data. |
 | Maintainability | Small dependency surface, documented content model, automated quality gates. |
 
-## 5. MVP proposal (to confirm in D-11)
+## 5. MVP scope (approved as proposed, D-11, 2026-11-05)
 
 **In:** M1 (full), M2 (list, detail, search, cite/export), M3 (articles, teaching, talks, books), the M4 snapshot page (if data sources are approved), M5 (contact form), bilingual English/Arabic with RTL, SEO, accessibility and performance baselines.
 **Later:** M6 CMS (Phase A), M4 interactive dashboard, newsletter, comments, talk map, reading list, notebooks.
@@ -70,4 +70,4 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 - Both language versions render correctly in RTL and LTR with no layout regressions (visual tests).
 
 ## 7. Explicitly not decided in Phase 1
-Hosting, domain, visual design and brand, content, data sources, and the CMS product. (Already approved: bilingual EN default + AR, D-03; Astro as the stack direction, D-04; BibTeX as the publication source, D-05.) See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).
+Hosting, domain, visual design and brand, content, data sources, and the CMS product. (Already approved: bilingual EN default + AR, D-03; Astro as the stack direction, D-04; BibTeX as the publication source, D-05; MVP scope, D-11.) See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).

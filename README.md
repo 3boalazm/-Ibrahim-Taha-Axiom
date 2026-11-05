@@ -9,7 +9,7 @@
 1. **`references/`**: نسخ مطابقة بالبايت للمشاريع الثلاثة (al-folio، Academic Pages، Astro Scholar). هي مراجع للدراسة فقط، ولا يتم تعديلها ولا دمج أكوادها.
 2. **`research/`**: التحليل: جرد المشاريع، مصفوفة مقارنة الميزات، بنية المعلومات، تقييم تجربة المستخدم، المقارنة التقنية، ومراجعة التراخيص.
 3. **`product/`**: الـ Product Brief المبدئي والتوصية المعمارية الأولية.
-4. **`docs/decisions-pending.md`**: **القرارات التي تحتاج موافقتك** قبل الانتقال للمرحلة الثانية.
+4. **`docs/decisions-pending.md`**: **سجل القرارات**: المعتمدة (اللغات، Astro، BibTeX، نطاق أول إصدار) والمعلّقة التي نحتاجها أثناء المرحلة الثانية.
 
 أهم النتائج:
 - **al-folio** هو الأغنى أكاديميًا (المنشورات، الـ CV، المقاييس، المقررات) لكنه ثقيل (Ruby + حوالي 19 gem) ودعمه للـ RTL جزئي.
@@ -66,4 +66,5 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 
 ## Status
 - [x] Phase 1: workspace, inspection, comparison, product brief, preliminary architecture
-- [ ] Phase 2: blocked on the decisions in [`docs/decisions-pending.md`](docs/decisions-pending.md)
+- [x] Blocking decisions approved (2026-11-05): languages EN default + AR (D-03), Astro (D-04), BibTeX (D-05), MVP scope (D-11)
+- [ ] Phase 2: ready to start. Remaining open items in [`docs/decisions-pending.md`](docs/decisions-pending.md) are needed during Phase 2, not before it
