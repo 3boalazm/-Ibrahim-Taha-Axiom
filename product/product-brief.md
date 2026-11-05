@@ -25,7 +25,7 @@ Identity (name, role, affiliation, photo), biography, research interests, awards
 *References:* AS hero, AP identity card, AF about hub and CV.
 
 ### M2 — Research & publications library
-A single structured source of truth for publications (format decided in D-05). List view with search, facets (type, year, topic, language) and sort. A detail page per publication with abstract, links (PDF, DOI, code, data, slides, video), "Cite" in multiple styles, BibTeX/RIS export, related items, and scholarly metadata (`citation_*`, JSON-LD). Selected/featured works, co-author linking, author highlighting.
+A single **BibTeX file** as the source of truth for publications (D-05, approved 2026-11-05), using al-folio's custom-field vocabulary plus `langid` for entry language and direction. List view with search, facets (type, year, topic, language) and sort. A detail page per publication with abstract, links (PDF, DOI, code, data, slides, video), "Cite" in multiple styles, BibTeX/RIS export, related items, and scholarly metadata (`citation_*`, JSON-LD). Selected/featured works, co-author linking, author highlighting.
 *References:* AF publications model, AP detail pages.
 
 ### M3 — Academic knowledge hub
@@ -70,4 +70,4 @@ Phase A: structured files edited through a Git-based CMS, with preview builds. P
 - Both language versions render correctly in RTL and LTR with no layout regressions (visual tests).
 
 ## 7. Explicitly not decided in Phase 1
-Hosting, domain, visual design and brand, content, data sources, and the CMS product. (Already approved: bilingual EN default + AR, D-03; Astro as the stack direction, D-04.) See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).
+Hosting, domain, visual design and brand, content, data sources, and the CMS product. (Already approved: bilingual EN default + AR, D-03; Astro as the stack direction, D-04; BibTeX as the publication source, D-05.) See [`../docs/decisions-pending.md`](../docs/decisions-pending.md).

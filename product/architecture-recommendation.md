@@ -55,7 +55,7 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
 | CMS (later) | Git-based CMS (e.g., Keystatic / Decap / TinaCMS) | Works with file content, no DB | D-09 |
 
 ## 5. Phase 2 entry criteria (proposed)
-1. Decisions approved: D-03 languages ✅ (English default + Arabic) and D-04 stack ✅ (Astro), both 2026-11-05. Still pending: D-05 (publication source), D-11 (MVP scope).
+1. Decisions approved on 2026-11-05: D-03 languages ✅ (English default + Arabic), D-04 stack ✅ (Astro), D-05 publication source ✅ (BibTeX). Still pending: D-11 (MVP scope).
 2. Repository visibility and licence decided (D-12).
 3. Technical spikes approved: bilingual RTL skeleton, BibTeX → CSL pipeline with test fixtures (synthetic, clearly marked as test data, never shown on the site), Pagefind Arabic check.
 
