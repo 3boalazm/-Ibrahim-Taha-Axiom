@@ -69,9 +69,13 @@ const labels = {
   </div>
 
   <aside class="profile__facts">
-    <div class="profile__portrait frame">
-      <Picture picture={PICTURES.study} lang={lang} />
-    </div>
+    <figure class="profile__portrait">
+      <Picture picture={PICTURES.portrait} lang={lang} ratio="4 / 5" objectPosition="50% 20%" class="profile__shot" />
+      <figcaption class="profile__caption">
+        <span class="profile__caption-name"><LangText value={profile.name} lang={lang} /></span>
+        <span class="profile__caption-role"><LangText value={profile.role} lang={lang} /></span>
+      </figcaption>
+    </figure>
 
     {
       profile.affiliations.length > 0 && (
@@ -227,8 +231,32 @@ const labels = {
     box-shadow: var(--shadow-card);
   }
   .profile__portrait {
-    aspect-ratio: 4 / 3;
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+  }
+  .profile__portrait :global(.profile__shot) {
+    display: block;
+    inline-size: 100%;
     border-radius: var(--radius-2);
+    box-shadow: var(--shadow-card);
+  }
+  .profile__caption {
+    display: grid;
+    gap: 2px;
+    padding-block-start: var(--space-2);
+    border-block-start: var(--border-hairline);
+  }
+  .profile__caption-name {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .profile__caption-role {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
   }
   .fact {
     padding-block-start: var(--space-4);
