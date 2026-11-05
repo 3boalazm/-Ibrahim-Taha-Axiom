@@ -1,5 +1,4 @@
 ---
-import Wordmark from '../shared/Wordmark.astro';
 import LanguageSwitcher from '../navigation/LanguageSwitcher.astro';
 import ThemeToggle from '../navigation/ThemeToggle.astro';
 import { SECTION_PATHS, navKeys, pageCopy } from '../../config/site';
@@ -17,27 +16,39 @@ const items = await Promise.all(
   navKeys.map(async (key) => ({ key, href: localePath(lang, SECTION_PATHS[key]), label: (await pageCopy(key, lang)).navLabel })),
 );
 const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SECTION_PATHS] || (path.startsWith(SECTION_PATHS[key as keyof typeof SECTION_PATHS]) && key !== 'home');
+// Two-word monogram, as in the wordmark.
+const monogram = 'IT';
 ---
 
 <header class="site-header" data-site-header>
   <div class="container site-header__inner">
-    <Wordmark lang={lang} />
+    <a class="site-header__monogram" href={localePath(lang, '/')} aria-label={lang === 'ar' ? 'الصفحة الرئيسية' : 'Home'} dir="ltr">
+      <span aria-hidden="true">{monogram}</span>
+    </a>
+
     <nav id="site-nav" class="site-nav" aria-label={ui.primaryNav}>
       <ul role="list">
         {
           items.map((item) => (
             <li>
               <a href={item.href} aria-current={isCurrent(item.key) ? 'page' : undefined}>
-                {item.label}
+                <span>{item.label}</span>
               </a>
             </li>
           ))
         }
       </ul>
     </nav>
+
     <div class="site-header__tools">
       <LanguageSwitcher lang={lang} path={path} />
       <ThemeToggle lang={lang} />
+      <a class="site-header__cta" href={localePath(lang, '/contact/')}>
+        <span>{ui.ctaContact}</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true" class="icon-flip">
+          <path d="M3 8h9m-3.5-3.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
       <button class="menu-button" type="button" aria-controls="site-nav" aria-expanded="false" data-menu-button>
         <span class="menu-button__icon" aria-hidden="true"><span></span><span></span></span>
         <span class="menu-button__label" data-label-open={ui.menu} data-label-close={ui.closeMenu}>{ui.menu}</span>
@@ -64,17 +75,27 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     }
   });
   header?.querySelectorAll('#site-nav a').forEach((a) => a.addEventListener('click', () => set(false)));
-  window.matchMedia('(min-width: 56.01rem)').addEventListener('change', (m) => m.matches && set(false));
+  window.matchMedia('(min-width: 60.01rem)').addEventListener('change', (m) => m.matches && set(false));
+  // Condense the bar once the hero starts scrolling away.
+  const onScroll = () => header?.toggleAttribute('data-condensed', window.scrollY > 24);
+  onScroll();
+  addEventListener('scroll', onScroll, { passive: true });
 </script>
 
 <style>
   .site-header {
     position: sticky;
+    inset-inline: 0;
     inset-block-start: 0;
     z-index: 50;
+    background: color-mix(in srgb, var(--color-paper) 82%, transparent);
+    backdrop-filter: saturate(1.3) blur(18px);
+    border-block-end: 1px solid transparent;
+    transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+  }
+  .site-header[data-condensed] {
+    border-block-end-color: var(--color-rule);
     background: color-mix(in srgb, var(--color-paper) 92%, transparent);
-    backdrop-filter: saturate(1.2) blur(8px);
-    border-block-end: var(--border-hairline);
   }
   .site-header__inner {
     display: flex;
@@ -82,50 +103,99 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     gap: var(--space-5);
     min-block-size: var(--header-height);
   }
+  .site-header__monogram {
+    display: grid;
+    place-items: center;
+    inline-size: 2.6rem;
+    block-size: 2.6rem;
+    border-radius: 50%;
+    border: 1px solid var(--color-rule-strong);
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    line-height: 1;
+    flex: none;
+    transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out);
+  }
+  .site-header__monogram:hover {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    transform: rotate(-6deg);
+  }
+  /* pill navigation, centred */
   .site-nav {
-    margin-inline-start: auto;
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    padding: 0.3rem;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-surface-1) 70%, transparent);
   }
   .site-nav ul {
     display: flex;
-    gap: var(--space-1);
+    gap: 0;
     padding: 0;
+    margin: 0;
     list-style: none;
   }
   .site-nav a {
     display: block;
-    padding: var(--space-2) var(--space-3);
+    padding: 0.5em 0.95em;
+    border-radius: var(--radius-pill);
     font-family: var(--font-ui);
     font-size: var(--step--1);
     font-weight: 500;
     color: var(--color-ink-2);
     text-decoration: none;
-    border-radius: var(--radius-1);
-    position: relative;
+    white-space: nowrap;
+    transition: color var(--dur-1) var(--ease), background var(--dur-2) var(--ease);
   }
   .site-nav a:hover {
     color: var(--color-ink);
+    background: var(--color-surface-2);
   }
   .site-nav a[aria-current='page'] {
-    color: var(--color-ink);
-  }
-  .site-nav a[aria-current='page']::after {
-    content: '';
-    position: absolute;
-    inset-inline: var(--space-3);
-    inset-block-end: 0.15rem;
-    block-size: 2px;
-    background: var(--color-accent);
+    color: var(--color-paper);
+    background: var(--color-ink);
   }
   .site-header__tools {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    flex: none;
+  }
+  .site-header__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.62em 1.05em;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+    color: var(--color-paper);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1.2;
+    transition: background var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out);
+  }
+  .site-header__cta svg {
+    inline-size: 0.85em;
+  }
+  .site-header__cta:hover {
+    background: var(--color-accent-strong);
+    color: var(--color-paper);
+    transform: translateY(-1px);
   }
   .menu-button {
     display: none;
     align-items: center;
     gap: var(--space-2);
-    padding: 0.45em 0.8em;
+    padding: 0.6em 0.85em;
     border: var(--border-strong);
     border-radius: var(--radius-pill);
     background: transparent;
@@ -151,9 +221,28 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     transform: translateY(-2.75px) rotate(-45deg);
   }
 
-  @media (max-width: 56rem) {
+  /* Before the nav collapses, tighten the pills so eight sections still fit. */
+  @media (max-width: 74rem) {
+    .site-nav a {
+      padding: 0.5em 0.62em;
+      font-size: var(--step--2);
+    }
+    .site-header__cta span:first-child {
+      display: none;
+    }
+    .site-header__cta {
+      padding: 0.62em 0.8em;
+    }
+  }
+  @media (max-width: 60rem) {
     .site-header__tools {
       margin-inline-start: auto;
+    }
+    .site-header__cta span:first-child {
+      display: inline;
+    }
+    .site-header__cta {
+      padding: 0.62em 1.05em;
     }
     .menu-button {
       display: inline-flex;
@@ -165,8 +254,10 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       inset-block-start: 100%;
       margin: 0;
       padding: var(--space-3) var(--gutter) var(--space-5);
-      background: var(--color-paper);
+      border: 0;
+      border-radius: 0;
       border-block-end: var(--border-hairline);
+      background: var(--color-paper);
       box-shadow: var(--shadow-panel);
     }
     [data-open] .site-nav {
@@ -177,44 +268,21 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       flex-direction: column;
       gap: 0;
     }
+    .site-nav a {
+      padding: var(--space-3) 0;
+      border-radius: 0;
+      font-size: var(--step-1);
+    }
     .site-nav li + li {
       border-block-start: var(--border-hairline);
     }
-    .site-nav a {
-      padding: var(--space-3) 0;
-      font-size: var(--step-0);
-    }
-    .site-nav a[aria-current='page']::after {
-      inset-inline: auto 0;
-      inset-block: 50% auto;
-      inline-size: 6px;
-      block-size: 6px;
-      border-radius: 50%;
+    .site-nav a[aria-current='page'] {
+      background: transparent;
+      color: var(--color-accent);
     }
   }
-  @media (max-width: 30rem) {
-    .site-header__inner {
-      gap: var(--space-3);
-    }
-    .site-header__tools {
-      gap: var(--space-1);
-    }
-    .site-header__inner :global(.wordmark__name) {
-      font-size: var(--step-0);
-    }
-    .site-header__inner :global(.wordmark) {
-      gap: 0.45em;
-    }
-    .site-header__inner :global(.wordmark__axiom) {
-      letter-spacing: 0.14em;
-    }
-    .menu-button {
-      padding: 0.55em 0.7em;
-    }
-  }
-  @media (max-width: 22rem) {
-    .site-header__inner :global(.wordmark__rule),
-    .site-header__inner :global(.wordmark__axiom) {
+  @media (max-width: 44rem) {
+    .site-header__cta {
       display: none;
     }
   }
@@ -230,7 +298,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
   @keyframes drop {
     from {
       opacity: 0;
-      transform: translateY(-4px);
+      transform: translateY(-6px);
     }
   }
 </style>

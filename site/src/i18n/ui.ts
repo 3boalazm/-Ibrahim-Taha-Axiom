@@ -86,6 +86,7 @@ const en = {
   notFoundTitle: 'Page not found',
   notFoundBody: 'The page you are looking for does not exist or has moved.',
   backHome: 'Back to the home page',
+  ctaContact: 'Get in touch',
 };
 
 const ar: typeof en = {
@@ -167,6 +168,7 @@ const ar: typeof en = {
   notFoundTitle: 'الصفحة غير موجودة',
   notFoundBody: 'الصفحة التي تبحث عنها غير موجودة أو نُقلت.',
   backHome: 'العودة إلى الصفحة الرئيسية',
+  ctaContact: 'تواصل معي',
 };
 
 export const ui = { en, ar };

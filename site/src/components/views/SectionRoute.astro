@@ -10,6 +10,8 @@ import LangText from '../shared/LangText.astro';
 import ProfileSummary from '../profile/ProfileSummary.astro';
 import PublicationLibrary from '../publications/PublicationLibrary.astro';
 import EntryList from '../research/EntryList.astro';
+import Picture from '../media/Picture.astro';
+import { PICTURES } from '../../utils/imagery';
 import { SECTION_PATHS, pageCopy, sectionCount, sectionNumber, type PageKey } from '../../config/site';
 import { courses, cv, manifest, profile, projects, researchAreas, talks } from '../../utils/content';
 import { books, getPublication, publications } from '../../utils/publications';
@@ -22,19 +24,20 @@ interface Props {
   page: Exclude<PageKey, 'home'>;
 }
 const { lang, page } = Astro.props;
+const ar = lang === 'ar';
 const ui = t(lang);
 const copy = await pageCopy(page, lang);
 const count = sectionCount(page) ?? 0;
 const crumbs = [{ label: ui.home, href: localePath(lang, '/') }, { label: copy.navLabel }];
-const areaLabel = lang === 'ar' ? 'مجال بحثي' : 'Research area';
-const projectLabel = lang === 'ar' ? 'مشروع' : 'Project';
+const areaLabel = ar ? 'مجال بحثي' : 'Research area';
+const projectLabel = ar ? 'مشروع' : 'Project';
 
 // When a section's approved content exists only in English, the Arabic page shows it as
 // one coherent English (LTR) block under a single note, instead of many mixed-direction
 // fragments. Nothing is machine-translated.
 const noAr = (v?: { ar: string | null } | null) => !v || !v.ar;
 const englishOnly =
-  lang === 'ar' &&
+  ar &&
   count > 0 &&
   ((page === 'about' && noAr(profile.biography) && noAr(profile.summary) && noAr(profile.role)) ||
     (page === 'teaching' && courses.every((c) => noAr(c.title) && noAr(c.summary))) ||
@@ -48,10 +51,74 @@ const talkPapers = (id: string) =>
     .filter((p) => p !== undefined);
 const cui = t(cl);
 const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
+
+/* Header picture per section (all abstract still lifes, no people). */
+const headerPicture = {
+  about: PICTURES.study,
+  research: PICTURES.surface,
+  publications: PICTURES.distributions,
+  projects: PICTURES.lattice,
+  teaching: PICTURES.study,
+  talks: PICTURES.lattice,
+  books: PICTURES.distributions,
+  cv: PICTURES.surface,
+  contact: PICTURES.contours,
+}[page];
+
+/* Figures shown in the header, strictly from approved counts. */
+const headerStats =
+  page === 'publications'
+    ? [
+        { value: String(publications.length), label: ar ? 'منشور' : 'publications' },
+        { value: String(new Set(publications.map((p) => p.type)).size), label: ar ? 'أنواع' : 'output types' },
+      ]
+    : page === 'research'
+      ? [{ value: String(researchAreas.length), label: ar ? 'مجالات' : 'areas' }]
+      : page === 'talks'
+        ? [{ value: String(talks.length), label: ar ? 'محاضرة' : 'talks' }]
+        : [];
+
+/* Contact: typed inquiry links (a mailto with a clear subject, no backend needed). */
+const inquiries = ar
+  ? [
+      { subject: 'تعاون بحثي', label: 'تعاون بحثي', note: 'مشروع مشترك أو ورقة أو بيانات' },
+      { subject: 'استشارة إحصائية', label: 'استشارة إحصائية', note: 'تحليل بيانات أو مراجعة منهجية' },
+      { subject: 'إشراف أكاديمي', label: 'إشراف أكاديمي', note: 'رسائل ماجستير ودكتوراه' },
+      { subject: 'محاضرة أو ورشة', label: 'محاضرة / ورشة', note: 'دعوات المؤتمرات والتدريب' },
+    ]
+  : [
+      { subject: 'Research collaboration', label: 'Research collaboration', note: 'A joint paper, project or dataset' },
+      { subject: 'Statistical consulting', label: 'Statistical consulting', note: 'Data analysis or a methods review' },
+      { subject: 'Academic supervision', label: 'Supervision', note: "Master's and doctoral work" },
+      { subject: 'Lecture or workshop', label: 'Lecture / workshop', note: 'Conference and training invitations' },
+    ];
+const mailTo = (subject: string) => `mailto:${profile.contact.email}?subject=${encodeURIComponent(subject)}`;
+/* A short eyebrow per section; it must not repeat the page title. */
+const kicker = {
+  about: ar ? 'الملف' : 'Profile',
+  research: ar ? 'المجالات' : 'Research areas',
+  publications: ar ? 'المكتبة' : 'The library',
+  projects: ar ? 'الأعمال' : 'Selected work',
+  teaching: ar ? 'التدريس' : 'In the classroom',
+  talks: ar ? 'السجل' : 'The record',
+  books: ar ? 'الكتب' : 'Books',
+  cv: ar ? 'السيرة' : 'Curriculum vitae',
+  contact: ar ? 'رسالة' : 'Write to me',
+}[page];
 ---
 
 <BaseLayout lang={lang} path={SECTION_PATHS[page]} title={copy.title} description={copy.description}>
-  <PageHeader lang={lang} title={copy.title} lead={copy.lead} number={sectionNumber(page)} crumbs={crumbs} />
+  <PageHeader
+    lang={lang}
+    title={copy.title}
+    lead={copy.lead}
+    number={sectionNumber(page)}
+    crumbs={crumbs}
+    picture={headerPicture}
+    stats={headerStats}
+    kicker={kicker}
+  />
+
   <div class="container section-body">
     {englishOnly && <p class="lang-note" role="note">{ui.sectionFallback}</p>}
     {
@@ -68,32 +135,38 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
     {page === 'projects' && (count > 0 ? <EntryList items={projects} lang={lang} kind="project" badge={projectLabel} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
     {page === 'publications' && (count > 0 ? <PublicationLibrary pubs={publications} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
     {page === 'books' && (count > 0 ? <PublicationLibrary pubs={books} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+
     {
       page === 'teaching' &&
         (count > 0 ? (
-          <ol class="list" role="list" {...blockAttrs}>
-            {courses.map((c) => (
-              <li class="list__item">
-                <h2>
-                  <LangText value={c.title} lang={cl} />
-                </h2>
-                <p class="list__meta">
-                  {c.institution && <LangText value={c.institution} lang={cl} />}
-                  {c.term && <span class="ltr">{c.term}</span>}
-                  {c.level && <LangText value={c.level} lang={cl} />}
-                </p>
-                <LangText value={c.summary} lang={cl} as="p" note />
-                {c.materials.length > 0 && (
-                  <ul class="list__links" role="list">
-                    {c.materials.map((m) => (
-                      <li>
-                        <a href={m.url}>
-                          <LangText value={m.label} lang={cl} />
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          <ol class="cards" role="list" {...blockAttrs}>
+            {courses.map((c, i) => (
+              <li class="cards__item">
+                <div class="cards__side">
+                  <span class="cards__index ltr">{String(i + 1).padStart(2, '0')}</span>
+                  {c.term && <span class="cards__term ltr">{c.term}</span>}
+                </div>
+                <div class="cards__body">
+                  <h2>
+                    <LangText value={c.title} lang={cl} />
+                  </h2>
+                  <p class="cards__meta">
+                    {c.institution && <LangText value={c.institution} lang={cl} />}
+                    {c.level && <LangText value={c.level} lang={cl} />}
+                  </p>
+                  <LangText value={c.summary} lang={cl} as="p" note />
+                  {c.materials.length > 0 && (
+                    <ul class="cards__links" role="list">
+                      {c.materials.map((m) => (
+                        <li>
+                          <a class="chip" href={m.url}>
+                            <LangText value={m.label} lang={cl} />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
@@ -101,34 +174,37 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
           <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
         ))
     }
+
     {
       page === 'talks' &&
         (count > 0 ? (
-          <ol class="list" role="list">
+          <ol class="timeline" role="list">
             {talks.map((tk) => (
-              <li class="list__item">
-                <p class="list__date ltr">{tk.date}</p>
-                <h2>
-                  <LangText value={tk.title} lang={lang} />
-                </h2>
-                <p class="list__meta">
-                  <LangText value={tk.event} lang={lang} />
-                  {tk.location && <LangText value={tk.location} lang={lang} />}
-                </p>
-                <LangText value={tk.summary} lang={lang} as="p" note />
-                {talkPapers(tk.id).map((p) => (
-                  <p class="list__links">
-                    <span class="label">{ui.relatedPaper}</span>
-                    <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
-                      {p.title}
-                    </a>
+              <li class="timeline__item">
+                <div class="timeline__date ltr">{tk.date}</div>
+                <div class="timeline__body">
+                  <h2>
+                    <LangText value={tk.title} lang={lang} />
+                  </h2>
+                  <p class="cards__meta">
+                    <LangText value={tk.event} lang={lang} />
+                    {tk.location && <LangText value={tk.location} lang={lang} />}
                   </p>
-                ))}
-                {tk.slides && (
-                  <a href={tk.slides} class="button">
-                    {ui.slides}
-                  </a>
-                )}
+                  <LangText value={tk.summary} lang={lang} as="p" note />
+                  {talkPapers(tk.id).map((p) => (
+                    <p class="timeline__paper">
+                      <span class="label">{ui.relatedPaper}</span>
+                      <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
+                        {p.title}
+                      </a>
+                    </p>
+                  ))}
+                  {tk.slides && (
+                    <a href={tk.slides} class="chip">
+                      {ui.slides}
+                    </a>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
@@ -136,27 +212,23 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
           <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
         ))
     }
+
     {
       page === 'cv' &&
         (count > 0 && cv ? (
           <div class="cv" {...blockAttrs}>
-            {cv.pdf && (
-              <p>
-                <a class="button" href={cv.pdf}>
-                  {cui.cvDownload}
-                </a>
-              </p>
-            )}
             {cv.sections.map((s) => (
               <section class="cv__section">
-                <h2>
+                <h2 class="label">
                   <LangText value={s.heading} lang={cl} />
                 </h2>
                 <ul role="list">
                   {s.items.map((i) => (
                     <li>
                       {i.period && <span class="cv__period ltr">{i.period}</span>}
-                      <LangText value={i.text} lang={cl} />
+                      <span class="cv__text">
+                        <LangText value={i.text} lang={cl} />
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -167,63 +239,93 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
           <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
         ))
     }
+
     {
       page === 'contact' && (
-        <>
-          {profile.contact.email || profile.contact.phone ? (
-            <section class="contact-card" aria-labelledby="direct-contact">
-              <h2 id="direct-contact" class="label">{ui.contactDirect}</h2>
-              <dl>
-                {profile.contact.email && (
+        <div class="contact">
+          {profile.contact.email ? (
+            <>
+              <section class="contact__main panel">
+                <p class="kicker">{ar ? 'رسالة' : 'A message'}</p>
+                <h2>{ar ? 'ما نوع المحادثة التي تريدها؟' : 'What kind of conversation is this?'}</h2>
+                <p class="contact__hint">
+                  {ar
+                    ? 'اختر نوع الطلب وسيُفتح بريدك برسالة مُهيّأة إلى العنوان الصحيح.'
+                    : 'Pick the type of enquiry and your mail app opens with a subject already set.'}
+                </p>
+                <ul class="contact__options" role="list">
+                  {inquiries.map((q) => (
+                    <li>
+                      <a class="contact__option" href={mailTo(q.subject)} rel="noopener">
+                        <span class="contact__option-label">{q.label}</span>
+                        <span class="contact__option-note">{q.note}</span>
+                        <span class="contact__option-arrow" aria-hidden="true">↗</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <dl class="contact__direct">
                   <div>
                     <dt>{ui.email}</dt>
                     <dd>
-                      <a class="ltr" href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
+                      <a class="ltr" href={`mailto:${profile.contact.email}`}>
+                        {profile.contact.email}
+                      </a>
                     </dd>
                   </div>
+                  {profile.contact.phone && (
+                    <div>
+                      <dt>{ui.phone}</dt>
+                      <dd>
+                        <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>
+                          {profile.contact.phone}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+
+              <aside class="contact__aside">
+                <div class="contact__media frame">
+                  <Picture picture={PICTURES.contours} lang={lang} />
+                  <span class="frame__caption">{ar ? 'تعاونٌ يبدأ برسالة' : 'Collaboration starts with a message'}</span>
+                </div>
+                {profile.identifiers.length > 0 && (
+                  <section class="contact__block">
+                    <h2 class="label">{ui.identifiers}</h2>
+                    <ul role="list">
+                      {profile.identifiers.map((i) => (
+                        <li>
+                          <a href={i.url} rel="me noopener">
+                            {i.type}
+                          </a>
+                          <span class="ltr contact__id">{i.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 )}
-                {profile.contact.phone && (
-                  <div>
-                    <dt>{ui.phone}</dt>
-                    <dd>
-                      <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>{profile.contact.phone}</a>
-                    </dd>
-                  </div>
+                {profile.community.length > 0 && (
+                  <section class="contact__block">
+                    <h2 class="label">{ui.community}</h2>
+                    <ul role="list">
+                      {profile.community.map((c) => (
+                        <li>
+                          <a href={c.url} rel="noopener">
+                            <LangText value={c.label} lang={lang} />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 )}
-              </dl>
-            </section>
+              </aside>
+            </>
           ) : (
             <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
           )}
-          {profile.identifiers.length > 0 && (
-            <section class="contact-profiles">
-              <h2 class="label">{ui.identifiers}</h2>
-              <ul role="list">
-                {profile.identifiers.map((i) => (
-                  <li>
-                    <a href={i.url} rel="me noopener">
-                      {i.type}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {profile.community.length > 0 && (
-            <section class="contact-profiles">
-              <h2 class="label">{ui.community}</h2>
-              <ul role="list">
-                {profile.community.map((c) => (
-                  <li>
-                    <a href={c.url} rel="noopener">
-                      <LangText value={c.label} lang={lang} />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
+        </div>
       )
     }
   </div>
@@ -231,7 +333,7 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
 
 <style>
   .section-body {
-    padding-block-start: var(--space-4);
+    padding-block-start: clamp(var(--space-6), 4vw, var(--space-8));
   }
   .lang-note {
     margin-block-end: var(--space-5);
@@ -239,28 +341,61 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
     max-inline-size: var(--width-wide);
     background: var(--color-surface-1);
     border: var(--border-hairline);
-    border-inline-start: 3px solid var(--color-accent);
+    border-inline-start: 2px solid var(--color-brass);
     border-radius: var(--radius-2);
     font-family: var(--font-ui);
     font-size: var(--step--1);
     color: var(--color-ink-2);
   }
-  .list {
+
+  /* ---------------------------------------------------------- teaching */
+  .cards {
+    display: grid;
+    gap: var(--space-4);
     padding: 0;
     list-style: none;
-    max-inline-size: var(--width-wide);
   }
-  .list__item {
+  .cards__item {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: var(--space-5);
+    padding: var(--space-6);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
+  }
+  .cards__item:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+  }
+  .cards__side {
     display: grid;
     gap: var(--space-2);
-    padding-block: var(--space-5);
-    border-block-end: var(--border-hairline);
+    align-content: start;
   }
-  .list__item h2 {
+  .cards__index {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.12em;
+    color: var(--color-brass);
+  }
+  .cards__term {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .cards__body {
+    display: grid;
+    gap: var(--space-3);
+  }
+  .cards__body h2 {
     font-size: var(--step-2);
+    font-weight: 400;
+    line-height: 1.2;
   }
-  .list__meta,
-  .list__date {
+  .cards__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 0 var(--space-3);
@@ -268,66 +403,262 @@ const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
     font-size: var(--step--1);
     color: var(--color-ink-3);
   }
-  .list__links {
+  .cards__body > p {
+    max-inline-size: 62ch;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--color-ink-2);
+  }
+  .cards__links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-3);
+    gap: var(--space-2);
     padding: 0;
     list-style: none;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
   }
-  .cv__section {
-    padding-block: var(--space-5);
+
+  /* ------------------------------------------------------------ talks */
+  .timeline {
+    display: grid;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .timeline__item {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-5);
+    padding-block: var(--space-6);
+    border-block-start: var(--border-hairline);
+  }
+  .timeline__item:last-child {
     border-block-end: var(--border-hairline);
-    max-inline-size: var(--width-wide);
   }
-  .cv__section ul {
-    padding: 0;
-    list-style: none;
+  .timeline__date {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--color-accent);
+  }
+  .timeline__body {
     display: grid;
     gap: var(--space-2);
-    margin-block-start: var(--space-3);
+    max-inline-size: 62ch;
+  }
+  .timeline__body h2 {
+    font-size: var(--step-2);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .timeline__body > p {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--color-ink-2);
+  }
+  .timeline__paper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+
+  /* --------------------------------------------------------------- cv */
+  .cv {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-7);
+  }
+  .cv__section {
+    padding-block-start: var(--space-4);
+    border-block-start: 2px solid var(--color-ink);
+  }
+  .cv__section ul {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    margin-block-start: var(--space-4);
+    list-style: none;
+  }
+  .cv__section li {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
   }
   .cv__period {
-    display: inline-block;
-    min-inline-size: 7rem;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
+    font-size: var(--step--2);
     color: var(--color-ink-3);
   }
-  .contact-card {
-    max-inline-size: var(--width-wide);
-    padding: var(--space-6);
-    background: var(--color-surface-1);
-    border: var(--border-hairline);
-    border-inline-start: 3px solid var(--color-accent);
-    border-radius: var(--radius-2);
+  .cv__text {
+    color: var(--color-ink-2);
   }
-  .contact-card dl {
+
+  /* ----------------------------------------------------------- contact */
+  .contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: clamp(var(--space-5), 4vw, var(--space-7));
+    align-items: start;
+  }
+  .contact__main {
     display: grid;
     gap: var(--space-4);
-    margin-block-start: var(--space-4);
+    padding: clamp(var(--space-5), 4vw, var(--space-7));
   }
-  .contact-card dt {
+  .contact__main h2 {
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+    max-inline-size: 22ch;
+  }
+  .contact__hint {
     font-family: var(--font-ui);
     font-size: var(--step--1);
+    color: var(--color-ink-2);
+  }
+  .contact__options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .contact__option {
+    position: relative;
+    display: grid;
+    gap: var(--space-1);
+    block-size: 100%;
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out);
+  }
+  .contact__option:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+    transform: translateY(-2px);
+  }
+  .contact__option-label {
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    font-weight: 500;
+  }
+  .contact__option-note {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.5;
     color: var(--color-ink-3);
   }
-  .contact-card dd {
+  .contact__option-arrow {
+    position: absolute;
+    inset-block-start: var(--space-3);
+    inset-inline-end: var(--space-3);
+    font-size: var(--step--1);
+    color: var(--color-brass);
+  }
+  .contact__direct {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    padding-block-start: var(--space-4);
+    margin-block-start: var(--space-1);
+    border-block-start: var(--border-hairline);
+  }
+  .contact__direct dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  :lang(ar) .contact__direct dt {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .contact__direct dd {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--step-1);
   }
-  .contact-profiles {
-    margin-block-start: var(--space-6);
+  .contact__aside {
+    display: grid;
+    gap: var(--space-5);
   }
-  .contact-profiles ul {
+  .contact__media {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-3);
+  }
+  .contact__block {
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-hairline);
+  }
+  .contact__block ul {
+    display: grid;
+    gap: var(--space-2);
     padding: 0;
+    margin-block-start: var(--space-3);
     list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .contact__block li {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-4);
-    margin-block-start: var(--space-2);
+    gap: var(--space-2);
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .contact__block a {
+    color: var(--color-ink);
+    text-decoration: none;
+    border-block-end: 1px solid var(--color-rule);
+  }
+  .contact__block a:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .contact__id {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 60rem) {
+    .contact,
+    .cv {
+      grid-template-columns: 1fr;
+    }
+    .cards__item {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+    .cards__side {
+      display: flex;
+      gap: var(--space-3);
+      align-items: baseline;
+    }
+  }
+  @media (max-width: 40rem) {
+    .contact__options {
+      grid-template-columns: 1fr;
+    }
+    .timeline__item {
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+    }
+    .cv__section li {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
+    }
   }
 </style>

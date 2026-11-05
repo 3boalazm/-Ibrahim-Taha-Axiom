@@ -2,9 +2,9 @@
 /** Detail page for one approved publication (scholarly meta + JSON-LD). */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../shared/PageHeader.astro';
+import { PICTURES } from '../../utils/imagery';
 import AuthorList from '../publications/AuthorList.astro';
 import CiteBlock from '../publications/CiteBlock.astro';
-import TypeBadge from '../shared/TypeBadge.astro';
 import LangText from '../shared/LangText.astro';
 import { pageCopy } from '../../config/site';
 import { manifest, projects, researchAreas } from '../../utils/content';
@@ -75,10 +75,22 @@ const meta: [string, string | null, boolean][] = [
 ---
 
 <BaseLayout lang={lang} path={path} title={pub.title} description={description} ogType="article" jsonLd={jsonLd} head={head}>
-  <PageHeader lang={lang} title={pub.title} titleLang={pub.titleLang} crumbs={crumbs}>
+  <PageHeader
+    lang={lang}
+    title={pub.title}
+    titleLang={pub.titleLang}
+    crumbs={crumbs}
+    kicker={ui.types[pub.type]}
+    picture={pub.type === 'book' || pub.type === 'book-chapter' ? PICTURES.distributions : PICTURES.surface}
+    stats={[
+      ...(pub.year ? [{ value: String(pub.year), label: ui.year }] : []),
+      ...(pub.volume ? [{ value: pub.volume, label: ui.volume }] : []),
+      ...(pub.pages ? [{ value: pub.pages, label: ui.pages }] : []),
+    ]}
+  >
     <div class="pub-head">
-      <TypeBadge kind={pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publication'} label={ui.types[pub.type]} />
       <AuthorList authors={pub.authors} lang={lang} />
+      {pub.venue && <p class="pub-head__venue">{pub.venue}</p>}
     </div>
   </PageHeader>
   <div class="container detail">
@@ -169,15 +181,33 @@ const meta: [string, string | null, boolean][] = [
 </BaseLayout>
 
 <style>
+  /* this page supplies a glass author card inside the shared header */
+  :global(.page-header__body) .pub-head {
+    margin-block-start: var(--space-2);
+  }
   .pub-head {
     display: grid;
-    gap: var(--space-3);
-    margin-block-start: var(--space-4);
+    gap: var(--space-2);
+    justify-items: start;
+    max-inline-size: 46rem;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid rgb(244 242 233 / 0.2);
+    border-radius: var(--radius-3);
+    background: rgb(12 26 20 / 0.42);
+    backdrop-filter: blur(14px);
+    color: rgb(244 242 233 / 0.94);
+  }
+  .pub-head__venue {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: rgb(244 242 233 / 0.72);
   }
   .detail {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 18rem;
-    gap: var(--space-7);
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: clamp(var(--space-5), 4vw, var(--space-7));
+    padding-block-start: clamp(var(--space-6), 4vw, var(--space-8));
+    align-items: start;
   }
   .detail__main {
     display: grid;
@@ -185,9 +215,15 @@ const meta: [string, string | null, boolean][] = [
     align-content: start;
     max-inline-size: var(--width-measure);
   }
+  .detail__main section {
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-hairline);
+  }
   .detail__abstract {
     margin-block-start: var(--space-3);
-    font-size: var(--step-0);
+    font-size: var(--step-1);
+    line-height: 1.55;
+    color: var(--color-ink);
   }
   .keywords {
     display: flex;
@@ -200,9 +236,10 @@ const meta: [string, string | null, boolean][] = [
     font-size: var(--step--1);
   }
   .keywords li {
-    padding: 0.15em 0.7em;
+    padding: 0.25em 0.75em;
     border: var(--border-hairline);
     border-radius: var(--radius-pill);
+    color: var(--color-ink-2);
   }
   .detail__aside {
     align-self: start;
@@ -211,7 +248,8 @@ const meta: [string, string | null, boolean][] = [
     padding: var(--space-5);
     background: var(--color-surface-1);
     border: var(--border-hairline);
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-card);
     font-family: var(--font-ui);
     font-size: var(--step--1);
   }
@@ -228,6 +266,7 @@ const meta: [string, string | null, boolean][] = [
   }
   :lang(ar) dt {
     text-transform: none;
+    letter-spacing: 0;
   }
   dd {
     margin: 0;
@@ -248,15 +287,19 @@ const meta: [string, string | null, boolean][] = [
   .detail__back {
     font-family: var(--font-ui);
     font-size: var(--step--1);
+    text-decoration: none;
   }
   .detail__back span {
     display: inline-block;
   }
   .related {
-    padding-inline-start: 1.1em;
-    margin-block-start: var(--space-2);
+    display: grid;
+    gap: var(--space-2);
+    padding: 0;
+    margin-block-start: var(--space-3);
+    list-style: none;
   }
-  @media (max-width: 56rem) {
+  @media (max-width: 60rem) {
     .detail {
       grid-template-columns: 1fr;
     }

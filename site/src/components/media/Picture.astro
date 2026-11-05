@@ -1,0 +1,28 @@
+---
+/** Responsive editorial image with a fixed aspect ratio and a bilingual alt. */
+import type { Lang } from '../../utils/schema';
+import type { Picture as Pic } from '../../utils/imagery';
+
+interface Props {
+  picture: Pic;
+  lang: Lang;
+  class?: string;
+  ratio?: string;
+  eager?: boolean;
+  sizes?: string;
+}
+const { picture, lang, class: cls, ratio, eager = false, sizes = '(max-width: 56rem) 100vw, 50vw' } = Astro.props;
+---
+
+<img
+  class={cls}
+  src={picture.src}
+  width={picture.width}
+  height={picture.height}
+  alt={picture.alt[lang]}
+  loading={eager ? 'eager' : 'lazy'}
+  decoding="async"
+  fetchpriority={eager ? 'high' : 'auto'}
+  style={ratio ? `aspect-ratio:${ratio};object-fit:cover;` : undefined}
+  sizes={sizes}
+/>

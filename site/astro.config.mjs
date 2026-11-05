@@ -17,6 +17,12 @@ export default defineConfig({
     locales: ['en', 'ar'],
     routing: { prefixDefaultLocale: false },
   },
+  // `npm run dev` must accept the sandbox preview host, which is proxied
+  // through a different origin than localhost. Development only: Vercel builds
+  // static output and never runs this server.
+  vite: {
+    server: { host: true, allowedHosts: true },
+  },
   integrations: [
     sitemap({
       i18n: { defaultLocale: 'en', locales: { en: 'en', ar: 'ar' } },

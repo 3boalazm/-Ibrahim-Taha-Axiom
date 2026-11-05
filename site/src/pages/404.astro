@@ -21,32 +21,67 @@ import { ui } from '../i18n/ui';
 
 <style>
   .not-found {
+    position: relative;
+    isolation: isolate;
     display: grid;
-    grid-template-columns: auto 1fr 1fr;
-    gap: var(--space-7);
-    padding-block: var(--space-9);
-    align-items: start;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    gap: clamp(var(--space-6), 6vw, var(--space-9));
+    align-items: center;
+    padding-block: clamp(var(--space-8), 8vw, var(--space-10));
+  }
+  .not-found::before {
+    content: '';
+    position: absolute;
+    inset-block: 12% 12%;
+    inset-inline-end: 0;
+    z-index: -1;
+    inline-size: 55%;
+    border-radius: var(--radius-4);
+    background: var(--color-surface-2);
   }
   .not-found__code {
-    font-family: var(--font-serif);
-    font-size: var(--step-5);
-    line-height: 1;
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 3rem + 14vw, 14rem);
+    font-weight: 300;
+    line-height: 0.82;
+    letter-spacing: -0.06em;
     color: var(--color-accent);
   }
   .not-found__copy {
     display: grid;
     gap: var(--space-3);
+    max-inline-size: 34rem;
+  }
+  .not-found__copy h1,
+  .not-found__copy h2 {
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .not-found__copy p {
+    color: var(--color-ink-2);
+  }
+  .not-found__copy + .not-found__copy {
+    padding-block-start: var(--space-5);
+    border-block-start: var(--border-hairline);
   }
   .not-found__copy[lang='ar'] {
     font-family: var(--font-ar-sans);
-    line-height: 1.9;
+    line-height: 1.85;
   }
   .not-found__copy[lang='ar'] h2 {
-    font-family: var(--font-ar-serif);
+    font-family: var(--font-ar-display);
+  }
+  .not-found__copy a {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
   }
   @media (max-width: 48rem) {
     .not-found {
       grid-template-columns: 1fr;
+    }
+    .not-found::before {
+      display: none;
     }
   }
 </style>

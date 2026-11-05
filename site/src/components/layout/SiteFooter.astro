@@ -1,7 +1,8 @@
 ---
 import Wordmark from '../shared/Wordmark.astro';
 import { SECTION_PATHS, SITE_NAME, navKeys, pageCopy } from '../../config/site';
-import { manifest } from '../../utils/content';
+import { manifest, profile, researchAreas } from '../../utils/content';
+import { publications, selectedPublications } from '../../utils/publications';
 import { localePath, otherLang } from '../../utils/paths';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -15,21 +16,88 @@ const ui = t(lang);
 const items = await Promise.all(navKeys.map(async (key) => ({ href: localePath(lang, SECTION_PATHS[key]), label: (await pageCopy(key, lang)).navLabel })));
 const year = new Date().getFullYear();
 const target = otherLang(lang);
+// One link per platform: the researcher has two Scopus ids, which would read as a duplicate.
+const ids = profile.identifiers
+  .filter((i) => ['ORCID', 'Google Scholar', 'Scopus', 'ResearchGate', 'LinkedIn', 'GitHub', 'OpenAlex'].includes(i.type))
+  .filter((i, _n, all) => all.findIndex((x) => x.type === i.type) === _n)
+  .map((i) => ({ ...i, type: i.type === 'Scopus' ? 'Scopus (2 ids)' : i.type }));
+const headline =
+  lang === 'ar'
+    ? 'بحثٌ في الإحصاء التطبيقي والقياس الاقتصادي، يصنع أدواتٍ تُقاس.'
+    : 'Applied statistics and econometrics, made usable.';
 ---
 
 <footer class="site-footer" data-pagefind-ignore>
+  <div class="container site-footer__top">
+    <p class="site-footer__headline">
+      {headline}
+    </p>
+    <div class="site-footer__actions">
+      <a class="button button--solid button--lg" href={localePath(lang, '/contact/')}>
+        {lang === 'ar' ? 'ابدأ محادثة' : 'Start a conversation'}
+        <span class="button__arrow" aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </div>
+
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
-      <Wordmark lang={lang} />
+      <Wordmark lang={lang} size="lg" />
       <p>{ui.footerNote}</p>
+      {
+        (profile.contact.email || profile.contact.phone) && (
+          <ul class="site-footer__contact" role="list">
+            {profile.contact.email && (
+              <li>
+                <a class="ltr" href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
+              </li>
+            )}
+            {profile.contact.phone && (
+              <li>
+                <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>{profile.contact.phone}</a>
+              </li>
+            )}
+          </ul>
+        )
+      }
     </div>
+
     <nav aria-label={ui.footerNav}>
+      <h2 class="label">{ui.footerNav}</h2>
       <ul role="list">
         {items.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
       </ul>
     </nav>
+
+    {
+      researchAreas.length > 0 && (
+        <div>
+          <h2 class="label">{ui.interests}</h2>
+          <ul role="list">
+            {profile.interests.slice(0, 6).map((i) => (
+              <li>{i.en ?? i.ar}</li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
     <div class="site-footer__meta">
-      <a href={localePath(target, path)} hreflang={target} lang={target}>{t(target).languageName}</a>
+      <h2 class="label">{ui.identifiers}</h2>
+      <ul role="list">
+        {
+          ids.map((i) => (
+            <li>
+              <a href={i.url} rel="me noopener">
+                {i.type}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="site-footer__lang">
+        <a href={localePath(target, path)} hreflang={target} lang={target}>{t(target).languageName}</a>
+      </p>
       {
         manifest.researcherApproval.status !== 'approved' && (
           <p class="site-footer__status">
@@ -37,59 +105,125 @@ const target = otherLang(lang);
           </p>
         )
       }
-      <p class="site-footer__copy">
-        <bdi dir="ltr">© {year} {SITE_NAME}</bdi>. {ui.rights}
-      </p>
     </div>
+  </div>
+
+  <div class="container site-footer__bottom">
+    <p class="site-footer__copy">
+      <bdi dir="ltr">© {year} {SITE_NAME}</bdi>. {ui.rights}
+    </p>
+    <p class="site-footer__counts ltr">
+      {publications.length} {lang === 'ar' ? 'منشورًا' : 'publications'} · {selectedPublications.length}{' '}
+      {lang === 'ar' ? 'مختارة' : 'selected'} · {researchAreas.length} {lang === 'ar' ? 'مجالات بحثية' : 'research areas'}
+    </p>
   </div>
 </footer>
 
 <style>
   .site-footer {
     margin-block-start: var(--space-9);
-    border-block-start: var(--border-hairline);
-    background: var(--color-surface-1);
+    background: var(--color-invert-bg);
+    color: var(--color-invert-fg);
     font-family: var(--font-ui);
     font-size: var(--step--1);
-    color: var(--color-ink-2);
+  }
+  .site-footer__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding-block: clamp(var(--space-7), 6vw, var(--space-9)) var(--space-7);
+    border-block-end: 1px solid color-mix(in srgb, var(--color-paper) 16%, transparent);
+  }
+  .site-footer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .site-footer__copy,
+  .site-footer__counts {
+    margin: 0;
+  }
+  .site-footer__headline {
+    max-inline-size: 22ch;
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: var(--tracking-display);
+    color: inherit;
+    text-wrap: balance;
+  }
+  :lang(ar) .site-footer__headline {
+    font-family: var(--font-ar-display);
+    line-height: 1.45;
   }
   .site-footer__grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-columns: 1.7fr 1fr 1fr 1fr;
     gap: var(--space-6);
-    padding-block: var(--space-7) var(--space-6);
+    padding-block: var(--space-7);
   }
-  .site-footer__brand p {
-    margin-block-start: var(--space-3);
-    max-inline-size: 28ch;
+  .site-footer__grid a {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.82;
   }
-  ul {
+  .site-footer__grid a:hover {
+    opacity: 1;
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .site-footer__grid .label {
+    color: color-mix(in srgb, var(--color-paper) 62%, transparent);
+    margin-block-end: var(--space-3);
+  }
+  .site-footer__grid ul {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2) var(--space-4);
+    gap: var(--space-2);
     padding: 0;
     list-style: none;
   }
-  a {
-    color: var(--color-ink-2);
-    text-decoration: none;
+  .site-footer__brand p {
+    margin-block-start: var(--space-4);
+    max-inline-size: 30ch;
+    opacity: 0.72;
   }
-  a:hover {
-    color: var(--color-ink);
-    text-decoration: underline;
+  .site-footer__contact {
+    margin-block-start: var(--space-4);
   }
   .site-footer__meta {
     display: grid;
-    gap: var(--space-2);
     align-content: start;
+    gap: var(--space-2);
+  }
+  .site-footer__lang {
+    margin-block-start: var(--space-3);
+    font-weight: 500;
   }
   .site-footer__status .label {
+    color: inherit;
+    opacity: 0.8;
     margin-inline-end: var(--space-2);
   }
-  .site-footer__copy {
-    color: var(--color-ink-3);
+  .site-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+    justify-content: space-between;
+    padding-block: var(--space-4) var(--space-5);
+    border-block-start: 1px solid color-mix(in srgb, var(--color-paper) 16%, transparent);
+    font-size: var(--step--2);
+    opacity: 0.72;
   }
-  @media (max-width: 48rem) {
+  @media (max-width: 60rem) {
+    .site-footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 40rem) {
     .site-footer__grid {
       grid-template-columns: 1fr;
     }
