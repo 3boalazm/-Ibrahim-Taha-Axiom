@@ -41,8 +41,11 @@ ibrahim-taha-axiom/
 ├── product/
 │   ├── product-brief.md               vision, audiences, modules M1–M6, MVP proposal
 │   └── architecture-recommendation.md architecture direction (Astro approved; libraries pending spikes)
-└── docs/
-    └── decisions-pending.md           decisions that need approval (Arabic)
+├── site/                              ← future Astro app (Vercel Root Directory); config only for now
+├── docs/
+│   ├── decisions-pending.md           decision log, approved + open (Arabic)
+│   └── deployment.md                  Vercel setup + environment variables
+└── .env.example                       environment template (real values never committed)
 ```
 
 ## Suggested reading order

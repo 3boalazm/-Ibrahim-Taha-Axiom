@@ -27,7 +27,7 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
 └───────────────┬───────────────────────────────────────────────────────┘
                 │ static output (+ minimal server endpoints when needed)
 ┌───────────────▼────────────── Delivery ───────────────────────────────┐
-│ Static host / CDN (D-07) · contact endpoint (D-08) · cookieless       │
+│ Vercel (D-07): CDN + Functions · contact endpoint (D-08) · cookieless │
 │ analytics (D-10)                                                       │
 └───────────────────────────────────────────────────────────────────────┘
 
@@ -50,7 +50,8 @@ Build a **new, static-first site on Astro (direction A)**, written from scratch.
 | Math | KaTeX at build time | Fast, no client JS | — |
 | Images | Built-in image pipeline (sharp) | Responsive and modern formats | — |
 | Metrics | CI cron → JSON snapshots → build-time charts | Reproducible, no runtime API keys in the browser | API coverage for the researcher's field |
-| Contact | Serverless endpoint or form service + spam protection | No raw email exposure | D-08 |
+| Hosting | Vercel with `@astrojs/vercel` (static pages + Functions), Root Directory `site/`, PR preview deployments | Approved (D-07); see [`../docs/deployment.md`](../docs/deployment.md) | Domain (D-07a), project (D-07b) |
+| Contact | Vercel Function or form service + spam protection | No raw email exposure | D-08 |
 | Quality gates | Type check, schema validation, link check, axe, Lighthouse CI, Playwright visual tests (LTR and RTL) | al-folio-grade CI | — |
 | CMS (later) | Git-based CMS (e.g., Keystatic / Decap / TinaCMS) | Works with file content, no DB | D-09 |
 
