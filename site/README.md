@@ -5,7 +5,7 @@
 - Astro 7.3.8 (static output), Node 26.x (`engines`).
 - `astro.config.mjs`: English default, Arabic under `/ar/` (D-03; URL scheme D-03a still pending), trailing slashes.
 - `public/robots.txt` blocks all crawlers and every page has `noindex`. **Remove both at launch.**
-- `vercel.json`: Astro preset, `npm ci` / `npm run build`, security headers, and an ignored-build-step guard (skips the build if `package.json` is ever missing).
+- `vercel.json`: Astro preset, `npm ci` / `npm run build`, security headers, and an ignored build step that skips the build when `package.json` is missing or when a commit changes nothing under `site/`.
 
 ```bash
 npm ci

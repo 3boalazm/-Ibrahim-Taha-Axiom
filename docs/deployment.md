@@ -27,10 +27,10 @@ Only `site/` is deployed. Everything else in the repository is outside the Verce
 | Framework preset | Astro (also set in `site/vercel.json`) |
 | Install / Build command | `npm ci` / `npm run build` (from `site/vercel.json`) |
 | Node.js version | 26.x (pinned with `engines.node` in `site/package.json`) |
-| Ignored Build Step | from `site/vercel.json`: skip if `site/package.json` is missing |
+| Ignored Build Step | from `site/vercel.json`: skip if `site/package.json` is missing **or if the commit changes nothing under `site/`** (`git diff --quiet HEAD^ HEAD -- .`) |
 | Preview deployments | On for pull requests and non-main branches (replaces the gh-pages PR previews used by Astro Scholar) |
 | Deployment Protection | Vercel Authentication on previews and per-deployment URLs. The production `*.vercel.app` alias is public, so never deploy unreviewed researcher data to `main` |
-| Skip unaffected deployments | On: commits that don't change `site/` do not trigger a build |
+| Skip unaffected deployments | Project setting is on, but it has no effect in this repo layout (it targets monorepo workspaces). Skipping is done by the Ignored Build Step above |
 
 ## How the Astro app will target Vercel (build phase)
 
