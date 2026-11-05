@@ -62,6 +62,18 @@ The images are **abstract still lifes generated for this project**, all in one m
 ### Portrait
 `public/images/portrait.webp` (4:5, About), `portrait-wide.webp` (16:9, home identity band) and `og.jpg` (the 1200×630 share card) all derive from the researcher's own photograph, supplied by the project owner. Only the background was replaced — engraved brass sine wave and normal density curve on bone plaster — so the face, pose and clothing are untouched. The original stays at `public/images/portrait.jpg`; regenerate the crops with ImageMagick rather than re-generating the person, and update both alt texts in `imagery.ts` if the framing changes.
 
+### Logo and icons
+The brand mark is the researcher's own portrait cut to a disc with a thin brass ring — `public/images/avatar.webp` (160 px) and `avatar@2x.webp` (320 px). It is used in the header next to the wordmark, in the footer brand block, and exposed as the site icon:
+
+| file | use |
+| --- | --- |
+| `favicon.ico`, `favicon-16.png`, `favicon-32.png` | browser tabs; opaque bone field with a tighter face crop so the disc still reads at 16 px |
+| `apple-touch-icon.png` (180) | iOS home screen; opaque, disc inset so iOS's rounding does not clip the ring |
+| `icon-192.png`, `icon-512.png` + `site.webmanifest` | installable app / Android home screen |
+| `images/avatar.webp`, `images/avatar@2x.webp` | header and footer mark (transparent outside the disc) |
+
+Every icon is generated from `public/images/portrait.jpg` with ImageMagick — no separate artwork to keep in sync. Icons must stay **opaque** (never transparent): a transparent tab icon turns black in dark browser themes. Below 44rem the header hides the wordmark and shows the avatar alone; the link's `aria-label` always carries the full site name.
+
 ### Research metrics
 Citation, read and h-index figures are content, not decoration: they change on third-party platforms without notice. They live in `src/data/approved/research-metrics.json` (platform, URL, retrieval date, figures) and are rendered by `src/utils/metrics.ts`, which always prints the platform and the date next to the number. The manifest's `metrics.approved` flag is the gate. Never add a metric that is not in that file, and re-verify the file (or remove the block) at each content review.
 
