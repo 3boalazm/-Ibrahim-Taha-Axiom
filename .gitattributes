@@ -1,0 +1,6 @@
+# Our own docs: normalize to LF in the repository.
+*.md text eol=lf
+
+# Keep reference snapshots byte-identical to the originals (no EOL conversion).
+# Must stay below the rules above so it wins for files under references/.
+references/** -text -eol

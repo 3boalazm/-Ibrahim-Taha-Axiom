@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# Build output and dependencies (for future phases)
+node_modules/
+dist/
+.astro/
+.env
+.env.*
