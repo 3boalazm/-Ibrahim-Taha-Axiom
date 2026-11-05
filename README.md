@@ -86,5 +86,5 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 - [x] Blocking decisions approved (2026-11-05): languages EN default + AR (D-03), Astro (D-04), BibTeX (D-05), MVP scope (D-11)
 - [x] Hosting: Vercel project `ibrahim-taha-axiom` with a temporary EN/AR placeholder (see [`docs/deployment.md`](docs/deployment.md))
 - [x] Phase 2: research data collected, reconciled and analysed (reports in `research/`; data in local `data-staging/`)
-- [x] Phase 3: bilingual website live at https://ibrahim-taha-axiom.vercel.app (EN `/`, AR `/ar/`). Researcher content is gated by [`docs/public-content-policy.md`](docs/public-content-policy.md); search indexing is off until [`docs/website-launch-checklist.md`](docs/website-launch-checklist.md) is complete
+- [x] Phase 3: bilingual website live at https://ibrahim-taha-axiom.vercel.app (EN `/`, AR `/ar/`). Researcher content is gated by [`docs/public-content-policy.md`](docs/public-content-policy.md); search indexing is ON (canonical: ibrahim-taha-axiom.vercel.app, custom domain pending; see [`docs/website-launch-checklist.md`](docs/website-launch-checklist.md))
 - [ ] Researcher review: answers to [`research/data-gaps-and-questions.md`](research/data-gaps-and-questions.md), then approval of profile and publications through the public-content manifest

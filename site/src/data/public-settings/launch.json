@@ -1,6 +1,6 @@
 {
   "siteName": "Ibrahim Taha Axiom",
-  "canonicalOrigin": null,
-  "allowIndexing": false,
-  "notes": "Search indexing is OFF. To launch: set canonicalOrigin to the confirmed domain (e.g. \"https://example.org\"), then set allowIndexing to true. The build refuses allowIndexing=true without a canonicalOrigin. See docs/website-launch-checklist.md."
+  "canonicalOrigin": "https://ibrahim-taha-axiom.vercel.app",
+  "allowIndexing": true,
+  "notes": "Search indexing is ON (approved by the project owner on 2026-11-05) on the Vercel production domain. When a custom domain is connected, change canonicalOrigin to it and let Vercel redirect the vercel.app address to the new domain. To pause indexing, set allowIndexing to false. See docs/website-launch-checklist.md."
 }

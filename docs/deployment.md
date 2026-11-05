@@ -2,7 +2,7 @@
 
 > Decision D-07 (hosting): **Vercel**, approved 2026-11-05. D-07b resolved the same day: a **new** Vercel project `ibrahim-taha-axiom` connected to this repository (the earlier project for the previous site is untouched). Domain (D-07a) is pending.
 >
-> Current deployment (Phase 3): the real bilingual website (see [`../site/README.md`](../site/README.md)), with all researcher-specific sections in an "awaiting approval" state until content is approved ([`public-content-policy.md`](public-content-policy.md)). The production alias **https://ibrahim-taha-axiom.vercel.app is publicly reachable**. Search indexing is **off** (`noindex, nofollow` + `robots.txt Disallow: /`) until the launch checklist is complete ([`website-launch-checklist.md`](website-launch-checklist.md)). Per-deployment and preview URLs require a Vercel login.
+> Current deployment: the bilingual website with approved researcher content ([`public-content-policy.md`](public-content-policy.md)), live and **open to search engines** at **https://ibrahim-taha-axiom.vercel.app** (canonical origin, `index, follow`, sitemap in `robots.txt`). See [`website-launch-checklist.md`](website-launch-checklist.md) for moving to a custom domain later. Per-deployment and preview URLs require a Vercel login and are not indexed.
 
 ## Layout
 

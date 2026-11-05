@@ -45,6 +45,11 @@ for (const page of pages) {
   }
   const robots = html.match(/<meta name="robots" content="([^"]*)"/)?.[1];
   if (!indexing && robots !== 'noindex, nofollow') errors.push(`${page}: robots meta must be noindex while indexing is disabled`);
+  if (indexing && robots !== 'index, follow') errors.push(`${page}: robots meta must be "index, follow" while indexing is enabled`);
+  if (indexing && !is404) {
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? '';
+    if (!canonical.startsWith(launch.canonicalOrigin)) errors.push(`${page}: canonical ${canonical} is not on ${launch.canonicalOrigin}`);
+  }
   if ((html.match(/<h1[\s>]/g) ?? []).length !== 1) errors.push(`${page}: expected exactly one <h1>`);
   // Language switcher must point at the equivalent page in the other language.
   const own = `/${page.replace(/index\.html$/, '')}`;
@@ -75,6 +80,16 @@ for (const page of pages) {
 const robotsTxt = existsSync(join(DIST, 'robots.txt')) ? readFileSync(join(DIST, 'robots.txt'), 'utf8') : '';
 if (!robotsTxt) errors.push('robots.txt missing');
 else if (!indexing && !/Disallow: \/\s*$/m.test(robotsTxt)) errors.push('robots.txt must disallow all while indexing is disabled');
+else if (indexing) {
+  if (/^Disallow: \/\s*$/m.test(robotsTxt)) errors.push('robots.txt still disallows all while indexing is enabled');
+  if (!robotsTxt.includes(`Sitemap: ${launch.canonicalOrigin}/sitemap-index.xml`)) errors.push('robots.txt must point to the sitemap on the canonical origin');
+  const sm = existsSync(join(DIST, 'sitemap-0.xml')) ? readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8') : '';
+  const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  if (!locs.length) errors.push('sitemap-0.xml missing or empty');
+  if (locs.some((u) => !u.startsWith(launch.canonicalOrigin))) errors.push('sitemap contains URLs outside the canonical origin');
+  if (locs.some((u) => u.includes('/404'))) errors.push('sitemap contains the 404 page');
+  console.log(`Sitemap: ${locs.length} URLs`);
+}
 
 // ---------------------------------------------------------------- 4
 const forbiddenName = /(data-staging|\.env|\.bib$|\.ris$|manifest\.json$|profile\.json$|\.venv|retrieval-log|candidates)/i;
