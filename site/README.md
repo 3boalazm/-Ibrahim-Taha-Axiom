@@ -24,7 +24,7 @@ src/
 │   ├── profile/       ProfileSummary (approved profile fields only)
 │   ├── publications/  PublicationLibrary (search, type filter, year groups), PublicationItem, CiteBlock, AuthorList
 │   ├── research/      EntryList (research areas / projects + evidence-backed related publications)
-│   ├── shared/        PageHeader, EmptyState, TypeBadge, LangText (language fallback), Wordmark
+│   ├── shared/        PageHeader, EmptyState, LangText (language fallback), Wordmark
 │   └── views/         HomeView, SectionRoute (all section pages), PublicationView (detail)
 ├── content/{en,ar}/   Page copy per section (typed content collection; describes the site, never the researcher)
 ├── data/
@@ -45,7 +45,21 @@ scripts/qa.mjs         Post-build QA
 - Works with an empty dataset (current state).
 
 ## Design system
-`src/styles/tokens.css` defines colour (light "paper" and dark themes), typography (Source Serif 4 for reading and display, IBM Plex Sans for interface, IBM Plex Sans Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, widths, borders, radii and motion. Components only consume tokens. Layout uses CSS logical properties throughout, so RTL comes from `dir="rtl"` and no mirrored CSS is needed. Fonts are self-hosted via Fontsource (SIL OFL).
+`src/styles/tokens.css` is the whole system: colour (warm bone paper and deep pine-dark themes), typography (Fraunces for display, IBM Plex Sans for interface, IBM Plex Sans Arabic / Noto Kufi Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, radii, shadows and motion. Components only consume tokens, and `npm run qa` re-checks every text/background pair for WCAG contrast in both themes — change a hex and run it again.
+
+The direction is **dark-forest editorial**: a full-bleed image masthead with the title set large, a pill navigation bar, brass-indexed numerals, soft `--radius-3`/`--radius-4` surfaces and generous white space. Layout uses CSS logical properties throughout, so RTL comes from `dir="rtl"` with no mirrored CSS.
+
+## Imagery
+All photography lives in `public/images/` (WebP, plus a 1200×630 `og.jpg`) and every alt text is bilingual and kept in `src/utils/imagery.ts` — never inline in a component.
+
+The images are **abstract still lifes generated for this project**: glass regression surfaces, sculpted density curves, a metal lattice, a writing desk, embossed contours. That is a deliberate content rule, not a style preference:
+
+- no depictions of people (no portraits, faces or hands), so no image can be read as a claim about a real person or conflict with a modesty/religious constraint;
+- no religious symbols, figurative art of living beings, alcohol or political imagery;
+- no text in any asset, so nothing is misread or mistranslated;
+- no third-party stock licence to track, and no copyright or attribution burden.
+
+When real photographs are added later, they must be approved like any other researcher data (see [`../docs/public-content-policy.md`](../docs/public-content-policy.md)) and their alt text added to `imagery.ts`.
 
 ## Bilingual / RTL
 - `<html lang dir>` per page; the language switcher links to the equivalent page; hreflang `en`, `ar`, `x-default`.

@@ -58,7 +58,9 @@ for (const page of pages) {
     }
     if (href.startsWith('#')) continue;
     if (href.startsWith('mailto:')) {
-      if (!allowedEmails.includes(href.slice(7).toLowerCase())) errors.push(`${page}: unapproved e-mail link ${href}`);
+      // Compare only the address: a prefilled subject (?subject=...) is not a second address.
+      const address = href.slice(7).split('?')[0].toLowerCase();
+      if (!allowedEmails.includes(address)) errors.push(`${page}: unapproved e-mail link ${href}`);
       continue;
     }
     if (href.startsWith('tel:')) {

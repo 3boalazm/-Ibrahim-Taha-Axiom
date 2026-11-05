@@ -27,11 +27,11 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
         <fieldset class="library__types">
           <legend class="label">{ui.filterType}</legend>
           <div class="library__chips">
-            <button type="button" class="button" aria-pressed="true" data-type-filter="all">
+            <button type="button" class="chip" aria-pressed="true" data-type-filter="all">
               {ui.allTypes}
             </button>
             {types.map(({ ty, n }) => (
-              <button type="button" class="button" aria-pressed="false" data-type-filter={ty}>
+              <button type="button" class="chip" aria-pressed="false" data-type-filter={ty}>
                 {ui.types[ty]} <span class="ltr library__n">{n}</span>
               </button>
             ))}
@@ -41,7 +41,7 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
     }
     {
       hasSelected && (
-        <button type="button" class="button library__selected" aria-pressed="false" data-selected-toggle>
+        <button type="button" class="chip library__selected" aria-pressed="false" data-selected-toggle>
           {ui.selectedOnly}
         </button>
       )
@@ -137,30 +137,33 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
     align-items: end;
     gap: var(--space-4) var(--space-5);
     padding-block: var(--space-4);
-    background: var(--color-paper);
+    background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    backdrop-filter: blur(14px);
     border-block-end: var(--border-hairline);
   }
   .library__search {
     display: grid;
     gap: var(--space-2);
-    flex: 1 1 18rem;
+    flex: 1 1 20rem;
   }
   input[type='search'] {
     inline-size: 100%;
-    padding: 0.6em 0.9em;
-    border: var(--border-strong);
-    border-radius: var(--radius-2);
+    padding: 0.72em 1em;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
     background: var(--color-surface-1);
     font-family: var(--font-ui);
     font-size: var(--step-0);
+    box-shadow: var(--shadow-float);
   }
   input[type='search']:focus-visible {
     outline: 2px solid var(--color-focus);
-    outline-offset: 1px;
+    outline-offset: 2px;
   }
   .library__types {
     border: 0;
     padding: 0;
+    margin: 0;
     display: grid;
     gap: var(--space-2);
   }
@@ -170,7 +173,7 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
     gap: var(--space-2);
   }
   .library__n {
-    opacity: 0.7;
+    opacity: 0.6;
     font-variant-numeric: tabular-nums;
   }
   .library__count {
@@ -181,20 +184,21 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
   }
   .year-group {
     display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
-    gap: var(--space-5);
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: var(--space-6);
     padding-block-start: var(--space-6);
   }
   .year-group__year {
     position: sticky;
-    inset-block-start: calc(var(--header-height) + 7rem);
+    inset-block-start: calc(var(--header-height) + 8.5rem);
     align-self: start;
-    padding-block-start: var(--space-5);
-    font-family: var(--font-serif);
-    font-size: var(--step-3);
-    font-weight: 500;
-    color: var(--color-ink-3);
-    font-variant-numeric: oldstyle-nums;
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+    font-variant-numeric: lining-nums;
   }
   .library__nomatch {
     display: grid;
@@ -209,13 +213,13 @@ const resultStrings = Object.fromEntries(Array.from({ length: pubs.length + 1 },
     }
     .year-group {
       grid-template-columns: 1fr;
-      gap: 0;
+      gap: var(--space-3);
     }
     .year-group__year {
       position: static;
       font-size: var(--step-2);
-      border-block-end: var(--border-hairline);
-      padding-block: var(--space-3);
+      padding-block-end: var(--space-2);
+      border-block-end: 2px solid var(--color-ink);
     }
   }
 </style>

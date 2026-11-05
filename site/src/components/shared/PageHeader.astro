@@ -1,5 +1,12 @@
 ---
+/**
+ * Page header for interior pages: an image band with the title set in it,
+ * plus a glass summary card. The image is decorative and abstract; the title
+ * remains the page's only <h1>.
+ */
 import Breadcrumbs from '../navigation/Breadcrumbs.astro';
+import Picture from '../media/Picture.astro';
+import { PICTURES } from '../../utils/imagery';
 import type { Lang } from '../../utils/schema';
 
 interface Props {
@@ -10,62 +17,187 @@ interface Props {
   kicker?: string;
   number?: string;
   crumbs?: { label: string; href?: string; lang?: Lang }[];
+  picture?: { src: string; alt: Record<Lang, string>; width: number; height: number };
+  /** Optional figures shown inside the header card. */
+  stats?: { value: string; label: string }[];
 }
-const { lang, title, titleLang, lead, kicker, number, crumbs } = Astro.props;
+const { lang, title, titleLang, lead, kicker, number, crumbs, picture, stats = [] } = Astro.props;
 const foreignTitle = titleLang && titleLang !== lang;
+const ar = lang === 'ar';
+const pic = picture ?? PICTURES.hero;
 ---
 
-<header class="page-header container">
-  {crumbs && crumbs.length > 1 && <Breadcrumbs lang={lang} items={crumbs} />}
-  <div class="page-header__body reveal">
-    {
-      (kicker || number) && (
-        <p class="page-header__kicker">
-          {number && <span class="page-header__number ltr">§ {number}</span>}
-          {kicker && <span class="label">{kicker}</span>}
-        </p>
-      )
-    }
-    <h1 lang={foreignTitle ? titleLang! : undefined} dir={foreignTitle ? 'auto' : undefined}>{title}</h1>
-    {lead && <p class="page-header__lead">{lead}</p>}
-    <slot />
+<header class="page-header">
+  <div class="page-header__media" aria-hidden="true">
+    <Picture picture={pic} lang={lang} eager />
+    <span class="page-header__veil"></span>
+  </div>
+
+  <div class="container page-header__inner">
+    <div class="page-header__top">
+      {crumbs && crumbs.length > 1 && <Breadcrumbs lang={lang} items={crumbs} />}
+      {number && <span class="page-header__number ltr">§ {number}</span>}
+    </div>
+
+    <div class="page-header__body reveal">
+      {kicker && <p class="kicker kicker--invert">{kicker}</p>}
+      <h1 lang={foreignTitle ? titleLang! : undefined} dir={foreignTitle ? 'auto' : undefined}>{title}</h1>
+      <div class="page-header__footer">
+        {lead && <p class="page-header__lead">{lead}</p>}
+        <slot name="aside" />
+        {
+          stats.length > 0 && (
+            <ul class="page-header__stats" role="list">
+              {stats.map((s) => (
+                <li>
+                  <span class="page-header__stat-value ltr">{s.value}</span>
+                  <span class="page-header__stat-label">{s.label}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+      <slot />
+    </div>
   </div>
 </header>
 
 <style>
   .page-header {
-    padding-block: var(--space-6) var(--space-6);
-  }
-  .page-header__body {
-    margin-block-start: var(--space-6);
-    padding-block-end: var(--space-6);
-    border-block-end: var(--border-hairline);
-  }
-  .page-header__kicker {
+    position: relative;
+    isolation: isolate;
     display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    margin-block-end: var(--space-3);
+    flex-direction: column;
+    min-block-size: clamp(19rem, 46vh, 30rem);
+    padding-block: var(--space-5) clamp(var(--space-6), 4vw, var(--space-8));
+    color: #f4f2e9;
+    overflow: hidden;
+    border-end-start-radius: var(--radius-4);
+    border-end-end-radius: var(--radius-4);
+    background: #10241b;
+  }
+  .page-header__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  .page-header__media :global(img) {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: 60% 60%;
+  }
+  .page-header__veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgb(8 20 15 / 0.94) 0%, rgb(8 20 15 / 0.6) 45%, rgb(8 20 15 / 0.28) 100%),
+      linear-gradient(to right, rgb(8 20 15 / 0.6), transparent 70%);
+  }
+  .page-header__inner {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(var(--space-5), 5vw, var(--space-7));
+    inline-size: 100%;
+  }
+  .page-header__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+  .page-header__top :global(.breadcrumbs ol) {
+    color: rgb(244 242 233 / 0.7);
+  }
+  .page-header__top :global(.breadcrumbs a) {
+    color: rgb(244 242 233 / 0.82);
+  }
+  .page-header__top :global(.breadcrumbs a:hover) {
+    color: #fff;
+  }
+  .page-header__top :global(.breadcrumbs li + li::before) {
+    color: rgb(244 242 233 / 0.4);
   }
   .page-header__number {
     font-family: var(--font-mono);
-    font-size: var(--step--1);
-    color: var(--color-accent);
+    font-size: var(--step--2);
+    color: rgb(244 242 233 / 0.7);
+  }
+  .page-header__body {
+    display: grid;
+    gap: var(--space-4);
+    align-items: end;
+  }
+  .kicker--invert {
+    color: rgb(244 242 233 / 0.72);
   }
   h1 {
-    font-size: var(--step-4);
-    max-inline-size: 22ch;
+    max-inline-size: 18ch;
+    font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem);
+    font-weight: 300;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    color: #f7f5ec;
+  }
+  :lang(ar) h1 {
+    line-height: 1.2;
+    letter-spacing: 0;
   }
   h1[lang] {
-    max-inline-size: 36ch;
-    font-size: var(--step-3);
-    /* A foreign-language title keeps its own direction but aligns with the page's reading edge. */
+    max-inline-size: 34ch;
+    font-size: var(--step-4);
     text-align: match-parent;
   }
+  .page-header__footer {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+  .page-header__footer:has(> :global(.pub-head)) {
+    grid-template-columns: 1fr;
+  }
   .page-header__lead {
-    margin-block-start: var(--space-4);
     max-inline-size: 52ch;
-    font-size: var(--step-1);
-    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    line-height: 1.55;
+    color: rgb(244 242 233 / 0.86);
+  }
+  .page-header__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    padding: 0;
+    list-style: none;
+  }
+  .page-header__stats li {
+    display: grid;
+    gap: 0.15em;
+    padding-inline-start: var(--space-3);
+    border-inline-start: 1px solid rgb(244 242 233 / 0.3);
+  }
+  .page-header__stat-value {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-weight: 400;
+    line-height: 1;
+    color: #f7f5ec;
+  }
+  .page-header__stat-label {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: rgb(244 242 233 / 0.7);
+  }
+  @media (max-width: 48rem) {
+    .page-header__footer {
+      grid-template-columns: 1fr;
+    }
+    .page-header {
+      min-block-size: auto;
+    }
   }
 </style>

@@ -1,6 +1,8 @@
 ---
 /** Approved profile fields only (see utils/content.ts). */
 import LangText from '../shared/LangText.astro';
+import Picture from '../media/Picture.astro';
+import { PICTURES } from '../../utils/imagery';
 import { pick, profile } from '../../utils/content';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -10,17 +12,40 @@ interface Props {
 }
 const { lang } = Astro.props;
 const ui = t(lang);
+const ar = lang === 'ar';
 const bio = pick(profile.biography, lang);
+const summary = pick(profile.summary, lang);
+const labels = {
+  bio: ar ? 'السيرة' : 'Biography',
+  facts: ar ? 'في سطور' : 'At a glance',
+};
 ---
 
 <div class="profile">
-  <div class="profile__main prose">
-    {(profile.name.en || profile.name.ar) && <h2 class="profile__name"><LangText value={profile.name} lang={lang} /></h2>}
-    {(profile.role.en || profile.role.ar) && <LangText value={profile.role} lang={lang} as="p" />}
-    {(profile.summary.en || profile.summary.ar) && <p class="profile__summary"><LangText value={profile.summary} lang={lang} /></p>}
+  <div class="profile__main">
+    {(profile.name.en || profile.name.ar) && (
+      <p class="profile__name">
+        <LangText value={profile.name} lang={lang} />
+      </p>
+    )}
+    {(profile.role.en || profile.role.ar) && (
+      <p class="profile__role">
+        <LangText value={profile.role} lang={lang} />
+      </p>
+    )}
+
+    {
+      summary && !summary.fallback && (
+        <p class="profile__summary" lang={summary.fallback ? summary.lang : undefined}>
+          {summary.text}
+        </p>
+      )
+    }
+
     {
       bio && (
-        <div class="profile__bio" lang={bio.fallback ? bio.lang : undefined} dir={bio.fallback ? (bio.lang === 'ar' ? 'rtl' : 'ltr') : undefined}>
+        <div class="profile__bio prose" lang={bio.fallback ? bio.lang : undefined} dir={bio.fallback ? (bio.lang === 'ar' ? 'rtl' : 'ltr') : undefined}>
+          <p class="kicker">{labels.bio}</p>
           {bio.text.split(/\n\s*\n/).map((para) => (
             <p>{para}</p>
           ))}
@@ -28,65 +53,81 @@ const bio = pick(profile.biography, lang);
       )
     }
     {bio?.fallback && <p class="fallback-note">{ui.translationFallback}</p>}
+
+    {
+      profile.interests.length > 0 && (
+        <div class="profile__interests">
+          <h2 class="label">{ui.interests}</h2>
+          <ul role="list">
+            {profile.interests.map((i) => (
+              <li class="chip">{(ar ? i.ar : i.en) ?? i.en ?? i.ar}</li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
   </div>
+
   <aside class="profile__facts">
+    <div class="profile__portrait frame">
+      <Picture picture={PICTURES.study} lang={lang} />
+    </div>
+
     {
       profile.affiliations.length > 0 && (
-        <section>
+        <section class="fact">
           <h2 class="label">{ui.affiliations}</h2>
           <ul role="list">
             {profile.affiliations.map((a) => (
               <li>
-                <LangText value={a.organization} lang={lang} />
+                <span class="fact__strong">
+                  <LangText value={a.organization} lang={lang} />
+                </span>
                 {a.department && <LangText value={a.department} lang={lang} as="p" />}
                 {a.role && <LangText value={a.role} lang={lang} as="p" />}
+                {(a.from || a.to) && (
+                  <p class="fact__period ltr">
+                    {a.from ?? ''}–{a.to ?? (ar ? 'الآن' : 'present')}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
         </section>
       )
     }
+
     {
       profile.education.length > 0 && (
-        <section>
+        <section class="fact">
           <h2 class="label">{ui.education}</h2>
           <ul role="list">
             {profile.education.map((e) => (
               <li>
-                <LangText value={e.degree} lang={lang} />, <LangText value={e.institution} lang={lang} />
-                {e.year && <span class="ltr"> {e.year}</span>}
+                <span class="fact__strong">
+                  <LangText value={e.degree} lang={lang} />
+                </span>
+                <p>
+                  <LangText value={e.institution} lang={lang} />
+                  {e.year && <span class="ltr"> · {e.year}</span>}
+                </p>
               </li>
             ))}
           </ul>
         </section>
       )
     }
+
     {
       profile.identifiers.length > 0 && (
-        <section>
+        <section class="fact">
           <h2 class="label">{ui.identifiers}</h2>
-          <ul role="list">
+          <ul class="fact__ids" role="list">
             {profile.identifiers.map((i) => (
               <li>
                 <a href={i.url} rel="me noopener">
-                  {i.type}
-                </a>{' '}
-                <span class="ltr id-value">{i.value}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-    {
-      profile.community.length > 0 && (
-        <section>
-          <h2 class="label">{ui.community}</h2>
-          <ul role="list">
-            {profile.community.map((c) => (
-              <li>
-                <a href={c.url} rel="noopener">
-                  <LangText value={c.label} lang={lang} />
+                  <span>{i.type}</span>
+                  <span class="ltr id-value">{i.value}</span>
                 </a>
               </li>
             ))}
@@ -94,16 +135,22 @@ const bio = pick(profile.biography, lang);
         </section>
       )
     }
+
     {
-      profile.interests.length > 0 && (
-        <section>
-          <h2 class="label">{ui.interests}</h2>
-          <ul role="list" class="chips">
-            {profile.interests.map((i) => (
+      (profile.contact.email || profile.contact.phone) && (
+        <section class="fact">
+          <h2 class="label">{ui.contactDirect}</h2>
+          <ul role="list">
+            {profile.contact.email && (
               <li>
-                <LangText value={i} lang={lang} />
+                <a class="ltr" href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
               </li>
-            ))}
+            )}
+            {profile.contact.phone && (
+              <li>
+                <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>{profile.contact.phone}</a>
+              </li>
+            )}
           </ul>
         </section>
       )
@@ -114,51 +161,127 @@ const bio = pick(profile.biography, lang);
 <style>
   .profile {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-    gap: var(--space-7);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: clamp(var(--space-6), 5vw, var(--space-8));
+    align-items: start;
+  }
+  .profile__main {
+    display: grid;
+    gap: var(--space-4);
+    max-inline-size: 44rem;
+  }
+  .profile__name {
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+  .profile__role {
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    color: var(--color-ink-3);
   }
   .profile__summary {
-    font-size: var(--step-1);
-    color: var(--color-ink-2);
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-weight: 300;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    text-wrap: pretty;
+  }
+  :lang(ar) .profile__summary {
+    font-family: var(--font-ar-display);
+    font-weight: 400;
+    line-height: 1.7;
   }
   .profile__bio {
     display: grid;
-    gap: 1em;
+    gap: var(--space-3);
+    padding-block-start: var(--space-5);
+    border-block-start: var(--border-hairline);
   }
-  .fallback-note {
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
+  .profile__bio p {
+    color: var(--color-ink-2);
+  }
+  .profile__interests {
+    padding-block-start: var(--space-4);
+  }
+  .profile__interests ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    margin-block-start: var(--space-3);
+    list-style: none;
   }
   .profile__facts {
     display: grid;
     gap: var(--space-5);
     align-content: start;
+    padding: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+    box-shadow: var(--shadow-card);
+  }
+  .profile__portrait {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-2);
+  }
+  .fact {
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-hairline);
+  }
+  .fact:first-of-type {
+    border-block-start: 0;
+  }
+  .fact ul {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0;
+    margin-block-start: var(--space-3);
+    list-style: none;
     font-family: var(--font-ui);
     font-size: var(--step--1);
+    color: var(--color-ink-2);
   }
-  .profile__facts ul {
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: var(--space-2);
-    margin-block-start: var(--space-2);
+  .fact__strong {
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .fact__period {
+    margin-block-start: var(--space-1);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .fact__ids {
+    gap: var(--space-1) !important;
+  }
+  .fact__ids a {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-block-end: var(--border-hairline);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .fact__ids a:hover {
+    color: var(--color-accent);
   }
   .id-value {
     font-family: var(--font-mono);
     font-size: var(--step--2);
     color: var(--color-ink-3);
   }
-  .chips {
-    display: flex !important;
-    flex-wrap: wrap;
+  .fallback-note {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
   }
-  .chips li {
-    padding: 0.2em 0.7em;
-    border: var(--border-hairline);
-    border-radius: var(--radius-pill);
-  }
-  @media (max-width: 48rem) {
+  @media (max-width: 64rem) {
     .profile {
       grid-template-columns: 1fr;
     }

@@ -1,12 +1,12 @@
 ---
 /**
- * Approved research areas or projects. Related publications are shown only
- * when the manifest records an approved relationship with its evidence.
+ * Approved research areas or projects, as image cards. Related publications are
+ * shown only when the manifest records an approved relationship with evidence.
  */
 import LangText from '../shared/LangText.astro';
 import PublicationItem from '../publications/PublicationItem.astro';
-import TypeBadge from '../shared/TypeBadge.astro';
 import { manifest } from '../../utils/content';
+import { areaPicture } from '../../utils/imagery';
 import { getPublication } from '../../utils/publications';
 import { t } from '../../i18n/ui';
 import type { Entry, Lang } from '../../utils/schema';
@@ -19,92 +19,210 @@ interface Props {
 }
 const { items, lang, kind, badge } = Astro.props;
 const ui = t(lang);
+const ar = lang === 'ar';
 const relatedFor = (id: string) =>
   manifest.relationships
     .filter((r) => r.to === `${kind}:${id}` && r.from.startsWith('publication:'))
     .map((r) => getPublication(r.from.slice('publication:'.length)))
     .filter((p) => p !== undefined);
+const pictureFor = (item: Entry, i: number) =>
+  kind === 'area' ? areaPicture(item.id) : [areaPicture('bayesian-estimation'), areaPicture('study'), areaPicture('penalized-count-regression')][i % 3];
 ---
 
 <ol class="entries" role="list">
   {
-    items.map((item) => (
-      <li class="entry" id={item.id}>
-        <div class="entry__head">
-          <TypeBadge kind={kind === 'area' ? 'publication' : 'project'} label={badge} />
-          {item.period && <span class="entry__period ltr">{item.period}</span>}
-        </div>
-        <h2 class="entry__title">
-          <LangText value={item.title} lang={lang} />
-        </h2>
-        <LangText value={item.summary} lang={lang} as="p" note />
-        {item.url && (
-          <a class="entry__link url" href={item.url} rel="noopener">
-            {item.url.replace(/^https?:\/\//, '')}
-          </a>
-        )}
-        {item.links.length > 0 && (
-          <ul class="entry__links" role="list">
-            {item.links.map((l) => (
-              <li>
-                <a href={l.url} rel="noopener">
-                  <LangText value={l.label} lang={lang} />
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-        {relatedFor(item.id).length > 0 && (
-          <div class="entry__related">
-            <p class="label">{ui.related}</p>
-            {relatedFor(item.id).map((p) => (
-              <PublicationItem pub={p!} lang={lang} compact />
-            ))}
+    items.map((item, i) => {
+      const pic = pictureFor(item, i);
+      const related = relatedFor(item.id);
+      return (
+        <li class="entry" id={item.id}>
+          {pic && (
+            <div class="entry__media frame frame--zoom">
+              <img src={pic.src} alt={pic.alt[lang]} loading="lazy" decoding="async" width={pic.width} height={pic.height} />
+              <span class="entry__badge">{badge}</span>
+            </div>
+          )}
+          <div class="entry__body">
+            <div class="entry__head">
+              <span class="entry__index ltr">{String(i + 1).padStart(2, '0')}</span>
+              {item.period && <span class="entry__period ltr">{item.period}</span>}
+            </div>
+            <h2 class="entry__title">
+              <LangText value={item.title} lang={lang} />
+            </h2>
+            <LangText value={item.summary} lang={lang} as="p" note />
+            {item.url && (
+              <a class="entry__link url arrow-link" href={item.url} rel="noopener">
+                {item.url.replace(/^https?:\/\//, '')}
+              </a>
+            )}
+            {item.links.length > 0 && (
+              <ul class="entry__links" role="list">
+                {item.links.map((l) => (
+                  <li>
+                    <a class="chip" href={l.url} rel="noopener">
+                      <LangText value={l.label} lang={lang} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {related.length > 0 && (
+              <div class="entry__related">
+                <p class="label">{ui.related}</p>
+                <ul role="list">
+                  {related.map((p) => (
+                    <li>
+                      <a href={`/${lang === 'ar' ? 'ar/' : ''}publications/${p!.key}/`} dir="auto" lang={p!.titleLang ?? undefined}>
+                        {p!.title}
+                      </a>
+                      {p!.year && <span class="ltr entry__related-year">{p!.year}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
-      </li>
-    ))
+        </li>
+      );
+    })
   }
 </ol>
 
 <style>
   .entries {
+    display: grid;
+    gap: clamp(var(--space-6), 5vw, var(--space-9));
     padding: 0;
     list-style: none;
-    display: grid;
-    gap: var(--space-6);
-    max-inline-size: var(--width-wide);
   }
   .entry {
     display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    gap: clamp(var(--space-5), 4vw, var(--space-7));
+    align-items: center;
+    scroll-margin-block-start: calc(var(--header-height) + var(--space-5));
+  }
+  .entry:nth-child(even) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  }
+  .entry:nth-child(even) .entry__media {
+    order: 2;
+  }
+  .entry__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-4);
+    box-shadow: var(--shadow-card);
+  }
+  .entry__media img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  .entry__badge {
+    position: absolute;
+    inset-block-start: var(--space-4);
+    inset-inline-start: var(--space-4);
+    padding: 0.35em 0.8em;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-paper) 86%, transparent);
+    backdrop-filter: blur(12px);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+  :lang(ar) .entry__badge {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .entry__body {
+    display: grid;
     gap: var(--space-3);
-    padding-block-end: var(--space-6);
-    border-block-end: var(--border-hairline);
+    align-content: center;
   }
   .entry__head {
     display: flex;
     gap: var(--space-4);
-    align-items: center;
+    align-items: baseline;
+  }
+  .entry__index {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.12em;
+    color: var(--color-brass);
   }
   .entry__period {
     font-family: var(--font-ui);
-    font-size: var(--step--1);
+    font-size: var(--step--2);
     color: var(--color-ink-3);
   }
   .entry__title {
-    font-size: var(--step-2);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  :lang(ar) .entry__title {
+    line-height: 1.4;
+  }
+  .entry__body > p {
+    max-inline-size: 48ch;
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    line-height: 1.65;
+    color: var(--color-ink-2);
   }
   .entry__links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
+    gap: var(--space-2);
     padding: 0;
+    margin-block-start: var(--space-1);
+    list-style: none;
+  }
+  .entry__related {
+    margin-block-start: var(--space-3);
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-hairline);
+  }
+  .entry__related ul {
+    display: grid;
+    gap: var(--space-2);
+    padding: 0;
+    margin-block-start: var(--space-3);
     list-style: none;
     font-family: var(--font-ui);
     font-size: var(--step--1);
   }
-  .entry__related {
-    padding-inline-start: var(--space-4);
-    border-inline-start: var(--border-hairline);
+  .entry__related li {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+  .entry__related a {
+    color: var(--color-ink);
+    text-decoration: none;
+    border-block-end: 1px solid var(--color-rule);
+    padding-block-end: 0.1em;
+  }
+  .entry__related a:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .entry__related-year {
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 56rem) {
+    .entry,
+    .entry:nth-child(even) {
+      grid-template-columns: 1fr;
+    }
+    .entry:nth-child(even) .entry__media {
+      order: 0;
+    }
   }
 </style>

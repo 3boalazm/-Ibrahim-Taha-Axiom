@@ -1,9 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <style>
-    .bg { fill: #f6f4ee; } .ink { fill: #1d4e6e; } .rule { stroke: #1d4e6e; }
-    @media (prefers-color-scheme: dark) { .bg { fill: #111316; } .ink { fill: #93bfdc; } .rule { stroke: #93bfdc; } }
-  </style>
-  <rect class="bg" width="64" height="64" rx="12"/>
-  <text class="ink" x="32" y="42" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700">IT</text>
-  <line class="rule" x1="16" y1="50" x2="48" y2="50" stroke-width="2.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ibrahim Taha Axiom">
+  <rect width="64" height="64" rx="32" fill="#10241b"/>
+  <path d="M20 44V20h3.6v24H20zm9.8 0V20H37l7.4 15.2V20h3.6v24h-3.6L36 27.4V44h-6.2z" fill="#f7f4ee" opacity=".92"/>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#a9843f" stroke-width="1.5" opacity=".55"/>
 </svg>

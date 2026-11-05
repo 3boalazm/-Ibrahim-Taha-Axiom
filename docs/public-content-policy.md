@@ -70,6 +70,14 @@ Add `{ "from": "publication:<key>", "to": "area:<id>", "evidence": "<why this li
 - Only **confirmed** translations go into the `ar` / `en` fields. Machine translation is not allowed in approved data.
 - When a field exists in one language only, the other-language page shows it in its original language with a visible "available in … only" note.
 
-## 5. Audit trail
+## 5. Imagery
+
+- Every image on the site is a **generic, abstract still life** (glass surfaces, sculpted density curves, a lattice, a writing desk, embossed contours). They were generated for this project and are stored in `site/public/images/`.
+- Images contain **no people**, no religious or political symbols, no figurative depictions of living beings, no alcohol, and no text. This is a hard rule: it keeps the site clear of modesty and religious-content concerns, and it prevents any image from being read as a claim about the researcher or about other people.
+- **No portrait of the researcher** is published until a photograph is explicitly approved and supplied. The site never implies a stock face is the researcher.
+- Alt text is bilingual and lives in `site/src/utils/imagery.ts`; it describes the picture literally. Decorative-only backgrounds use `alt=""`.
+- Third-party stock photography is not used. If it ever is, its licence, source and attribution go into `THIRD_PARTY_NOTICES.md` and the image must pass the same content rules above.
+
+## 6. Audit trail
 
 Approvals are auditable through Git history of `site/src/data/approved/` plus the manifest's `lastReviewed`, `reviewedBy` and `researcherApproval.reference` (e.g. a dated e-mail or meeting note reference, never the e-mail address itself).

@@ -34,15 +34,15 @@ const ui = t(lang);
     gap: var(--space-5);
     align-items: start;
     max-inline-size: var(--width-wide);
-    padding: var(--space-6);
+    padding: clamp(var(--space-5), 4vw, var(--space-7));
     background: var(--color-surface-1);
     border: var(--border-hairline);
-    border-inline-start: 3px solid var(--color-accent);
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-card);
   }
   .empty-state__mark {
     inline-size: 3rem;
-    color: var(--color-accent);
+    color: var(--color-brass);
   }
   h2 {
     margin-block: var(--space-2) var(--space-3);

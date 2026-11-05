@@ -1,54 +1,73 @@
 /*
  * Design tokens: Ibrahim Taha Axiom.
- * Direction: premium academic editorial + contemporary research journal.
- * Change the system here; components only consume these variables.
+ * Direction: dark-forest editorial — a research journal art-directed like a
+ * gallery catalogue. Deep pine green, warm bone paper, brass detailing,
+ * high-contrast serif display type.
+ *
+ * Components only consume these variables. QA checks the colour pairs below
+ * for WCAG contrast, so change a hex here and re-run `npm run qa`.
  */
 :root {
-  /* ---- colour: light ("paper") ---- */
-  --color-paper: #f6f4ee;
-  --color-surface-1: #fbfaf6;
-  --color-surface-2: #eeebe2;
-  --color-ink: #17181c;
-  --color-ink-2: #4b5059;
-  --color-ink-3: #5f646d;
-  --color-rule: #d9d4c7;
-  --color-rule-strong: #b9b2a2;
-  --color-accent: #1d4e6e;
-  --color-accent-strong: #133a54;
-  --color-accent-soft: #e2ebf0;
-  --color-focus: #b5541c;
-  --color-selection: #d6e4ec;
+  /* ---- colour: light ("bone paper") ---- */
+  --color-paper: #f7f4ee;
+  --color-surface-1: #fcfaf6;
+  --color-surface-2: #ebe6da;
+  --color-ink: #101e19;
+  --color-ink-2: #414e48;
+  --color-ink-3: #5a665f;
+  --color-rule: #dbd5c7;
+  --color-rule-strong: #b4ad9c;
+  --color-accent: #1e4b3a;
+  --color-accent-strong: #0f2a21;
+  --color-accent-soft: #dce6dd;
+  --color-focus: #8e4a14;
+  --color-selection: #dce6dd;
 
-  /* content-type hues (used as small markers, never as large fills) */
-  --type-publication: #1d4e6e;
-  --type-project: #2f5d3a;
+  /* decorative only — never used behind body text */
+  --color-brass: #a9843f;
+  --color-brass-soft: #e8d9b8;
+  --color-scrim: rgb(16 30 25 / 0.55);
+  --color-glass: rgb(252 250 246 / 0.72);
+  --color-glass-line: rgb(255 255 255 / 0.55);
+  --color-glass-strong: rgb(252 250 246 / 0.9);
+  /* inverted panels (footer): deep ink in light mode, surface in dark mode */
+  --color-invert-bg: #10241b;
+  --color-invert-fg: #f7f4ee;
+
+  /* content-type hues (small markers and hairline accents) */
+  --type-publication: #1e4b3a;
+  --type-project: #3c5f2f;
   --type-teaching: #8a4f12;
   --type-talk: #6b2d55;
   --type-book: #5c4a1c;
 
   /* ---- typography ---- */
-  --font-serif: 'Source Serif 4 Variable', 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
+  --font-serif: 'Fraunces Variable', 'Fraunces', 'Iowan Old Style', Georgia, serif;
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, monospace;
   --font-ar-sans: 'IBM Plex Sans Arabic', 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
+  --font-ar-display: 'Noto Kufi Arabic Variable', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
   --font-ar-serif: 'Noto Naskh Arabic Variable', 'IBM Plex Sans Arabic', 'Traditional Arabic', serif;
 
   --font-display: var(--font-serif);
   --font-body: var(--font-serif);
   --font-ui: var(--font-sans);
-  --leading-body: 1.65;
-  --leading-tight: 1.15;
-  --tracking-label: 0.08em;
+  --leading-body: 1.62;
+  --leading-tight: 1.04;
+  --tracking-label: 0.14em;
+  --tracking-display: -0.03em;
 
-  /* fluid type scale (1.25 ratio, 17px base) */
-  --step--2: 0.75rem;
-  --step--1: 0.875rem;
+  /* fluid type scale (≈1.28 ratio, 17px base) */
+  --step--2: 0.72rem;
+  --step--1: 0.855rem;
   --step-0: 1.0625rem;
-  --step-1: clamp(1.18rem, 1.1rem + 0.35vw, 1.33rem);
-  --step-2: clamp(1.4rem, 1.27rem + 0.6vw, 1.66rem);
-  --step-3: clamp(1.7rem, 1.45rem + 1.1vw, 2.2rem);
-  --step-4: clamp(2.1rem, 1.7rem + 1.9vw, 3.1rem);
-  --step-5: clamp(2.6rem, 1.9rem + 3.2vw, 4.4rem);
+  --step-1: clamp(1.15rem, 1.08rem + 0.32vw, 1.3rem);
+  --step-2: clamp(1.38rem, 1.24rem + 0.62vw, 1.68rem);
+  --step-3: clamp(1.7rem, 1.42rem + 1.25vw, 2.28rem);
+  --step-4: clamp(2.1rem, 1.6rem + 2.2vw, 3.2rem);
+  --step-5: clamp(2.5rem, 1.75rem + 3.6vw, 4.4rem);
+  --step-6: clamp(3rem, 1.9rem + 5.4vw, 6rem);
+  --step-7: clamp(3.4rem, 1.8rem + 7.6vw, 8.2rem);
 
   /* ---- space ---- */
   --space-1: 0.25rem;
@@ -60,86 +79,119 @@
   --space-7: 3rem;
   --space-8: 4.5rem;
   --space-9: 6.5rem;
+  --space-10: 9rem;
 
   /* ---- layout ---- */
-  --width-page: 74rem;
-  --width-measure: 42rem;
-  --width-wide: 56rem;
-  --gutter: clamp(1rem, 4vw, 2.5rem);
-  --header-height: 4.25rem;
+  --width-page: 84rem;
+  --width-measure: 40rem;
+  --width-wide: 62rem;
+  --gutter: clamp(1.15rem, 4vw, 3rem);
+  --header-height: 4.75rem;
 
   /* ---- surfaces, borders, radii ---- */
   --border-hairline: 1px solid var(--color-rule);
   --border-strong: 1px solid var(--color-rule-strong);
-  --radius-1: 3px;
-  --radius-2: 6px;
+  --radius-1: 4px;
+  --radius-2: 10px;
+  --radius-3: 18px;
+  --radius-4: 28px;
+  --radius-5: 40px;
   --radius-pill: 999px;
-  --shadow-panel: 0 18px 40px -24px rgb(23 24 28 / 0.35);
+  --shadow-panel: 0 24px 60px -34px rgb(16 30 25 / 0.38);
+  --shadow-card: 0 2px 2px rgb(16 30 25 / 0.02), 0 18px 40px -30px rgb(16 30 25 / 0.35);
+  --shadow-lift: 0 30px 70px -32px rgb(16 30 25 / 0.42);
+  --shadow-float: 0 10px 30px -14px rgb(16 30 25 / 0.28);
 
   /* ---- motion ---- */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --dur-1: 120ms;
-  --dur-2: 220ms;
-  --dur-3: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-1: 140ms;
+  --dur-2: 260ms;
+  --dur-3: 520ms;
 
   color-scheme: light;
 }
 
-/* Arabic: script-appropriate families, more generous leading, no letter-spacing */
+/* Arabic: script-appropriate families, more generous leading, no tracking. */
 :root:lang(ar) {
-  --font-display: var(--font-ar-serif);
+  --font-display: var(--font-ar-display);
   --font-body: var(--font-ar-sans);
   --font-ui: var(--font-ar-sans);
-  --leading-body: 1.9;
-  --leading-tight: 1.45;
+  --leading-body: 1.85;
+  --leading-tight: 1.3;
   --tracking-label: 0;
+  --tracking-display: 0;
 }
 
-/* ---- colour: dark ---- */
+/* ---- colour: dark ("deep pine") ---- */
 :root[data-theme='dark'] {
-  --color-paper: #111316;
-  --color-surface-1: #16181c;
-  --color-surface-2: #1d2025;
-  --color-ink: #ece9e2;
-  --color-ink-2: #b6b9c0;
-  --color-ink-3: #959aa4;
-  --color-rule: #2c3036;
-  --color-rule-strong: #444a52;
-  --color-accent: #93bfdc;
-  --color-accent-strong: #b8d5e9;
-  --color-accent-soft: #1a2833;
-  --color-focus: #f0a46b;
-  --color-selection: #27445a;
-  --type-publication: #93bfdc;
-  --type-project: #8fc49b;
+  --color-paper: #0e1512;
+  --color-surface-1: #141d19;
+  --color-surface-2: #1b2620;
+  --color-ink: #efefe7;
+  --color-ink-2: #b9c2bb;
+  --color-ink-3: #9ba69f;
+  --color-rule: #2a352f;
+  --color-rule-strong: #48544d;
+  --color-accent: #9ed0b4;
+  --color-accent-strong: #cfebdb;
+  --color-accent-soft: #1d2d25;
+  --color-focus: #e9a96b;
+  --color-selection: #24463a;
+  --color-brass: #d8b578;
+  --color-brass-soft: #3a2f1d;
+  --color-scrim: rgb(6 12 9 / 0.66);
+  --color-glass: rgb(20 29 25 / 0.66);
+  --color-glass-line: rgb(255 255 255 / 0.12);
+  --color-glass-strong: rgb(14 21 18 / 0.88);
+  --color-invert-bg: #141d19;
+  --color-invert-fg: #efefe7;
+  --type-publication: #9ed0b4;
+  --type-project: #a8c79b;
   --type-teaching: #e0ae6f;
   --type-talk: #d79cc2;
   --type-book: #d2c08a;
-  --shadow-panel: 0 18px 40px -20px rgb(0 0 0 / 0.7);
+  --shadow-panel: 0 24px 60px -30px rgb(0 0 0 / 0.8);
+  --shadow-card: 0 2px 2px rgb(0 0 0 / 0.2), 0 18px 40px -28px rgb(0 0 0 / 0.8);
+  --shadow-lift: 0 30px 70px -30px rgb(0 0 0 / 0.85);
+  --shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-paper: #111316;
-    --color-surface-1: #16181c;
-    --color-surface-2: #1d2025;
-    --color-ink: #ece9e2;
-    --color-ink-2: #b6b9c0;
-    --color-ink-3: #959aa4;
-    --color-rule: #2c3036;
-    --color-rule-strong: #444a52;
-    --color-accent: #93bfdc;
-    --color-accent-strong: #b8d5e9;
-    --color-accent-soft: #1a2833;
-    --color-focus: #f0a46b;
-    --color-selection: #27445a;
-    --type-publication: #93bfdc;
-    --type-project: #8fc49b;
+    --color-paper: #0e1512;
+    --color-surface-1: #141d19;
+    --color-surface-2: #1b2620;
+    --color-ink: #efefe7;
+    --color-ink-2: #b9c2bb;
+    --color-ink-3: #9ba69f;
+    --color-rule: #2a352f;
+    --color-rule-strong: #48544d;
+    --color-accent: #9ed0b4;
+    --color-accent-strong: #cfebdb;
+    --color-accent-soft: #1d2d25;
+    --color-focus: #e9a96b;
+    --color-selection: #24463a;
+    --color-brass: #d8b578;
+    --color-brass-soft: #3a2f1d;
+    --color-scrim: rgb(6 12 9 / 0.66);
+    --color-glass: rgb(20 29 25 / 0.66);
+    --color-glass-line: rgb(255 255 255 / 0.12);
+    --color-glass-strong: rgb(14 21 18 / 0.88);
+    --color-invert-bg: #141d19;
+    --color-invert-fg: #efefe7;
+  --color-invert-bg: #141d19;
+  --color-invert-fg: #efefe7;
+    --type-publication: #9ed0b4;
+    --type-project: #a8c79b;
     --type-teaching: #e0ae6f;
     --type-talk: #d79cc2;
     --type-book: #d2c08a;
-    --shadow-panel: 0 18px 40px -20px rgb(0 0 0 / 0.7);
+    --shadow-panel: 0 24px 60px -30px rgb(0 0 0 / 0.8);
+    --shadow-card: 0 2px 2px rgb(0 0 0 / 0.2), 0 18px 40px -28px rgb(0 0 0 / 0.8);
+    --shadow-lift: 0 30px 70px -30px rgb(0 0 0 / 0.85);
+    --shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }

@@ -62,12 +62,13 @@ const ui = t(Astro.props.lang);
     block-size: 2.25rem;
     border: var(--border-hairline);
     border-radius: 50%;
-    background: transparent;
+    background: var(--color-surface-2);
     color: var(--color-ink);
     cursor: pointer;
+    transition: background var(--dur-2) var(--ease);
   }
   .theme-toggle:hover {
-    background: var(--color-surface-2);
+    background: var(--color-rule);
   }
   .icon {
     inline-size: 1.05rem;
