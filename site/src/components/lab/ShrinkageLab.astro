@@ -1,0 +1,993 @@
+---
+/**
+ * The shrinkage lab: the interactive centrepiece.
+ *
+ * A controlled experiment rather than a chart: the visitor changes one thing —
+ * how collinear the predictors are — and watches three estimators disagree.
+ * Every state is precomputed at build (see src/lab/snapshots.ts), so the browser
+ * only swaps text and draws bars; no statistics code ships to the client.
+ */
+import { LAB_PAYLOAD, SNAPSHOTS, TRUTH } from '../../lab/snapshots';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const initial = SNAPSHOTS.findIndex((s) => s.rho === 0.9) >= 0 ? SNAPSHOTS.findIndex((s) => s.rho === 0.9) : 8;
+const start = SNAPSHOTS[initial];
+
+const copy = {
+  control: ar ? 'الارتباط بين المتغيرات المستقلة' : 'Collinearity between the predictors',
+  controlNote: ar
+    ? 'حرِّك المؤشر: كل شيء آخر ثابت — نفس المشاهدات ونفس البواقي.'
+    : 'Move the dial. Nothing else changes: same rows, same errors.',
+  vif: ar ? 'أقصى VIF' : 'Max VIF',
+  lambda: ar ? 'λ المختار' : 'λ chosen',
+  spreadMl: ar ? 'اهتزاز الإمكان الأقصى' : 'ML spread (±2 SD)',
+  spreadRidge: ar ? 'اهتزاز المُقلِّص' : 'Ridge spread (±2 SD)',
+  coef: ar ? 'المعاملات مقابل القيمة الحقيقية' : 'Coefficients against the truth',
+  coefNote: ar
+    ? 'الخط المتقطّع هو القيمة الحقيقية التي وُلِّدت بها البيانات. الأعمدة هي ما قدَّره كل مُقدِّر من نفس المشاهدات.'
+    : 'The dashed line is the true value the data were generated from. The bars are what each estimator recovers from the same rows.',
+  cv: ar ? 'منحنى التحقق المتقاطع' : 'Cross-validation curve',
+  cvNote: ar
+    ? 'الانحراف على البيانات المحجوزة مقابل λ. النقطة النحاسية هي λ الذي اختاره التحقق — لا نُدخله يدويًا.'
+    : 'Held-out deviance against λ. The brass dot is the λ the cross-validation picked — it is not hand-set.',
+  spread: ar ? 'لماذا يهمّ: تشتُّت التقدير' : 'Why it matters: sampling spread',
+  spreadNote: ar
+    ? '٢٠ عيّنة مُعادة لكل مستوى ارتباط. المحور الرأسي هو الانحراف المعياري للمعاملات عبر العيّنات، أي مدى اهتزاز التقدير لو أُعيدت الدراسة.'
+    : 'Twenty redrawn samples at each level of collinearity. The vertical axis is the standard deviation of the coefficients across samples — how much the estimate would move if the study were re-run.',
+  ml: ar ? 'الإمكان الأقصى' : 'Maximum likelihood',
+  ridge: ar ? 'تلالي سلبي ثنائي الحد' : 'NB ridge',
+  cw: ar ? 'تلالي مرجَّح بالارتباط' : 'Correlation-weighted ridge',
+  truth: ar ? 'الحقيقة' : 'truth',
+  no: 'no',
+  yes: 'yes',
+  presetIndependent: ar ? 'مستقلة' : 'Independent',
+  presetCorrelated: ar ? 'مترابطة' : 'Correlated',
+  presetCollinear: ar ? 'شبه متطابقة' : 'Nearly identical',
+  numbers: ar ? 'الأرقام كما هي' : 'The numbers, as they are',
+  skip: ar ? 'انتقل إلى الأرقام' : 'Skip to the numbers',
+  formulaLabel: ar ? 'النموذج' : 'The model',
+  noteLabel: ar ? 'ملاحظة على المنهج' : 'A note on method',
+  note: ar
+    ? 'هذه تجربة مضبوطة لا محاكاة حيّة: العيّنة والبواقي مُولَّدة مرة واحدة ببذرة ثابتة (٢٠٢٦١١٠٥)، فلا يتغيّر شيء عند إعادة التحميل، وكل رقم على الصفحة محسوب من هذه البيانات. النموذج السلبي الثنائي الحد بنسبة تشتت φ = ٦٫٥، وλ يُختار بخمس طيّات، والمعاملات مُعيارية. الشيفرة كلها مفتوحة في المستودع.'
+    : 'This is a controlled experiment, not a live simulation: the rows and errors are drawn once from a fixed seed (20261105), so nothing changes on reload and every figure on the page is computed from that one dataset. Overdispersed counts (NB2, φ = 6.5), λ chosen by five-fold cross-validation, standardised predictors. The code is in the repository.',
+} as const;
+
+const regime = [
+  {
+    id: 'low',
+    title: ar ? 'عندما تكون المتغيرات مستقلة' : 'When the predictors are independent',
+    body: ar
+      ? 'لا مشكلة. التلالي يدفع المعاملات قليلًا نحو الصفر مقابل انحياز صغير، وقد يكون أدقّ من الإمكان الأقصى أو أدنى منه قليلًا — الفرق هنا في حدود ٠٫٠٥.'
+      : 'No problem to solve. Ridge trades a little bias for a little variance, and may be a touch worse than maximum likelihood here — the difference is about 0.05. Shrinkage is a price, not a gift.',
+  },
+  {
+    id: 'mid',
+    title: ar ? 'بين ٠٫٦ و٠٫٩: إشارة أولى' : 'Between 0.6 and 0.9: the first warning',
+    body: ar
+      ? 'تتضخّم معاملات تضخّم التباين وتكبر الأخطاء المعيارية، ويبدأ الإمكان الأقصى في توزيع «وزن» المتغيرات المترابطة عشوائيًا بينها.'
+      : 'Variance-inflation factors climb and standard errors widen. Maximum likelihood starts splitting the shared information between correlated predictors almost arbitrarily.',
+  },
+  {
+    id: 'high',
+    title: ar ? 'فوق ٠٫٩٥: انهيار التقدير' : 'Above 0.95: the estimate collapses',
+    body: ar
+      ? 'عند هذا المستوى تهتزّ معاملات الإمكان الأقصى من عيّنة إلى أخرى بأكثر من عشرة أضعاف اهتزاز التقدير المُقلِّص، وتنكمش تقديراتها نحو بعضها فتفقد معناها الفردي.'
+      : 'Here the unpenalised coefficients swing more than ten times as much from sample to sample as the penalised ones, and they collapse towards each other until their individual values stop meaning anything.',
+  },
+];
+---
+
+<section class="lab" aria-labelledby="lab-heading">
+  <div class="container lab__head">
+    <p class="kicker">{ar ? 'الورشة' : 'The lab'}</p>
+    <h2 id="lab-heading" class="lab__title">
+      {ar ? 'حرِّك الارتباط، وشاهد التقدير ينهار — ثم يثبت.' : 'Turn up the correlation and watch the estimate fall apart — then hold.'}
+    </h2>
+    <p class="lab__lead">
+      {ar
+        ? 'أربعة متغيرات مستقلة، ومشاهدات عدّية، ومُقدِّر واحد صحيح. المؤشر يغيّر شيئًا واحدًا فقط: مقدار الارتباط بين المتغيرات. الباقي — المشاهدات والبواقي والقيمة الحقيقية — ثابت.'
+        : 'Four predictors, count data, one correct model. The dial changes one thing only: how correlated the predictors are. The rows, the errors and the true coefficients stay fixed.'}
+    </p>
+  </div>
+
+  <div class="container lab__grid">
+    <!-- ---------------------------------------------------------- controls -->
+    <div class="lab__controls panel">
+      <label class="label" for="lab-range">{copy.control}</label>
+      <p class="lab__hint">{copy.controlNote}</p>
+
+      <div class="lab__dial" dir="ltr">
+        <input
+          id="lab-range"
+          type="range"
+          min="0"
+          max={SNAPSHOTS.length - 1}
+          step="1"
+          value={initial}
+          data-lab-range
+          aria-describedby="lab-hint"
+        />
+        <div class="lab__scale" aria-hidden="true">
+          {SNAPSHOTS.map((s) => (
+            <span class={s.rho === start.rho ? 'is-current' : ''}>{s.rho === 0 ? '0' : s.rho.toFixed(2).replace(/^0/, '')}</span>
+          ))}
+        </div>
+      </div>
+      <p class="lab__rho"><span data-lab="rho">ρ = {start.rho.toFixed(2)}</span></p>
+
+      <dl class="lab__readout">
+        <div>
+          <dt>{copy.vif}</dt>
+          <dd data-lab="vif">{start.vif.toFixed(1)}</dd>
+        </div>
+        <div>
+          <dt>{copy.lambda}</dt>
+          <dd data-lab="lambda">{start.ridge.lambda}</dd>
+        </div>
+        <div>
+          <dt>{copy.spreadMl}</dt>
+          <dd data-lab="spread-ml">{start.spread.ml.toFixed(2)}</dd>
+        </div>
+        <div>
+          <dt>{copy.spreadRidge}</dt>
+          <dd data-lab="spread-ridge">{start.spread.ridge.toFixed(2)}</dd>
+        </div>
+      </dl>
+
+      <div class="lab__presets">
+        <button type="button" data-lab-preset="0">{copy.presetIndependent}</button>
+        <button type="button" data-lab-preset={String(SNAPSHOTS.findIndex((s) => s.rho === 0.8))}>{copy.presetCorrelated}</button>
+        <button type="button" data-lab-preset={String(SNAPSHOTS.length - 1)}>{copy.presetCollinear}</button>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------------------------- figures -->
+    <div class="lab__figures">
+      <figure class="lab__figure panel">
+        <figcaption>
+          <span class="lab__figlabel">{copy.coef}</span>
+          <span class="lab__fignote">{copy.coefNote}</span>
+        </figcaption>
+        <div class="coef" dir="ltr" data-lab-coef aria-hidden="true"></div>
+        <div class="coef__legend" dir="ltr" aria-hidden="true">
+          <span class="coef__key coef__key--ml"></span>{copy.ml}
+          <span class="coef__key coef__key--ridge"></span>{copy.ridge}
+          <span class="coef__key coef__key--cw"></span>{copy.cw}
+          <span class="coef__key coef__key--truth"></span>{copy.truth}
+        </div>
+      </figure>
+
+      <div class="lab__pair">
+        <figure class="lab__figure panel">
+          <figcaption>
+            <span class="lab__figlabel">{copy.cv}</span>
+            <span class="lab__fignote">{copy.cvNote}</span>
+          </figcaption>
+          <div class="cv" dir="ltr" data-lab-cv aria-hidden="true"></div>
+        </figure>
+
+        <figure class="lab__figure panel">
+          <figcaption>
+            <span class="lab__figlabel">{copy.spread}</span>
+            <span class="lab__fignote">{copy.spreadNote}</span>
+          </figcaption>
+          <div class="spread" dir="ltr" data-lab-spread aria-hidden="true"></div>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------ readings -->
+  <div class="container lab__readings">
+    {
+      regime.map((r) => (
+        <article class="lab__reading" data-lab-regime={r.id}>
+          <h3>{r.title}</h3>
+          <p>{r.body}</p>
+        </article>
+      ))
+    }
+    <p class="lab__callout">
+      {ar
+        ? 'الخلاصة ليست «التقليص أفضل دائمًا». الخلاصة أن جودة التقدير يجب أن تُقاس بتشتُّته، لا بقربه من عيّنة واحدة.'
+        : 'The lesson is not "shrinkage always wins". It is that the quality of an estimate is measured by its spread, not by how well it fits one sample.'}
+    </p>
+  </div>
+
+  <!-- ----------------------------------------------------------- data table -->
+  <div class="container">
+    <details class="lab__data" data-lab-data>
+      <summary>{copy.numbers}</summary>
+      <div class="lab__tablewrap">
+        <table>
+          <caption>
+            {ar ? 'المعاملات عند المستوى المعروض (الخطأ المعياري بين قوسين)' : 'Coefficients at the displayed level (standard error in brackets)'}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{ar ? 'المتغير' : 'Predictor'}</th>
+              <th scope="col">{copy.truth}</th>
+              <th scope="col">{copy.ml}</th>
+              <th scope="col">{copy.ridge}</th>
+              <th scope="col">{copy.cw}</th>
+            </tr>
+          </thead>
+          <tbody data-lab-table>
+            {TRUTH.map((t, j) => (
+              <tr>
+                <th scope="row">x{j + 1}</th>
+                <td>{t.toFixed(2)}</td>
+                <td>{start.ml.beta[j].toFixed(2)} ({start.ml.se[j].toFixed(2)})</td>
+                <td>{start.ridge.beta[j].toFixed(2)} ({start.ridge.se[j].toFixed(2)})</td>
+                <td>{start.cw.beta[j].toFixed(2)} ({start.cw.se[j].toFixed(2)})</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <!-- --------------------------------------------------------------- method -->
+  <div class="container lab__method">
+    <p class="kicker">{copy.formulaLabel}</p>
+    <div class="lab__math" dir="ltr">
+      <code>y<sub>i</sub> ~ NB2(μ<sub>i</sub>, φ), &nbsp; log μ<sub>i</sub> = β<sub>0</sub> + x<sub>i</sub><sup>⊤</sup>β, &nbsp; β̂ = argmin [ −ℓ(β) + λ‖β‖² ]</code>
+      <code>x<sub>j</sub> = ρ z<sub>1</sub> + √(1−ρ²) z<sub>j</sub>, &nbsp; j = 2,3,4 &nbsp;&nbsp;·&nbsp;&nbsp; ρ ∈ [0, 0.995]</code>
+    </div>
+    <p class="lab__note">{copy.note}</p>
+  </div>
+</section>
+
+<script type="application/json" id="lab-payload" set:html={JSON.stringify(LAB_PAYLOAD)} />
+
+<script>
+  type Estimate = { beta: number[]; se: number[]; lambda: number };
+  type State = {
+    rho: number;
+    vif: number;
+    lambda: number;
+    cv: number[];
+    ml: Estimate;
+    ridge: Estimate;
+    cw: Estimate;
+    spread: { ml: number; ridge: number; cw: number };
+  };
+  type Payload = { truth: number[]; rho: number[]; states: State[] };
+
+  const root = document.querySelector<HTMLElement>('[data-lab-range]');
+  const payloadEl = document.getElementById('lab-payload');
+  if (root && payloadEl) {
+    const cfg: Payload = JSON.parse(payloadEl.textContent ?? '{}');
+    const range = root as HTMLInputElement;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const coef = document.querySelector<HTMLElement>('[data-lab-coef]');
+    const cvBox = document.querySelector<HTMLElement>('[data-lab-cv]');
+    const spreadBox = document.querySelector<HTMLElement>('[data-lab-spread]');
+    const table = document.querySelector<HTMLElement>('[data-lab-table]');
+    const readings = Array.from(document.querySelectorAll<HTMLElement>('[data-lab-regime]'));
+    const num = (name: string) => document.querySelectorAll<HTMLElement>(`[data-lab="${name}"]`);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const DOMAIN = 1.1; // coefficient axis, ±
+
+    /* ---------------------------------------------------------- coefficient bars */
+    function drawCoef(s: State) {
+      if (!coef) return;
+      const rows = cfg.truth.map((truth, j) => ({ truth, j }));
+      coef.textContent = '';
+      for (const { truth, j } of rows) {
+        const row = document.createElement('div');
+        row.className = 'coef__row';
+
+        const name = document.createElement('span');
+        name.className = 'coef__name';
+        name.textContent = `x${j + 1}`;
+        row.append(name);
+
+        const track = document.createElement('div');
+        track.className = 'coef__track';
+
+        for (const [key, cls] of [
+          ['ml', 'is-ml'],
+          ['ridge', 'is-ridge'],
+          ['cw', 'is-cw'],
+        ] as const) {
+          const value = s[key].beta[j];
+          const bar = document.createElement('span');
+          bar.className = `coef__bar ${cls}`;
+          const lo = Math.max(-DOMAIN, Math.min(0, value));
+          const hi = Math.min(DOMAIN, Math.max(0, value));
+          bar.style.left = `${((lo + DOMAIN) / (2 * DOMAIN)) * 100}%`;
+          bar.style.width = `${((hi - lo) / (2 * DOMAIN)) * 100}%`;
+          track.append(bar);
+        }
+
+        const tick = document.createElement('span');
+        tick.className = 'coef__truth';
+        tick.style.left = `${((truth + DOMAIN) / (2 * DOMAIN)) * 100}%`;
+        track.append(tick);
+
+        const axis = document.createElement('span');
+        axis.className = 'coef__zero';
+        axis.style.left = '50%';
+        track.append(axis);
+
+        row.append(track);
+
+        const val = document.createElement('span');
+        val.className = 'coef__value';
+        val.textContent = s.ml.beta[j].toFixed(2);
+        row.append(val);
+
+        coef.append(row);
+      }
+    }
+
+    /* ------------------------------------------------------------------ CV curve */
+    function drawCv(s: State) {
+      if (!cvBox) return;
+      const w = 320;
+      const h = 130;
+      const pad = 14;
+      const dev = s.cv;
+      const min = Math.min(...dev);
+      const max = Math.max(...dev);
+      const x = (i: number) => pad + (i * (w - 2 * pad)) / (dev.length - 1);
+      const y = (v: number) => h - pad - ((v - min) / Math.max(1e-6, max - min)) * (h - 2 * pad);
+
+      cvBox.textContent = '';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.setAttribute('class', 'cv__svg');
+      svg.setAttribute('role', 'presentation');
+
+      const line = document.createElementNS(svgNS, 'polyline');
+      line.setAttribute('points', dev.map((v, i) => `${x(i)},${y(v)}`).join(' '));
+      line.setAttribute('class', 'cv__line');
+      svg.append(line);
+
+      dev.forEach((v, i) => {
+        const dot = document.createElementNS(svgNS, 'circle');
+        dot.setAttribute('cx', `${x(i)}`);
+        dot.setAttribute('cy', `${y(v)}`);
+        dot.setAttribute('r', i === s.cv.indexOf(min) ? '4.5' : '2.4');
+        dot.setAttribute('class', i === s.cv.indexOf(min) ? 'cv__dot is-chosen' : 'cv__dot');
+        svg.append(dot);
+      });
+
+      const labels = document.createElementNS(svgNS, 'text');
+      labels.setAttribute('x', `${pad}`);
+      labels.setAttribute('y', `${h - 2}`);
+      labels.setAttribute('class', 'cv__axis');
+      labels.textContent = 'λ 0';
+      svg.append(labels);
+      const labels2 = document.createElementNS(svgNS, 'text');
+      labels2.setAttribute('x', `${w - pad}`);
+      labels2.setAttribute('y', `${h - 2}`);
+      labels2.setAttribute('text-anchor', 'end');
+      labels2.setAttribute('class', 'cv__axis');
+      labels2.textContent = 'λ 300';
+      svg.append(labels2);
+
+      cvBox.append(svg);
+    }
+
+    /* -------------------------------------------------------------- spread chart */
+    function drawSpread(s: State) {
+      if (!spreadBox) return;
+      const w = 320;
+      const h = 150;
+      const pad = 16;
+      const all = cfg.states.map((st) => Math.max(st.spread.ml, st.spread.ridge, st.spread.cw));
+      const maxY = Math.max(...all) * 1.08;
+      const x = (i: number) => pad + (i * (w - 2 * pad)) / (cfg.states.length - 1);
+      const y = (v: number) => h - pad - (v / maxY) * (h - 2 * pad);
+
+      spreadBox.textContent = '';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${w} ${h + 10}`);
+      svg.setAttribute('class', 'spread__svg');
+      svg.setAttribute('role', 'presentation');
+
+      const series: Array<['ml' | 'ridge' | 'cw', string]> = [
+        ['ml', 'spread__line is-ml'],
+        ['ridge', 'spread__line is-ridge'],
+        ['cw', 'spread__line is-cw'],
+      ];
+      for (const [key, cls] of series) {
+        const line = document.createElementNS(svgNS, 'polyline');
+        line.setAttribute('points', cfg.states.map((st, i) => `${x(i)},${y(st.spread[key])}`).join(' '));
+        line.setAttribute('class', cls);
+        svg.append(line);
+      }
+
+      const here = Math.max(0, cfg.states.findIndex((st) => st.rho === s.rho));
+      const marker = document.createElementNS(svgNS, 'line');
+      marker.setAttribute('x1', `${x(here)}`);
+      marker.setAttribute('x2', `${x(here)}`);
+      marker.setAttribute('y1', '6');
+      marker.setAttribute('y2', `${h - pad}`);
+      marker.setAttribute('class', 'spread__marker');
+      svg.append(marker);
+
+      const zero = document.createElementNS(svgNS, 'text');
+      zero.setAttribute('x', '2');
+      zero.setAttribute('y', `${h - pad + 12}`);
+      zero.setAttribute('class', 'spread__axis');
+      zero.textContent = 'ρ 0';
+      svg.append(zero);
+      const top = document.createElementNS(svgNS, 'text');
+      top.setAttribute('x', `${w - 2}`);
+      top.setAttribute('y', `${h - pad + 12}`);
+      top.setAttribute('text-anchor', 'end');
+      top.setAttribute('class', 'spread__axis');
+      top.textContent = 'ρ 0.995';
+      svg.append(top);
+
+      spreadBox.append(svg);
+    }
+
+    /* --------------------------------------------------------------------- table */
+    function drawTable(s: State) {
+      if (!table) return;
+      const rows = Array.from(table.querySelectorAll('tr'));
+      rows.forEach((tr, j) => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length < 4) return;
+        cells[1].textContent = `${s.ml.beta[j].toFixed(2)} (${s.ml.se[j].toFixed(2)})`;
+        cells[2].textContent = `${s.ridge.beta[j].toFixed(2)} (${s.ridge.se[j].toFixed(2)})`;
+        cells[3].textContent = `${s.cw.beta[j].toFixed(2)} (${s.cw.se[j].toFixed(2)})`;
+      });
+    }
+
+    /* -------------------------------------------------------------------- render */
+    function setText(name: string, value: string) {
+      for (const el of num(name)) el.textContent = value;
+    }
+
+    function render(index: number) {
+      const s = cfg.states[index];
+      if (!s) return;
+      const isAr = document.documentElement.lang === 'ar';
+      setText('rho', `ρ = ${s.rho === 0 ? '0' : s.rho.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}`);
+      setText('vif', s.vif.toFixed(1));
+      setText('lambda', String(s.ridge.lambda));
+      setText('spread-ml', s.spread.ml.toFixed(2));
+      setText('spread-ridge', s.spread.ridge.toFixed(2));
+      range.setAttribute('aria-valuetext', `${isAr ? 'ارتباط' : 'correlation'} ${s.rho.toFixed(3)}, VIF ${s.vif.toFixed(0)}`);
+      drawCoef(s);
+      drawCv(s);
+      drawSpread(s);
+      drawTable(s);
+
+      const level = s.rho >= 0.95 ? 'high' : s.rho >= 0.6 ? 'mid' : 'low';
+      for (const block of readings) {
+        block.toggleAttribute('data-active', block.dataset.labRegime === level);
+      }
+      document.querySelectorAll<HTMLElement>('.lab__scale span').forEach((bullet, i) => {
+        bullet.classList.toggle('is-current', i === index);
+      });
+      document.documentElement.style.setProperty('--lab-progress', `${(index / (cfg.states.length - 1)) * 100}%`);
+    }
+
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        render(Number(range.value));
+      });
+    };
+
+    range.addEventListener('input', schedule);
+    for (const preset of document.querySelectorAll<HTMLButtonElement>('[data-lab-preset]')) {
+      preset.addEventListener('click', () => {
+        range.value = preset.dataset.labPreset ?? '0';
+        if (!reduced) range.focus({ preventScroll: true });
+        render(Number(range.value));
+      });
+    }
+
+    render(Number(range.value));
+  }
+</script>
+
+<style>
+  .lab {
+    padding-block: clamp(var(--space-6), 4vw, var(--space-8));
+  }
+  .lab__head {
+    display: grid;
+    gap: var(--space-3);
+    max-inline-size: 54rem;
+    margin-block-end: var(--space-6);
+  }
+  .lab__title {
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  :lang(ar) .lab__title {
+    line-height: 1.35;
+    letter-spacing: 0;
+  }
+  .lab__lead {
+    max-inline-size: 46rem;
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+
+  .lab__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    gap: clamp(var(--space-4), 2.5vw, var(--space-6));
+    align-items: start;
+  }
+  .lab__controls {
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-4));
+    display: grid;
+    gap: var(--space-3);
+    padding: clamp(var(--space-4), 2.4vw, var(--space-5));
+    background: var(--color-surface-1);
+  }
+  .lab__hint {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.55;
+    color: var(--color-ink-3);
+  }
+
+  /* ------------------------------------------------------------------- the dial */
+  .lab__dial {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+  .lab__dial input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    inline-size: 100%;
+    block-size: 2rem;
+    background: transparent;
+    cursor: grab;
+  }
+  .lab__dial input[type='range']:active {
+    cursor: grabbing;
+  }
+  .lab__dial input[type='range']::-webkit-slider-runnable-track {
+    block-size: 3px;
+    border-radius: 3px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent) 0%,
+      var(--color-accent) var(--lab-progress, 60%),
+      var(--color-rule-strong) var(--lab-progress, 60%),
+      var(--color-rule-strong) 100%
+    );
+  }
+  .lab__dial input[type='range']::-moz-range-track {
+    block-size: 3px;
+    border-radius: 3px;
+    background: var(--color-rule-strong);
+  }
+  .lab__dial input[type='range']::-moz-range-progress {
+    block-size: 3px;
+    border-radius: 3px;
+    background: var(--color-accent);
+  }
+  .lab__dial input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin-block-start: -0.7rem;
+    border-radius: 50%;
+    border: 2px solid var(--color-surface-1);
+    background: var(--color-brass);
+    box-shadow: 0 2px 8px rgb(16 30 25 / 0.28);
+    transition: transform var(--dur-1) var(--ease-out);
+  }
+  .lab__dial input[type='range']::-moz-range-thumb {
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+    border-radius: 50%;
+    border: 2px solid var(--color-surface-1);
+    background: var(--color-brass);
+  }
+  .lab__dial input[type='range']:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 4px;
+    border-radius: var(--radius-1);
+  }
+  .lab__scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--color-ink-3);
+    opacity: 0.85;
+  }
+  .lab__scale span {
+    transition: color var(--dur-1) var(--ease);
+  }
+  .lab__scale span.is-current {
+    color: var(--color-brass);
+    font-weight: 700;
+  }
+  .lab__rho {
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .lab__readout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-3);
+    padding-block: var(--space-3);
+    border-block: var(--border-hairline);
+  }
+  .lab__readout dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  :lang(ar) .lab__readout dt {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .lab__readout dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+  .lab__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .lab__presets button {
+    padding: 0.4em 0.8em;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    cursor: pointer;
+    transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  }
+  .lab__presets button:hover,
+  .lab__presets button:focus-visible {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-paper);
+  }
+
+  /* -------------------------------------------------------------------- panels */
+  .lab__figures {
+    display: grid;
+    gap: var(--space-3);
+  }
+  .lab__pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .lab__figure {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: clamp(var(--space-3), 2vw, var(--space-4));
+    background: var(--color-surface-1);
+  }
+  .lab__figure figcaption {
+    display: grid;
+    gap: 2px;
+  }
+  .lab__figlabel {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .lab__fignote {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.5;
+    color: var(--color-ink-3);
+  }
+
+  /* ----------------------------------------------------------- coefficient bars */
+  .coef {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .coef__row {
+    display: grid;
+    grid-template-columns: 2.2rem minmax(0, 1fr) 3rem;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .coef__name,
+  .coef__value {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .coef__value {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+  .coef__track {
+    position: relative;
+    block-size: 2.15rem;
+  }
+  .coef__zero {
+    position: absolute;
+    inset-block: 0;
+    inline-size: 1px;
+    background: var(--color-rule-strong);
+  }
+  .coef__bar {
+    position: absolute;
+    block-size: 0.36rem;
+    border-radius: 2px;
+    transition: left var(--dur-2) var(--ease-out), width var(--dur-2) var(--ease-out);
+  }
+  .coef__bar.is-ml {
+    inset-block-start: 0.18rem;
+    background: var(--color-ink-3);
+  }
+  .coef__bar.is-ridge {
+    inset-block-start: 0.78rem;
+    background: var(--color-accent);
+  }
+  .coef__bar.is-cw {
+    inset-block-start: 1.38rem;
+    background: var(--color-brass);
+  }
+  .coef__truth {
+    position: absolute;
+    inset-block: -0.15rem;
+    inline-size: 2px;
+    margin-inline-start: -1px;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--color-ink) 0 3px,
+      transparent 3px 6px
+    );
+    transition: left var(--dur-2) var(--ease-out);
+  }
+  .coef__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .coef__key {
+    display: inline-block;
+    inline-size: 1.1rem;
+    block-size: 0.3rem;
+    border-radius: 2px;
+    margin-inline-end: 0.3rem;
+  }
+  .coef__key--ml {
+    background: var(--color-ink-3);
+  }
+  .coef__key--ridge {
+    background: var(--color-accent);
+  }
+  .coef__key--cw {
+    background: var(--color-brass);
+  }
+  .coef__key--truth {
+    background: repeating-linear-gradient(to right, var(--color-ink) 0 3px, transparent 3px 6px);
+  }
+
+  /* ------------------------------------------------------------------ small plots */
+  .cv__svg,
+  .spread__svg {
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+  .cv__line,
+  .spread__line {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .cv__line {
+    stroke: var(--color-ink-3);
+  }
+  .cv__dot {
+    fill: var(--color-ink-3);
+  }
+  .cv__dot.is-chosen {
+    fill: var(--color-brass);
+    stroke: var(--color-surface-1);
+    stroke-width: 2;
+  }
+  .cv__axis,
+  .spread__axis {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    fill: var(--color-ink-3);
+  }
+  .spread__line.is-ml {
+    stroke: var(--color-ink-3);
+    stroke-dasharray: 4 3;
+  }
+  .spread__line.is-ridge {
+    stroke: var(--color-accent);
+  }
+  .spread__line.is-cw {
+    stroke: var(--color-brass);
+  }
+  .spread__marker {
+    stroke: var(--color-brass);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    opacity: 0.7;
+  }
+
+  /* -------------------------------------------------------------------- readings */
+  .lab__readings {
+    margin-block-start: clamp(var(--space-5), 4vw, var(--space-7));
+    display: grid;
+    gap: var(--space-4);
+    max-inline-size: 62rem;
+  }
+  .lab__reading {
+    display: none;
+    gap: var(--space-2);
+    padding-inline-start: var(--space-4);
+    border-inline-start: 2px solid var(--color-brass);
+  }
+  .lab__reading[data-active] {
+    display: grid;
+  }
+  .lab__reading h3 {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .lab__reading p {
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    line-height: 1.65;
+    color: var(--color-ink-2);
+  }
+  .lab__callout {
+    margin-block-start: var(--space-3);
+    padding: clamp(var(--space-4), 3vw, var(--space-5));
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-2);
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--color-ink);
+  }
+
+  /* ----------------------------------------------------------------- data table */
+  .lab__data {
+    margin-block-start: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  .lab__data summary {
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    cursor: pointer;
+  }
+  .lab__tablewrap {
+    overflow-x: auto;
+    padding: 0 var(--space-4) var(--space-4);
+  }
+  .lab__data table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+  }
+  .lab__data caption {
+    text-align: start;
+    padding-block-end: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .lab__data th,
+  .lab__data td {
+    padding: var(--space-2) var(--space-3);
+    border-block-end: var(--border-hairline);
+    text-align: start;
+  }
+  .lab__data thead th {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+    font-weight: 500;
+  }
+
+  /* -------------------------------------------------------------------- method */
+  .lab__method {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: clamp(var(--space-5), 4vw, var(--space-7));
+    padding-block-start: var(--space-5);
+    border-block-start: var(--border-hairline);
+    max-inline-size: 62rem;
+  }
+  .lab__math {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: var(--color-surface-1);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    overflow-x: auto;
+  }
+  .lab__note {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-3);
+  }
+
+  @media (max-width: 62rem) {
+    .lab__grid {
+      grid-template-columns: 1fr;
+    }
+    .lab__controls {
+      position: static;
+    }
+  }
+  @media (max-width: 46rem) {
+    .lab__pair {
+      grid-template-columns: 1fr;
+    }
+    .coef__row {
+      grid-template-columns: 1.8rem minmax(0, 1fr) 2.6rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .coef__bar,
+    .coef__truth,
+    .lab__scale span {
+      transition: none;
+    }
+  }
+</style>

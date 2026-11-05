@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/shared/PageHeader.astro';
+import ShrinkageLab from '../components/lab/ShrinkageLab.astro';
+import { PICTURES } from '../utils/imagery';
+import { pageCopy } from '../config/site';
+import { localePath } from '../utils/paths';
+import { t } from '../i18n/ui';
+
+const copy = await pageCopy('lab', 'en');
+const ui = t('en');
+const crumbs = [{ label: ui.home, href: localePath('en', '/') }, { label: copy.navLabel }];
+---
+
+<BaseLayout lang="en" path="/lab/" title={copy.title} description={copy.description}>
+  <PageHeader
+    lang="en"
+    title={copy.title}
+    lead={copy.lead}
+    number="09"
+    crumbs={crumbs}
+    picture={PICTURES.tangent}
+    stats={[{ value: '3', label: 'estimators' }, { value: '15', label: 'collinearity levels' }, { value: '20', label: 'replicates each' }]}
+    kicker="Interactive"
+  />
+  <ShrinkageLab lang="en" />
+</BaseLayout>

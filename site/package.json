@@ -10,7 +10,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "qa": "node scripts/qa.mjs"
+    "qa": "node scripts/qa.mjs",
+    "lab:verify": "node scripts/lab-verify.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",

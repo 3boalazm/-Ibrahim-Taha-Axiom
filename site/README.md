@@ -44,6 +44,17 @@ scripts/qa.mjs         Post-build QA
 - Internal website fields (`selected`, `abbr`, `abstract`, `pdf`, `supp`, …) never appear in copied or downloaded BibTeX.
 - Works with an empty dataset (current state).
 
+## The lab (`/lab/`)
+The only interactive part of the site, and deliberately a *controlled experiment* rather than an animation. A dial raises the correlation between four predictors; the rows, errors and true coefficients never change, so everything that moves is caused by collinearity or by the estimator.
+
+- `src/lab/model.ts` — the statistics: seeded data generation, NB2 penalised IRLS, penalised information-matrix standard errors, k-fold CV, correlation-weighted ridge.
+- `src/lab/metrics.ts` — build-time Monte-Carlo: 20 replicates × 9 collinearity levels, to measure each estimator's sampling spread. Precomputed because it is a property of the estimator, not of one sample.
+- `src/lab/snapshots.ts` — every state the page can show (15 levels), computed at build and shipped as a ~6 KB JSON island. **No statistics code reaches the browser**; the client only formats numbers and draws bars.
+- `src/components/lab/ShrinkageLab.astro` — markup, copy (EN/AR) and the ~5 KB script.
+- `npm run lab:verify` — asserts the claims the page makes: ML spread ≥ 8× ridge at the top level, ridge *not* better at ρ = 0, VIF crossing 5 and 10 where the copy says. Run it after touching any constant.
+
+Rules: the lab may never invent a number. If the copy changes, the test changes with it; if the model changes, rebuild and re-run `lab:verify`.
+
 ## Design system
 `src/styles/tokens.css` is the whole system: colour (warm bone paper and deep pine-dark themes), typography (Fraunces for display, IBM Plex Sans for interface, IBM Plex Sans Arabic / Noto Kufi Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, radii, shadows and motion. Components only consume tokens, and `npm run qa` re-checks every text/background pair for WCAG contrast in both themes — change a hex and run it again.
 
