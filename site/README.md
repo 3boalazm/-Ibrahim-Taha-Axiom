@@ -1,16 +1,56 @@
-# site/ — Astro website (deployed on Vercel)
+# site/ — Ibrahim Taha Axiom website (Astro, deployed on Vercel)
 
-**Current state: temporary placeholder.** Two pages ("under construction"): English at `/` and Arabic (RTL) at `/ar/`. They exist only to verify the deployment pipeline end to end. They carry no researcher content and are **not** the final design, which is built in a later phase.
-
-- Astro 7.3.8 (static output), Node 26.x (`engines`).
-- `astro.config.mjs`: English default, Arabic under `/ar/` (D-03; URL scheme D-03a still pending), trailing slashes.
-- `public/robots.txt` blocks all crawlers and every page has `noindex`. **Remove both at launch.**
-- `vercel.json`: Astro preset, `npm ci` / `npm run build`, security headers, and an ignored build step that skips the build when `package.json` is missing or when a commit changes nothing under `site/`.
+Bilingual academic website: English at `/`, Arabic (RTL) at `/ar/`. Static output, no client framework, about 2 KB of inline JS per page.
 
 ```bash
 npm ci
 npm run dev      # http://localhost:4321/
-npm run build    # output in dist/
+npm run build    # static output in dist/
+npm run qa       # post-build checks (links, metadata, robots, privacy, contrast)
+npm run preview  # serve dist/
 ```
 
-Deployment settings and environment variables: [`../docs/deployment.md`](../docs/deployment.md).
+## Content gate (read this first)
+
+The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. Today all approval lists are empty, so every section shows an honest "awaiting approval" state. Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
+
+## Structure
+
+```
+src/
+├── components/
+│   ├── layout/        BaseLayout pieces: SiteHeader, SiteFooter, Seo (meta, hreflang, JSON-LD, robots)
+│   ├── navigation/    LanguageSwitcher, ThemeToggle, Breadcrumbs
+│   ├── profile/       ProfileSummary (approved profile fields only)
+│   ├── publications/  PublicationLibrary (search, type filter, year groups), PublicationItem, CiteBlock, AuthorList
+│   ├── research/      EntryList (research areas / projects + evidence-backed related publications)
+│   ├── shared/        PageHeader, EmptyState, TypeBadge, LangText (language fallback), Wordmark
+│   └── views/         HomeView, SectionRoute (all section pages), PublicationView (detail)
+├── content/{en,ar}/   Page copy per section (typed content collection; describes the site, never the researcher)
+├── data/
+│   ├── approved/        Public-content manifest + approved data (BibTeX, profile, areas, projects, courses, talks, CV)
+│   └── public-settings/ launch.json (site name, canonical origin, indexing switch)
+├── i18n/ui.ts         Interface strings (EN/AR)
+├── layouts/           BaseLayout.astro
+├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, 404, robots.txt
+├── styles/            tokens.css (design tokens) + global.css
+└── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), paths.ts
+scripts/qa.mjs         Post-build QA
+```
+
+## Publications
+- Parsed at build time from `src/data/approved/publications.bib` with **@retorquere/bibtex-parser** (a real parser; sentence-casing disabled so titles stay exactly as written).
+- Features: grouping by year, filter by type, search (title, authors, venue, keywords, year, DOI), selected styling, DOI links, abstract expansion, citation copy (APA-style text, BibTeX) and download (.bib, .ris), and a detail page per entry with Google Scholar `citation_*` meta and schema.org JSON-LD.
+- Internal website fields (`selected`, `abbr`, `abstract`, `pdf`, `supp`, …) never appear in copied or downloaded BibTeX.
+- Works with an empty dataset (current state).
+
+## Design system
+`src/styles/tokens.css` defines colour (light "paper" and dark themes), typography (Source Serif 4 for reading and display, IBM Plex Sans for interface, IBM Plex Sans Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, widths, borders, radii and motion. Components only consume tokens. Layout uses CSS logical properties throughout, so RTL comes from `dir="rtl"` and no mirrored CSS is needed. Fonts are self-hosted via Fontsource (SIL OFL).
+
+## Bilingual / RTL
+- `<html lang dir>` per page; the language switcher links to the equivalent page; hreflang `en`, `ar`, `x-default`.
+- Mixed-direction data is isolated: author names in `<bdi>`, DOIs and URLs forced LTR, foreign-language titles keep their own `lang` and direction.
+- Missing translations fall back to the original language with a visible note. Content is never machine-translated.
+
+## Deployment
+Vercel project `ibrahim-taha-axiom`, Root Directory `site/`, Node 26.x. `vercel.json` skips builds when a commit does not touch `site/`. See [`../docs/deployment.md`](../docs/deployment.md).

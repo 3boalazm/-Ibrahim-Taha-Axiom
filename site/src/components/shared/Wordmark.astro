@@ -1,0 +1,56 @@
+---
+import { localePath } from '../../utils/paths';
+import { SITE_NAME } from '../../config/site';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  size?: 'sm' | 'lg';
+}
+const { lang, size = 'sm' } = Astro.props;
+// The brand is written in Latin script in both languages and always reads LTR.
+const words = SITE_NAME.split(' ');
+const last = words.pop();
+---
+
+<a class:list={['wordmark', `wordmark--${size}`]} href={localePath(lang, '/')} dir="ltr" lang="en" aria-label={SITE_NAME}>
+  <span class="wordmark__name">{words.join(' ')}</span>
+  <span class="wordmark__rule" aria-hidden="true"></span>
+  <span class="wordmark__axiom">{last}</span>
+</a>
+
+<style>
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    color: var(--color-ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .wordmark__name {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--step-1);
+    letter-spacing: -0.01em;
+  }
+  .wordmark__rule {
+    inline-size: 1px;
+    block-size: 1.1em;
+    background: var(--color-rule-strong);
+  }
+  .wordmark__axiom {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .wordmark:hover .wordmark__name {
+    color: var(--color-accent-strong);
+  }
+  .wordmark--lg .wordmark__name {
+    font-size: var(--step-2);
+  }
+</style>

@@ -1,0 +1,71 @@
+---
+import Breadcrumbs from '../navigation/Breadcrumbs.astro';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  titleLang?: Lang | null;
+  lead?: string;
+  kicker?: string;
+  number?: string;
+  crumbs?: { label: string; href?: string; lang?: Lang }[];
+}
+const { lang, title, titleLang, lead, kicker, number, crumbs } = Astro.props;
+const foreignTitle = titleLang && titleLang !== lang;
+---
+
+<header class="page-header container">
+  {crumbs && crumbs.length > 1 && <Breadcrumbs lang={lang} items={crumbs} />}
+  <div class="page-header__body reveal">
+    {
+      (kicker || number) && (
+        <p class="page-header__kicker">
+          {number && <span class="page-header__number ltr">§ {number}</span>}
+          {kicker && <span class="label">{kicker}</span>}
+        </p>
+      )
+    }
+    <h1 lang={foreignTitle ? titleLang! : undefined} dir={foreignTitle ? 'auto' : undefined}>{title}</h1>
+    {lead && <p class="page-header__lead">{lead}</p>}
+    <slot />
+  </div>
+</header>
+
+<style>
+  .page-header {
+    padding-block: var(--space-6) var(--space-6);
+  }
+  .page-header__body {
+    margin-block-start: var(--space-6);
+    padding-block-end: var(--space-6);
+    border-block-end: var(--border-hairline);
+  }
+  .page-header__kicker {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-block-end: var(--space-3);
+  }
+  .page-header__number {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--color-accent);
+  }
+  h1 {
+    font-size: var(--step-4);
+    max-inline-size: 22ch;
+  }
+  h1[lang] {
+    max-inline-size: 36ch;
+    font-size: var(--step-3);
+    /* A foreign-language title keeps its own direction but aligns with the page's reading edge. */
+    text-align: match-parent;
+  }
+  .page-header__lead {
+    margin-block-start: var(--space-4);
+    max-inline-size: 52ch;
+    font-size: var(--step-1);
+    color: var(--color-ink-2);
+  }
+</style>

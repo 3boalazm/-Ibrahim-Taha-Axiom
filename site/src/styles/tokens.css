@@ -1,0 +1,145 @@
+/*
+ * Design tokens: Ibrahim Taha Axiom.
+ * Direction: premium academic editorial + contemporary research journal.
+ * Change the system here; components only consume these variables.
+ */
+:root {
+  /* ---- colour: light ("paper") ---- */
+  --color-paper: #f6f4ee;
+  --color-surface-1: #fbfaf6;
+  --color-surface-2: #eeebe2;
+  --color-ink: #17181c;
+  --color-ink-2: #4b5059;
+  --color-ink-3: #5f646d;
+  --color-rule: #d9d4c7;
+  --color-rule-strong: #b9b2a2;
+  --color-accent: #1d4e6e;
+  --color-accent-strong: #133a54;
+  --color-accent-soft: #e2ebf0;
+  --color-focus: #b5541c;
+  --color-selection: #d6e4ec;
+
+  /* content-type hues (used as small markers, never as large fills) */
+  --type-publication: #1d4e6e;
+  --type-project: #2f5d3a;
+  --type-teaching: #8a4f12;
+  --type-talk: #6b2d55;
+  --type-book: #5c4a1c;
+
+  /* ---- typography ---- */
+  --font-serif: 'Source Serif 4 Variable', 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, monospace;
+  --font-ar-sans: 'IBM Plex Sans Arabic', 'IBM Plex Sans', 'Segoe UI', Tahoma, sans-serif;
+  --font-ar-serif: 'Noto Naskh Arabic Variable', 'IBM Plex Sans Arabic', 'Traditional Arabic', serif;
+
+  --font-display: var(--font-serif);
+  --font-body: var(--font-serif);
+  --font-ui: var(--font-sans);
+  --leading-body: 1.65;
+  --leading-tight: 1.15;
+  --tracking-label: 0.08em;
+
+  /* fluid type scale (1.25 ratio, 17px base) */
+  --step--2: 0.75rem;
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: clamp(1.18rem, 1.1rem + 0.35vw, 1.33rem);
+  --step-2: clamp(1.4rem, 1.27rem + 0.6vw, 1.66rem);
+  --step-3: clamp(1.7rem, 1.45rem + 1.1vw, 2.2rem);
+  --step-4: clamp(2.1rem, 1.7rem + 1.9vw, 3.1rem);
+  --step-5: clamp(2.6rem, 1.9rem + 3.2vw, 4.4rem);
+
+  /* ---- space ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-9: 6.5rem;
+
+  /* ---- layout ---- */
+  --width-page: 74rem;
+  --width-measure: 42rem;
+  --width-wide: 56rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --header-height: 4.25rem;
+
+  /* ---- surfaces, borders, radii ---- */
+  --border-hairline: 1px solid var(--color-rule);
+  --border-strong: 1px solid var(--color-rule-strong);
+  --radius-1: 3px;
+  --radius-2: 6px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 18px 40px -24px rgb(23 24 28 / 0.35);
+
+  /* ---- motion ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
+
+  color-scheme: light;
+}
+
+/* Arabic: script-appropriate families, more generous leading, no letter-spacing */
+:root:lang(ar) {
+  --font-display: var(--font-ar-serif);
+  --font-body: var(--font-ar-sans);
+  --font-ui: var(--font-ar-sans);
+  --leading-body: 1.9;
+  --leading-tight: 1.45;
+  --tracking-label: 0;
+}
+
+/* ---- colour: dark ---- */
+:root[data-theme='dark'] {
+  --color-paper: #111316;
+  --color-surface-1: #16181c;
+  --color-surface-2: #1d2025;
+  --color-ink: #ece9e2;
+  --color-ink-2: #b6b9c0;
+  --color-ink-3: #959aa4;
+  --color-rule: #2c3036;
+  --color-rule-strong: #444a52;
+  --color-accent: #93bfdc;
+  --color-accent-strong: #b8d5e9;
+  --color-accent-soft: #1a2833;
+  --color-focus: #f0a46b;
+  --color-selection: #27445a;
+  --type-publication: #93bfdc;
+  --type-project: #8fc49b;
+  --type-teaching: #e0ae6f;
+  --type-talk: #d79cc2;
+  --type-book: #d2c08a;
+  --shadow-panel: 0 18px 40px -20px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-paper: #111316;
+    --color-surface-1: #16181c;
+    --color-surface-2: #1d2025;
+    --color-ink: #ece9e2;
+    --color-ink-2: #b6b9c0;
+    --color-ink-3: #959aa4;
+    --color-rule: #2c3036;
+    --color-rule-strong: #444a52;
+    --color-accent: #93bfdc;
+    --color-accent-strong: #b8d5e9;
+    --color-accent-soft: #1a2833;
+    --color-focus: #f0a46b;
+    --color-selection: #27445a;
+    --type-publication: #93bfdc;
+    --type-project: #8fc49b;
+    --type-teaching: #e0ae6f;
+    --type-talk: #d79cc2;
+    --type-book: #d2c08a;
+    --shadow-panel: 0 18px 40px -20px rgb(0 0 0 / 0.7);
+    color-scheme: dark;
+  }
+}

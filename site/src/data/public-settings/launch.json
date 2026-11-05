@@ -1,0 +1,6 @@
+{
+  "siteName": "Ibrahim Taha Axiom",
+  "canonicalOrigin": null,
+  "allowIndexing": false,
+  "notes": "Search indexing is OFF. To launch: set canonicalOrigin to the confirmed domain (e.g. \"https://example.org\"), then set allowIndexing to true. The build refuses allowIndexing=true without a canonicalOrigin. See docs/website-launch-checklist.md."
+}

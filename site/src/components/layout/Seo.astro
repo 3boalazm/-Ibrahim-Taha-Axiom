@@ -1,0 +1,74 @@
+---
+/**
+ * Page metadata. Indexing is controlled by src/data/public-settings/launch.json
+ * (allowIndexing + canonicalOrigin). While indexing is off, every page carries
+ * noindex,nofollow and robots.txt disallows crawling.
+ */
+import { SITE_NAME } from '../../config/site';
+import { indexingAllowed, profile } from '../../utils/content';
+import { localePath } from '../../utils/paths';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  path: string;
+  title: string;
+  description: string;
+  ogType: 'website' | 'article';
+  jsonLd: Record<string, unknown>[];
+  alternates?: boolean;
+}
+const { lang, path, title, description, ogType, jsonLd, alternates = true } = Astro.props;
+const site = Astro.site!;
+const canonical = new URL(localePath(lang, path), site).href;
+const enUrl = new URL(localePath('en', path), site).href;
+const arUrl = new URL(localePath('ar', path), site).href;
+const fullTitle = title === SITE_NAME ? SITE_NAME : `${title} — ${SITE_NAME}`;
+
+const graph: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: new URL('/', site).href,
+    inLanguage: ['en', 'ar'],
+  },
+  ...jsonLd,
+];
+const personName = profile.name.en ?? profile.name.ar;
+if (path === '/' && personName) {
+  graph.push({
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: personName,
+    url: new URL('/', site).href,
+    sameAs: profile.identifiers.map((i) => i.url),
+  });
+}
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="robots" content={indexingAllowed ? 'index, follow' : 'noindex, nofollow'} />
+{
+  alternates && (
+    <>
+      <link rel="canonical" href={canonical} />
+      <link rel="alternate" hreflang="en" href={enUrl} />
+      <link rel="alternate" hreflang="ar" href={arUrl} />
+      <link rel="alternate" hreflang="x-default" href={enUrl} />
+    </>
+  )
+}
+<link rel="sitemap" href="/sitemap-index.xml" />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content={lang === 'ar' ? 'ar_EG' : 'en_US'} />
+<meta property="og:locale:alternate" content={lang === 'ar' ? 'en_US' : 'ar_EG'} />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{graph.map((g) => <script type="application/ld+json" set:html={JSON.stringify(g)} />)}

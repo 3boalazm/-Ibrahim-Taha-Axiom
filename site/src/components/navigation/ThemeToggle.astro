@@ -1,0 +1,83 @@
+---
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const ui = t(Astro.props.lang);
+---
+
+<button
+  class="theme-toggle"
+  type="button"
+  data-theme-toggle
+  data-label={ui.theme}
+  data-system={ui.themeSystem}
+  data-light={ui.themeLight}
+  data-dark={ui.themeDark}
+  aria-label={`${ui.theme}: ${ui.themeSystem}`}
+  title={`${ui.theme}: ${ui.themeSystem}`}
+>
+  <svg class="icon icon--system" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"></path></svg>
+  <svg class="icon icon--light" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 1.5v2.5M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2 16 16M4 16l1.8-1.8M14.2 5.8 16 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+  <svg class="icon icon--dark" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.6A6.5 6.5 0 0 1 7.4 4.5a6.5 6.5 0 1 0 8.1 8.1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+</button>
+
+<script>
+  type Mode = 'system' | 'light' | 'dark';
+  const order: Mode[] = ['system', 'light', 'dark'];
+  const root = document.documentElement;
+  const read = (): Mode => {
+    try {
+      const v = localStorage.getItem('axiom-theme');
+      return v === 'light' || v === 'dark' ? v : 'system';
+    } catch {
+      return 'system';
+    }
+  };
+  const apply = (mode: Mode, btn: HTMLButtonElement) => {
+    if (mode === 'system') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    try {
+      if (mode === 'system') localStorage.removeItem('axiom-theme');
+      else localStorage.setItem('axiom-theme', mode);
+    } catch {}
+    btn.dataset.mode = mode;
+    const text = `${btn.dataset.label}: ${btn.dataset[mode]}`;
+    btn.setAttribute('aria-label', text);
+    btn.title = text;
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    apply(read(), btn);
+    btn.addEventListener('click', () => apply(order[(order.indexOf(read()) + 1) % order.length], btn));
+  });
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border: var(--border-hairline);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .theme-toggle:hover {
+    background: var(--color-surface-2);
+  }
+  .icon {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+    display: none;
+  }
+  .theme-toggle:not([data-mode]) .icon--system,
+  .theme-toggle[data-mode='system'] .icon--system,
+  .theme-toggle[data-mode='light'] .icon--light,
+  .theme-toggle[data-mode='dark'] .icon--dark {
+    display: block;
+  }
+</style>

@@ -1,0 +1,222 @@
+---
+/**
+ * One route component for every section page, in both languages.
+ * Each section renders approved content, or an honest empty state.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../shared/PageHeader.astro';
+import EmptyState from '../shared/EmptyState.astro';
+import LangText from '../shared/LangText.astro';
+import ProfileSummary from '../profile/ProfileSummary.astro';
+import PublicationLibrary from '../publications/PublicationLibrary.astro';
+import EntryList from '../research/EntryList.astro';
+import { SECTION_PATHS, pageCopy, sectionCount, sectionNumber, type PageKey } from '../../config/site';
+import { courses, cv, profile, projects, researchAreas, talks } from '../../utils/content';
+import { books, publications } from '../../utils/publications';
+import { localePath } from '../../utils/paths';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  page: Exclude<PageKey, 'home'>;
+}
+const { lang, page } = Astro.props;
+const ui = t(lang);
+const copy = await pageCopy(page, lang);
+const count = sectionCount(page) ?? 0;
+const crumbs = [{ label: ui.home, href: localePath(lang, '/') }, { label: copy.navLabel }];
+const areaLabel = lang === 'ar' ? 'مجال بحثي' : 'Research area';
+const projectLabel = lang === 'ar' ? 'مشروع' : 'Project';
+---
+
+<BaseLayout lang={lang} path={SECTION_PATHS[page]} title={copy.title} description={copy.description}>
+  <PageHeader lang={lang} title={copy.title} lead={copy.lead} number={sectionNumber(page)} crumbs={crumbs} />
+  <div class="container section-body">
+    {page === 'about' && (count > 0 ? <ProfileSummary lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'research' && (count > 0 ? <EntryList items={researchAreas} lang={lang} kind="area" badge={areaLabel} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'projects' && (count > 0 ? <EntryList items={projects} lang={lang} kind="project" badge={projectLabel} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'publications' && (count > 0 ? <PublicationLibrary pubs={publications} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'books' && (count > 0 ? <PublicationLibrary pubs={books} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {
+      page === 'teaching' &&
+        (count > 0 ? (
+          <ol class="list" role="list">
+            {courses.map((c) => (
+              <li class="list__item">
+                <h2>
+                  <LangText value={c.title} lang={lang} />
+                </h2>
+                <p class="list__meta">
+                  {c.institution && <LangText value={c.institution} lang={lang} />}
+                  {c.term && <span class="ltr">{c.term}</span>}
+                  {c.level && <LangText value={c.level} lang={lang} />}
+                </p>
+                <LangText value={c.summary} lang={lang} as="p" note />
+                {c.materials.length > 0 && (
+                  <ul class="list__links" role="list">
+                    {c.materials.map((m) => (
+                      <li>
+                        <a href={m.url}>
+                          <LangText value={m.label} lang={lang} />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+        ))
+    }
+    {
+      page === 'talks' &&
+        (count > 0 ? (
+          <ol class="list" role="list">
+            {talks.map((tk) => (
+              <li class="list__item">
+                <p class="list__date ltr">{tk.date}</p>
+                <h2>
+                  <LangText value={tk.title} lang={lang} />
+                </h2>
+                <p class="list__meta">
+                  <LangText value={tk.event} lang={lang} />
+                  {tk.location && <LangText value={tk.location} lang={lang} />}
+                </p>
+                <LangText value={tk.summary} lang={lang} as="p" note />
+                {tk.slides && (
+                  <a href={tk.slides} class="button">
+                    {ui.slides}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+        ))
+    }
+    {
+      page === 'cv' &&
+        (count > 0 && cv ? (
+          <div class="cv">
+            {cv.pdf && (
+              <p>
+                <a class="button" href={cv.pdf}>
+                  {ui.cvDownload}
+                </a>
+              </p>
+            )}
+            {cv.sections.map((s) => (
+              <section class="cv__section">
+                <h2>
+                  <LangText value={s.heading} lang={lang} />
+                </h2>
+                <ul role="list">
+                  {s.items.map((i) => (
+                    <li>
+                      {i.period && <span class="cv__period ltr">{i.period}</span>}
+                      <LangText value={i.text} lang={lang} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+        ))
+    }
+    {
+      page === 'contact' && (
+        <>
+          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+          {profile.identifiers.length > 0 && (
+            <section class="contact-profiles">
+              <h2 class="label">{ui.identifiers}</h2>
+              <ul role="list">
+                {profile.identifiers.map((i) => (
+                  <li>
+                    <a href={i.url} rel="me noopener">
+                      {i.type}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .section-body {
+    padding-block-start: var(--space-4);
+  }
+  .list {
+    padding: 0;
+    list-style: none;
+    max-inline-size: var(--width-wide);
+  }
+  .list__item {
+    display: grid;
+    gap: var(--space-2);
+    padding-block: var(--space-5);
+    border-block-end: var(--border-hairline);
+  }
+  .list__item h2 {
+    font-size: var(--step-2);
+  }
+  .list__meta,
+  .list__date {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .list__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .cv__section {
+    padding-block: var(--space-5);
+    border-block-end: var(--border-hairline);
+    max-inline-size: var(--width-wide);
+  }
+  .cv__section ul {
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+  }
+  .cv__period {
+    display: inline-block;
+    min-inline-size: 7rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .contact-profiles {
+    margin-block-start: var(--space-6);
+  }
+  .contact-profiles ul {
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-block-start: var(--space-2);
+  }
+</style>

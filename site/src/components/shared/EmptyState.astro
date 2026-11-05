@@ -1,0 +1,61 @@
+---
+/**
+ * Honest empty state: says plainly that nothing has been approved yet.
+ * Never shows placeholder or sample records.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  body: string;
+}
+const { lang, title, body } = Astro.props;
+const ui = t(lang);
+---
+
+<section class="empty-state reveal reveal-2" aria-labelledby="empty-state-title">
+  <div class="empty-state__mark" aria-hidden="true">
+    <svg viewBox="0 0 48 48"><rect x="6.5" y="9.5" width="35" height="29" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"></rect><path d="M12 17h16M12 22h24M12 27h20M12 32h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".55"></path></svg>
+  </div>
+  <div>
+    <p class="label">{ui.statusLabel} · {ui.awaitingReview}</p>
+    <h2 id="empty-state-title">{title}</h2>
+    <p class="empty-state__body">{body}</p>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .empty-state {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-5);
+    align-items: start;
+    max-inline-size: var(--width-wide);
+    padding: var(--space-6);
+    background: var(--color-surface-1);
+    border: var(--border-hairline);
+    border-inline-start: 3px solid var(--color-accent);
+    border-radius: var(--radius-2);
+  }
+  .empty-state__mark {
+    inline-size: 3rem;
+    color: var(--color-accent);
+  }
+  h2 {
+    margin-block: var(--space-2) var(--space-3);
+    font-size: var(--step-2);
+  }
+  .empty-state__body {
+    max-inline-size: 58ch;
+    color: var(--color-ink-2);
+  }
+  @media (max-width: 36rem) {
+    .empty-state {
+      grid-template-columns: 1fr;
+      padding: var(--space-5);
+    }
+  }
+</style>

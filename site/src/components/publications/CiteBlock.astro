@@ -1,0 +1,134 @@
+---
+import { t } from '../../i18n/ui';
+import type { Publication } from '../../utils/publications';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  pub: Publication;
+  lang: Lang;
+  open?: boolean;
+}
+const { pub, lang, open = false } = Astro.props;
+const ui = t(lang);
+---
+
+<details class="cite" data-cite open={open}>
+  <summary>{ui.cite}</summary>
+  <div class="cite__panel">
+    <p class="label">{ui.citeText}</p>
+    <p class="cite__text" lang={pub.titleLang ?? undefined} dir={pub.titleLang === 'ar' ? 'rtl' : 'ltr'}>
+      {pub.citation.parts.lead}{' '}<bdi>{pub.citation.parts.title}</bdi>
+      {pub.citation.parts.venue && (<>{' '}<bdi><i>{pub.citation.parts.venue}</i></bdi><span class="ltr">{pub.citation.parts.details}</span></>)}
+      {pub.citation.parts.link && (<>{' '}<span class="ltr">{pub.citation.parts.link}</span></>)}
+    </p>
+    <pre hidden data-cite-text>{pub.citation.text}</pre>
+    <p class="cite__note">{ui.citationStyleNote}</p>
+    <div class="cite__actions">
+      <button type="button" class="button" data-copy="text" data-done={ui.copied}>{ui.copy}</button>
+      <button type="button" class="button" data-copy="bibtex" data-done={ui.copied}>{ui.copy} BibTeX</button>
+      <button type="button" class="button" data-download="bib" data-filename={`${pub.key}.bib`}>{ui.download} .bib</button>
+      <button type="button" class="button" data-download="ris" data-filename={`${pub.key}.ris`}>{ui.download} .ris</button>
+    </div>
+    <pre class="cite__bibtex" dir="ltr" lang="en" tabindex="0" aria-label="BibTeX"><code data-cite-bibtex>{pub.citation.bibtex}</code></pre>
+    <pre hidden data-cite-ris>{pub.citation.ris}</pre>
+    <p class="visually-hidden" aria-live="polite" data-cite-status></p>
+  </div>
+</details>
+
+<script>
+  document.addEventListener('click', async (event) => {
+    const target = event.target as HTMLElement | null;
+    const btn = target?.closest<HTMLButtonElement>('[data-copy], [data-download]');
+    if (!btn) return;
+    const box = btn.closest<HTMLElement>('[data-cite]');
+    if (!box) return;
+    const status = box.querySelector<HTMLElement>('[data-cite-status]');
+    if (btn.dataset.copy) {
+      const src = box.querySelector<HTMLElement>(btn.dataset.copy === 'text' ? '[data-cite-text]' : '[data-cite-bibtex]');
+      const text = src?.textContent?.trim() ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent;
+        btn.textContent = btn.dataset.done ?? original;
+        if (status) status.textContent = btn.dataset.done ?? '';
+        setTimeout(() => (btn.textContent = original), 1800);
+      } catch {
+        const range = document.createRange();
+        if (src) {
+          range.selectNodeContents(src);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+      }
+    } else if (btn.dataset.download) {
+      const src = box.querySelector<HTMLElement>(btn.dataset.download === 'ris' ? '[data-cite-ris]' : '[data-cite-bibtex]');
+      const type = btn.dataset.download === 'ris' ? 'application/x-research-info-systems' : 'application/x-bibtex';
+      const blob = new Blob([(src?.textContent ?? '').trim() + '\n'], { type: `${type};charset=utf-8` });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = btn.dataset.filename ?? 'citation.txt';
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+  });
+</script>
+
+<style>
+  .cite summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--color-accent);
+    list-style: none;
+  }
+  .cite summary::-webkit-details-marker {
+    display: none;
+  }
+  .cite summary::before {
+    content: '+';
+    font-family: var(--font-mono);
+  }
+  .cite[open] summary::before {
+    content: '−';
+  }
+  .cite__panel {
+    margin-block-start: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-surface-2);
+    border-radius: var(--radius-2);
+    display: grid;
+    gap: var(--space-3);
+  }
+  .cite__text {
+    font-size: var(--step--1);
+    line-height: 1.6;
+  }
+  .cite__note {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .cite__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .cite__bibtex {
+    overflow-x: auto;
+    padding: var(--space-3);
+    background: var(--color-surface-1);
+    border: var(--border-hairline);
+    border-radius: var(--radius-1);
+    font-size: var(--step--2);
+    line-height: 1.55;
+    white-space: pre;
+    text-align: left;
+  }
+</style>

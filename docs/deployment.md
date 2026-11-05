@@ -2,13 +2,13 @@
 
 > Decision D-07 (hosting): **Vercel**, approved 2026-11-05. D-07b resolved the same day: a **new** Vercel project `ibrahim-taha-axiom` connected to this repository (the earlier project for the previous site is untouched). Domain (D-07a) is pending.
 >
-> Current deployment: a temporary EN/AR placeholder (see [`../site/README.md`](../site/README.md)), marked `noindex` and blocked in `robots.txt`. The production alias **https://ibrahim-taha-axiom.vercel.app is publicly reachable**. Per-deployment and preview URLs require a Vercel login.
+> Current deployment (Phase 3): the real bilingual website (see [`../site/README.md`](../site/README.md)), with all researcher-specific sections in an "awaiting approval" state until content is approved ([`public-content-policy.md`](public-content-policy.md)). The production alias **https://ibrahim-taha-axiom.vercel.app is publicly reachable**. Search indexing is **off** (`noindex, nofollow` + `robots.txt Disallow: /`) until the launch checklist is complete ([`website-launch-checklist.md`](website-launch-checklist.md)). Per-deployment and preview URLs require a Vercel login.
 
 ## Layout
 
 ```
 ibrahim-taha-axiom/          ← Git repository (monorepo-style workspace)
-├── site/                    ← Vercel "Root Directory": the future Astro app
+├── site/                    ← Vercel "Root Directory": the Astro website
 │   └── vercel.json          ← build config + ignored-build-step guard
 ├── scripts/ingestion/       ← local research-data tooling (never deployed)
 ├── data-staging/            ← local only, gitignored (never deployed)
@@ -32,12 +32,18 @@ Only `site/` is deployed. Everything else in the repository is outside the Verce
 | Deployment Protection | Vercel Authentication on previews and per-deployment URLs. The production `*.vercel.app` alias is public, so never deploy unreviewed researcher data to `main` |
 | Skip unaffected deployments | Project setting is on, but it has no effect in this repo layout (it targets monorepo workspaces). Skipping is done by the Ignored Build Step above |
 
-## How the Astro app will target Vercel (build phase)
+## How the Astro app targets Vercel
 
-- Adapter: `@astrojs/vercel`. Pages are prerendered (static) by default; only routes that need a server opt out (`export const prerender = false`).
-- Server routes expected in the MVP: the contact/collaboration endpoint (D-08). These run as Vercel Functions.
-- Bilingual routing (D-03, D-03a) is handled by Astro i18n routing at build time, not by Vercel rewrites.
-- Research metrics are produced by a scheduled job into versioned JSON in the repository and read at build time; no API keys are needed in the website runtime.
+- **Now:** fully static output (`astro build` → `dist/`), served by Vercel's CDN with the Astro preset. No adapter and no server code. `robots.txt` and the sitemap are generated at build time from `site/src/data/public-settings/launch.json`.
+- **Later (D-08):** when the contact channel is decided, add `@astrojs/vercel` and opt only the contact endpoint out of prerendering (`export const prerender = false`). It must never report success without actually delivering the message.
+- Bilingual routing (D-03, D-03a: English unprefixed, Arabic under `/ar/`) is handled by Astro at build time, not by Vercel rewrites.
+- Research metrics, if approved, are produced by a scheduled job into versioned JSON in the repository and read at build time. No API keys are needed in the website runtime.
+- `PUBLIC_SITE_URL` (optional Vercel env var) overrides the canonical origin. Otherwise `launch.json` → `canonicalOrigin` is used, falling back to `https://ibrahim-taha-axiom.vercel.app`.
+
+## Release procedure
+1. `cd site && npm ci && npm run build && npm run qa` (all checks must pass).
+2. Commit and push to `main`. Vercel builds only when `site/` changed (ignored build step).
+3. Verify `https://ibrahim-taha-axiom.vercel.app/`, `/ar/`, `/robots.txt`.
 
 ## Environment variables
 

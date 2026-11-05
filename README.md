@@ -53,10 +53,12 @@ ibrahim-taha-axiom/
 ├── product/
 │   ├── product-brief.md               vision, audiences, modules M1–M6, MVP proposal
 │   └── architecture-recommendation.md architecture direction (Astro approved; libraries pending spikes)
-├── site/                              ← future Astro app (Vercel Root Directory); config only for now
+├── site/                              ← the Astro website (Vercel Root Directory), see site/README.md
 ├── docs/
 │   ├── decisions-pending.md           decision log, approved + open (Arabic)
-│   └── deployment.md                  Vercel setup + environment variables
+│   ├── deployment.md                  Vercel setup, environment variables, release procedure
+│   ├── public-content-policy.md       what the website may show + how to approve content
+│   └── website-launch-checklist.md    approvals before indexing + the one-step indexing switch
 └── .env.example                       environment template (real values never committed)
 ```
 
@@ -84,4 +86,5 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 - [x] Blocking decisions approved (2026-11-05): languages EN default + AR (D-03), Astro (D-04), BibTeX (D-05), MVP scope (D-11)
 - [x] Hosting: Vercel project `ibrahim-taha-axiom` with a temporary EN/AR placeholder (see [`docs/deployment.md`](docs/deployment.md))
 - [x] Phase 2: research data collected, reconciled and analysed (reports in `research/`; data in local `data-staging/`)
-- [ ] Researcher review: answers to [`research/data-gaps-and-questions.md`](research/data-gaps-and-questions.md), then approval of the candidate BibTeX and profile
+- [x] Phase 3: bilingual website live at https://ibrahim-taha-axiom.vercel.app (EN `/`, AR `/ar/`). Researcher content is gated by [`docs/public-content-policy.md`](docs/public-content-policy.md); search indexing is off until [`docs/website-launch-checklist.md`](docs/website-launch-checklist.md) is complete
+- [ ] Researcher review: answers to [`research/data-gaps-and-questions.md`](research/data-gaps-and-questions.md), then approval of profile and publications through the public-content manifest

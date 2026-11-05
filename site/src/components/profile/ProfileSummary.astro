@@ -1,0 +1,127 @@
+---
+/** Approved profile fields only (see utils/content.ts). */
+import LangText from '../shared/LangText.astro';
+import { profile } from '../../utils/content';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+---
+
+<div class="profile">
+  <div class="profile__main prose">
+    {(profile.name.en || profile.name.ar) && <h2 class="profile__name"><LangText value={profile.name} lang={lang} /></h2>}
+    {(profile.role.en || profile.role.ar) && <LangText value={profile.role} lang={lang} as="p" />}
+    {(profile.summary.en || profile.summary.ar) && <LangText value={profile.summary} lang={lang} as="p" note />}
+    {(profile.biography.en || profile.biography.ar) && <LangText value={profile.biography} lang={lang} as="div" note />}
+  </div>
+  <aside class="profile__facts">
+    {
+      profile.affiliations.length > 0 && (
+        <section>
+          <h2 class="label">{ui.affiliations}</h2>
+          <ul role="list">
+            {profile.affiliations.map((a) => (
+              <li>
+                <LangText value={a.organization} lang={lang} />
+                {a.department && <LangText value={a.department} lang={lang} as="p" />}
+                {a.role && <LangText value={a.role} lang={lang} as="p" />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+    {
+      profile.education.length > 0 && (
+        <section>
+          <h2 class="label">{ui.education}</h2>
+          <ul role="list">
+            {profile.education.map((e) => (
+              <li>
+                <LangText value={e.degree} lang={lang} />, <LangText value={e.institution} lang={lang} />
+                {e.year && <span class="ltr"> {e.year}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+    {
+      profile.identifiers.length > 0 && (
+        <section>
+          <h2 class="label">{ui.identifiers}</h2>
+          <ul role="list">
+            {profile.identifiers.map((i) => (
+              <li>
+                <a href={i.url} rel="me noopener">
+                  {i.type}
+                </a>{' '}
+                <span class="ltr id-value">{i.value}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+    {
+      profile.interests.length > 0 && (
+        <section>
+          <h2 class="label">{ui.interests}</h2>
+          <ul role="list" class="chips">
+            {profile.interests.map((i) => (
+              <li>
+                <LangText value={i} lang={lang} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </aside>
+</div>
+
+<style>
+  .profile {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+  .profile__facts {
+    display: grid;
+    gap: var(--space-5);
+    align-content: start;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .profile__facts ul {
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+  .id-value {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .chips {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+  .chips li {
+    padding: 0.2em 0.7em;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+  }
+  @media (max-width: 48rem) {
+    .profile {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

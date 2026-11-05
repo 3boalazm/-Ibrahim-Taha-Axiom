@@ -1,3 +1,0 @@
-# Placeholder phase: keep the site out of search engines until launch.
-User-agent: *
-Disallow: /

@@ -1,0 +1,246 @@
+@import './tokens.css';
+
+/* ------------------------------------------------------------ reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-block-start: calc(var(--header-height) + var(--space-4));
+}
+body {
+  min-block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: var(--leading-body);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+img,
+svg {
+  display: block;
+  max-inline-size: 100%;
+}
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+::selection {
+  background: var(--color-selection);
+}
+
+/* ------------------------------------------------------------ type */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+:lang(ar) :is(h1, h2, h3, h4) {
+  letter-spacing: 0;
+  font-weight: 700;
+}
+p {
+  text-wrap: pretty;
+}
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-1) var(--ease), text-decoration-color var(--dur-1) var(--ease);
+}
+a:hover {
+  color: var(--color-accent-strong);
+}
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-1);
+}
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* Direction-neutral data (DOIs, URLs, codes) always reads left-to-right. */
+.ltr,
+.doi,
+.url {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+[lang='ar'] .ltr {
+  text-align: start;
+}
+
+/* ------------------------------------------------------------ layout */
+.container {
+  inline-size: 100%;
+  max-inline-size: var(--width-page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.measure {
+  max-inline-size: var(--width-measure);
+}
+main {
+  flex: 1;
+}
+.visually-hidden {
+  position: absolute !important;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  inset-block-start: var(--space-3);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  border-radius: var(--radius-1);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+
+/* ------------------------------------------------------------ shared atoms */
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--step--2);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+:lang(ar) .label {
+  text-transform: none;
+  font-size: var(--step--1);
+}
+.rule {
+  border: 0;
+  border-block-start: var(--border-hairline);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.45em 0.9em;
+  border: var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.button:hover {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+}
+.button[aria-pressed='true'] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-paper);
+}
+.button--quiet {
+  border-color: transparent;
+}
+.icon-flip:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* Disclosures (abstracts, citation panels) */
+.disclosure > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--color-accent);
+  list-style: none;
+}
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Long-form text */
+.prose {
+  font-size: var(--step-0);
+  max-inline-size: var(--width-measure);
+}
+.prose > * + * {
+  margin-block-start: 1em;
+}
+.prose h2 {
+  font-size: var(--step-2);
+  margin-block-start: 1.6em;
+}
+
+/* ------------------------------------------------------------ motion */
+@view-transition {
+  navigation: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: reveal var(--dur-3) var(--ease) both;
+  }
+  .reveal-2 {
+    animation-delay: 60ms;
+  }
+  .reveal-3 {
+    animation-delay: 120ms;
+  }
+}
+/* Motion only (no opacity): content stays visible even if animations are paused
+   (background tabs, print, capture tools). */
+@keyframes reveal {
+  from {
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  @view-transition {
+    navigation: none;
+  }
+}

@@ -1,0 +1,268 @@
+---
+/** Detail page for one approved publication (scholarly meta + JSON-LD). */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../shared/PageHeader.astro';
+import AuthorList from '../publications/AuthorList.astro';
+import CiteBlock from '../publications/CiteBlock.astro';
+import TypeBadge from '../shared/TypeBadge.astro';
+import LangText from '../shared/LangText.astro';
+import { pageCopy } from '../../config/site';
+import { manifest, projects, researchAreas } from '../../utils/content';
+import { localePath } from '../../utils/paths';
+import type { Publication } from '../../utils/publications';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  pub: Publication;
+}
+const { lang, pub } = Astro.props;
+const ui = t(lang);
+const section = await pageCopy('publications', lang);
+const path = `/publications/${pub.key}/`;
+const description = (pub.abstract ?? `${pub.title}. ${pub.venue ?? ''} ${pub.year ?? ''}`).slice(0, 180).trim();
+
+// Google Scholar (Highwire) citation meta + schema.org ScholarlyArticle.
+const head = [
+  { name: 'citation_title', content: pub.title },
+  ...pub.authors.map((a) => ({ name: 'citation_author', content: a.first ? `${a.last}, ${a.first}` : a.last })),
+  ...(pub.year ? [{ name: 'citation_publication_date', content: String(pub.year) }] : []),
+  ...(pub.venue && pub.type === 'journal-article' ? [{ name: 'citation_journal_title', content: pub.venue }] : []),
+  ...(pub.venue && pub.type === 'conference-paper' ? [{ name: 'citation_conference_title', content: pub.venue }] : []),
+  ...(pub.volume ? [{ name: 'citation_volume', content: pub.volume }] : []),
+  ...(pub.number ? [{ name: 'citation_issue', content: pub.number }] : []),
+  ...(pub.doi ? [{ name: 'citation_doi', content: pub.doi }] : []),
+  ...(pub.links.find((l) => l.kind === 'pdf') ? [{ name: 'citation_pdf_url', content: pub.links.find((l) => l.kind === 'pdf')!.href }] : []),
+];
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': pub.type === 'book' ? 'Book' : 'ScholarlyArticle',
+    headline: pub.title,
+    name: pub.title,
+    inLanguage: pub.titleLang ?? undefined,
+    author: pub.authors.map((a) => ({ '@type': 'Person', name: a.display })),
+    datePublished: pub.year ? String(pub.year) : undefined,
+    isPartOf: pub.venue ? { '@type': 'Periodical', name: pub.venue } : undefined,
+    identifier: pub.doi ? { '@type': 'PropertyValue', propertyID: 'DOI', value: pub.doi } : undefined,
+    sameAs: pub.doi ? `https://doi.org/${pub.doi}` : undefined,
+    abstract: pub.abstract ?? undefined,
+    keywords: pub.keywords.length ? pub.keywords.join(', ') : undefined,
+  },
+];
+const related = manifest.relationships
+  .filter((r) => r.from === `publication:${pub.key}`)
+  .map((r) => {
+    const [kind, id] = r.to.split(':');
+    const item = kind === 'area' ? researchAreas.find((a) => a.id === id) : kind === 'project' ? projects.find((p) => p.id === id) : undefined;
+    return item ? { href: localePath(lang, `/${kind === 'area' ? 'research' : 'projects'}/#${id}`), title: item.title } : null;
+  })
+  .filter((x) => x !== null);
+const crumbs = [
+  { label: ui.home, href: localePath(lang, '/') },
+  { label: section.navLabel, href: localePath(lang, '/publications/') },
+  { label: pub.title, lang: pub.titleLang ?? undefined },
+];
+const meta: [string, string | null, boolean][] = [
+  [ui.publishedIn, pub.venue, false],
+  [ui.year, pub.year ? String(pub.year) : null, true],
+  [ui.volume, pub.volume, true],
+  [ui.issue, pub.number, true],
+  [ui.pages, pub.pages, true],
+  [ui.publisher, pub.publisher, false],
+];
+---
+
+<BaseLayout lang={lang} path={path} title={pub.title} description={description} ogType="article" jsonLd={jsonLd} head={head}>
+  <PageHeader lang={lang} title={pub.title} titleLang={pub.titleLang} crumbs={crumbs}>
+    <div class="pub-head">
+      <TypeBadge kind={pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publication'} label={ui.types[pub.type]} />
+      <AuthorList authors={pub.authors} lang={lang} />
+    </div>
+  </PageHeader>
+  <div class="container detail">
+    <div class="detail__main">
+      {
+        pub.abstract && (
+          <section>
+            <h2 class="label">{ui.abstract}</h2>
+            <p class="detail__abstract" lang={pub.titleLang ?? undefined} dir="auto">
+              {pub.abstract}
+            </p>
+          </section>
+        )
+      }
+      {
+        pub.keywords.length > 0 && (
+          <section>
+            <h2 class="label">{ui.keywords}</h2>
+            <ul class="keywords" role="list" lang={pub.titleLang ?? undefined}>
+              {pub.keywords.map((k) => (
+                <li dir="auto">{k}</li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+      <CiteBlock pub={pub} lang={lang} open />
+      {
+        related.length > 0 && (
+          <section>
+            <h2 class="label">{ui.related}</h2>
+            <ul role="list" class="related">
+              {related.map((r) => (
+                <li>
+                  <a href={r!.href}>
+                    <LangText value={r!.title} lang={lang} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+      <p><a href={localePath(lang, '/publications/')} class="detail__back"><span class="icon-flip" aria-hidden="true">←</span> {ui.backToPublications}</a></p>
+    </div>
+    <aside class="detail__aside">
+      <dl>
+        {
+          meta
+            .filter(([, v]) => v)
+            .map(([k, v, isLtr]) => (
+              <div>
+                <dt>{k}</dt>
+                <dd class:list={{ ltr: isLtr }} dir={isLtr ? undefined : 'auto'}>
+                  {v}
+                </dd>
+              </div>
+            ))
+        }
+        {
+          pub.doi && (
+            <div>
+              <dt>{ui.doi}</dt>
+              <dd>
+                <a class="doi" href={`https://doi.org/${pub.doi}`} rel="noopener">
+                  {pub.doi}
+                </a>
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+      {
+        pub.links.length > 0 && (
+          <ul class="detail__links" role="list">
+            {pub.links.map((l) => (
+              <li>
+                <a class="button" href={l.href} rel="noopener">
+                  {ui.linkLabels[l.kind]}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .pub-head {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: var(--space-4);
+  }
+  .detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    gap: var(--space-7);
+  }
+  .detail__main {
+    display: grid;
+    gap: var(--space-6);
+    align-content: start;
+    max-inline-size: var(--width-measure);
+  }
+  .detail__abstract {
+    margin-block-start: var(--space-3);
+    font-size: var(--step-0);
+  }
+  .keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    margin-block-start: var(--space-3);
+    list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .keywords li {
+    padding: 0.15em 0.7em;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+  }
+  .detail__aside {
+    align-self: start;
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-5));
+    padding: var(--space-5);
+    background: var(--color-surface-1);
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  dl {
+    display: grid;
+    gap: var(--space-3);
+  }
+  dt {
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  :lang(ar) dt {
+    text-transform: none;
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .doi {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+  }
+  .detail__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    margin-block-start: var(--space-4);
+    list-style: none;
+  }
+  .detail__back {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .detail__back span {
+    display: inline-block;
+  }
+  .related {
+    padding-inline-start: 1.1em;
+    margin-block-start: var(--space-2);
+  }
+  @media (max-width: 56rem) {
+    .detail {
+      grid-template-columns: 1fr;
+    }
+    .detail__aside {
+      position: static;
+      order: -1;
+    }
+  }
+</style>

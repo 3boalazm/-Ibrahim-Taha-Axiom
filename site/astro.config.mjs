@@ -1,15 +1,26 @@
 // @ts-check
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
-// Temporary placeholder configuration. The real site is built in a later phase.
-// - English is the default locale (D-03); Arabic lives under /ar/ (D-03a, pending).
-// - `site` will come from PUBLIC_SITE_URL once the domain is decided (D-07a).
+// Canonical origin: PUBLIC_SITE_URL (Vercel env) > launch.json canonicalOrigin
+// > the existing Vercel production alias (until the domain is decided, D-07a).
+const launch = JSON.parse(readFileSync(new URL('./src/data/public-settings/launch.json', import.meta.url), 'utf8'));
+const site = process.env.PUBLIC_SITE_URL || launch.canonicalOrigin || 'https://ibrahim-taha-axiom.vercel.app';
+
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL || undefined,
+  site,
   trailingSlash: 'always',
+  build: { format: 'directory' },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'ar'],
     routing: { prefixDefaultLocale: false },
   },
+  integrations: [
+    sitemap({
+      i18n: { defaultLocale: 'en', locales: { en: 'en', ar: 'ar' } },
+      filter: (page) => !page.includes('/404'),
+    }),
+  ],
 });

@@ -1,0 +1,90 @@
+---
+/**
+ * Approved research areas or projects. Related publications are shown only
+ * when the manifest records an approved relationship with its evidence.
+ */
+import LangText from '../shared/LangText.astro';
+import PublicationItem from '../publications/PublicationItem.astro';
+import TypeBadge from '../shared/TypeBadge.astro';
+import { manifest } from '../../utils/content';
+import { getPublication } from '../../utils/publications';
+import { t } from '../../i18n/ui';
+import type { Entry, Lang } from '../../utils/schema';
+
+interface Props {
+  items: Entry[];
+  lang: Lang;
+  kind: 'area' | 'project';
+  badge: string;
+}
+const { items, lang, kind, badge } = Astro.props;
+const ui = t(lang);
+const relatedFor = (id: string) =>
+  manifest.relationships
+    .filter((r) => r.to === `${kind}:${id}` && r.from.startsWith('publication:'))
+    .map((r) => getPublication(r.from.slice('publication:'.length)))
+    .filter((p) => p !== undefined);
+---
+
+<ol class="entries" role="list">
+  {
+    items.map((item) => (
+      <li class="entry" id={item.id}>
+        <div class="entry__head">
+          <TypeBadge kind={kind === 'area' ? 'publication' : 'project'} label={badge} />
+          {item.period && <span class="entry__period ltr">{item.period}</span>}
+        </div>
+        <h2 class="entry__title">
+          <LangText value={item.title} lang={lang} />
+        </h2>
+        <LangText value={item.summary} lang={lang} as="p" note />
+        {item.url && (
+          <a class="entry__link url" href={item.url} rel="noopener">
+            {item.url.replace(/^https?:\/\//, '')}
+          </a>
+        )}
+        {relatedFor(item.id).length > 0 && (
+          <div class="entry__related">
+            <p class="label">{ui.related}</p>
+            {relatedFor(item.id).map((p) => (
+              <PublicationItem pub={p!} lang={lang} compact />
+            ))}
+          </div>
+        )}
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .entries {
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--space-6);
+    max-inline-size: var(--width-wide);
+  }
+  .entry {
+    display: grid;
+    gap: var(--space-3);
+    padding-block-end: var(--space-6);
+    border-block-end: var(--border-hairline);
+  }
+  .entry__head {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .entry__period {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .entry__title {
+    font-size: var(--step-2);
+  }
+  .entry__related {
+    padding-inline-start: var(--space-4);
+    border-inline-start: var(--border-hairline);
+  }
+</style>

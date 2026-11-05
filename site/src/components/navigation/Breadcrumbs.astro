@@ -1,0 +1,62 @@
+---
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  items: { label: string; href?: string; lang?: Lang }[];
+}
+const { lang, items } = Astro.props;
+---
+
+<nav class="breadcrumbs" aria-label={t(lang).breadcrumbs}>
+  <ol role="list">
+    {
+      items.map((item, i) => (
+        <li>
+          {item.href && i < items.length - 1 ? (
+            <a href={item.href} lang={item.lang}>{item.label}</a>
+          ) : (
+            <span aria-current="page" lang={item.lang} dir="auto">{item.label}</span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .breadcrumbs li {
+    display: inline-flex;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+  .breadcrumbs li + li::before {
+    content: '/';
+    color: var(--color-rule-strong);
+  }
+  .breadcrumbs a {
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+  .breadcrumbs a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+  .breadcrumbs [aria-current] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-inline-size: 40ch;
+  }
+</style>

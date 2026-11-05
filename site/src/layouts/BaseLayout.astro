@@ -1,0 +1,66 @@
+---
+import '@fontsource-variable/source-serif-4/index.css';
+// Only the subsets this site uses (Latin, Latin-ext, Arabic).
+import '@fontsource/ibm-plex-sans/latin-400.css';
+import '@fontsource/ibm-plex-sans/latin-500.css';
+import '@fontsource/ibm-plex-sans/latin-600.css';
+import '@fontsource/ibm-plex-sans/latin-ext-400.css';
+import '@fontsource/ibm-plex-sans/latin-ext-500.css';
+import '@fontsource/ibm-plex-sans/latin-ext-600.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+import '@fontsource-variable/noto-naskh-arabic/index.css';
+import '../styles/global.css';
+import SiteHeader from '../components/layout/SiteHeader.astro';
+import SiteFooter from '../components/layout/SiteFooter.astro';
+import Seo from '../components/layout/Seo.astro';
+import { dirOf } from '../utils/paths';
+import { t } from '../i18n/ui';
+import type { Lang } from '../utils/schema';
+
+interface Props {
+  lang: Lang;
+  /** Locale-independent path, e.g. "/publications/". */
+  path: string;
+  title: string;
+  description: string;
+  ogType?: 'website' | 'article';
+  jsonLd?: Record<string, unknown>[];
+  head?: { name: string; content: string }[];
+  /** Pages without a translated twin (404) link the switcher here and skip canonical/hreflang. */
+  switchPath?: string;
+}
+const { lang, path, title, description, ogType = 'website', jsonLd = [], head = [], switchPath } = Astro.props;
+const navPath = switchPath ?? path;
+const ui = t(lang);
+---
+
+<!doctype html>
+<html lang={lang} dir={dirOf(lang)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      (() => {
+        try {
+          const s = localStorage.getItem('axiom-theme');
+          if (s === 'light' || s === 'dark') document.documentElement.dataset.theme = s;
+        } catch (_) {}
+      })();
+    </script>
+    <Seo lang={lang} path={path} title={title} description={description} ogType={ogType} jsonLd={jsonLd} alternates={!switchPath} />
+    {head.map((m) => <meta name={m.name} content={m.content} />)}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f6f4ee" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111316" media="(prefers-color-scheme: dark)" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{ui.skip}</a>
+    <SiteHeader lang={lang} path={navPath} />
+    <main id="main" tabindex="-1" data-pagefind-body>
+      <slot />
+    </main>
+    <SiteFooter lang={lang} path={navPath} />
+  </body>
+</html>

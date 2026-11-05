@@ -1,0 +1,35 @@
+---
+import type { Author } from '../../utils/publications';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  authors: Author[];
+  lang: Lang;
+}
+const { authors, lang } = Astro.props;
+const sep = lang === 'ar' ? '، ' : ', ';
+---
+
+<p class="authors">
+  {
+    authors.map((a, i) => (
+      <>
+        <bdi class:list={['author', { 'author--self': a.isResearcher }]}>{a.display}</bdi>
+        {i < authors.length - 1 ? sep : ''}
+      </>
+    ))
+  }
+</p>
+
+<style>
+  .authors {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+  .author--self {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+</style>

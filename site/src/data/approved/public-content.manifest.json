@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "status": "no researcher content approved yet",
+  "lastReviewed": null,
+  "reviewedBy": null,
+  "researcherApproval": {
+    "status": "pending",
+    "reference": null
+  },
+  "profile": {
+    "approvedFields": []
+  },
+  "publications": {
+    "approvedKeys": [],
+    "selectedKeys": []
+  },
+  "researchAreas": {
+    "approvedIds": []
+  },
+  "projects": {
+    "approvedIds": []
+  },
+  "courses": {
+    "approvedIds": []
+  },
+  "talks": {
+    "approvedIds": []
+  },
+  "cv": {
+    "approved": false
+  },
+  "relationships": []
+}

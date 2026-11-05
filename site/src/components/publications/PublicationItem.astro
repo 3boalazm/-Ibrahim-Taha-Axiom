@@ -1,0 +1,169 @@
+---
+import AuthorList from './AuthorList.astro';
+import CiteBlock from './CiteBlock.astro';
+import TypeBadge from '../shared/TypeBadge.astro';
+import { t } from '../../i18n/ui';
+import { localePath } from '../../utils/paths';
+import type { Publication } from '../../utils/publications';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  pub: Publication;
+  lang: Lang;
+  compact?: boolean;
+}
+const { pub, lang, compact = false } = Astro.props;
+const ui = t(lang);
+const href = localePath(lang, `/publications/${pub.key}/`);
+const fold = (s: string) => s.normalize('NFKD').replace(/[̀-ًͯ-ٟ]/g, '').toLowerCase();
+const searchText = fold(
+  [pub.title, ...pub.authors.map((a) => a.display), pub.venue ?? '', ...pub.keywords, String(pub.year ?? ''), pub.doi ?? ''].join(' '),
+);
+const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publication';
+---
+
+<article class:list={['pub', { 'pub--selected': pub.selected }]} data-pub data-type={pub.type} data-selected={String(pub.selected)} data-search={searchText}>
+  <div class="pub__meta">
+    <TypeBadge kind={kind} label={ui.types[pub.type]} />
+    {pub.selected && <span class="pub__flag">{ui.selected}</span>}
+    {pub.abbr && <span class="pub__abbr ltr">{pub.abbr}</span>}
+    {pub.award && <span class="pub__flag" dir="auto">{pub.award}</span>}
+  </div>
+  <h3 class="pub__title" lang={pub.titleLang ?? undefined} dir="auto">
+    <a href={href}>{pub.title}</a>
+  </h3>
+  <AuthorList authors={pub.authors} lang={lang} />
+  <p class="pub__venue">
+    {pub.venue && <cite lang={pub.venueLang ?? undefined} dir="auto">{pub.venue}</cite>}
+    {pub.volume && <span class="ltr">{pub.volume}{pub.number ? `(${pub.number})` : ''}</span>}
+    {pub.pages && <span class="ltr">{pub.pages}</span>}
+    {pub.year && <span class="ltr">{pub.year}</span>}
+  </p>
+  {
+    !compact && (
+      <div class="pub__actions">
+        {pub.doi && (
+          <a class="pub__doi doi" href={`https://doi.org/${pub.doi}`} rel="noopener">
+            doi:{pub.doi}
+          </a>
+        )}
+        {pub.links.map((l) => (
+          <a class="pub__link" href={l.href} rel="noopener">
+            {ui.linkLabels[l.kind]}
+          </a>
+        ))}
+        <a class="pub__link" href={href}>
+          {ui.details}
+        </a>
+      </div>
+    )
+  }
+  {
+    !compact && pub.abstract && (
+      <details class="disclosure pub__abstract">
+        <summary>{ui.abstract}</summary>
+        <p lang={pub.titleLang ?? undefined} dir="auto">
+          {pub.abstract}
+        </p>
+      </details>
+    )
+  }
+  {!compact && <CiteBlock pub={pub} lang={lang} />}
+</article>
+
+<style>
+  .pub {
+    display: grid;
+    gap: var(--space-2);
+    padding-block: var(--space-5);
+    border-block-end: var(--border-hairline);
+  }
+  .pub--selected {
+    border-inline-start: 2px solid var(--color-accent);
+    padding-inline-start: var(--space-4);
+  }
+  .pub__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+  .pub__flag,
+  .pub__abbr {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    font-weight: 600;
+    padding: 0.1em 0.55em;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+  }
+  .pub__abbr {
+    background: transparent;
+    border: var(--border-hairline);
+    color: var(--color-ink-2);
+  }
+  .pub__title {
+    font-size: var(--step-1);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: match-parent;
+  }
+  .pub__title a {
+    color: var(--color-ink);
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: background-size var(--dur-2) var(--ease);
+  }
+  .pub__title a:hover {
+    background-size: 100% 1px;
+  }
+  .pub__venue {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .pub__venue cite {
+    font-style: italic;
+    color: var(--color-ink-2);
+  }
+  .pub__venue cite:lang(ar) {
+    font-style: normal;
+  }
+  .pub__venue > * + *::before {
+    content: '·';
+    margin-inline-end: var(--space-2);
+    color: var(--color-rule-strong);
+  }
+  .pub__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .pub__doi {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    align-self: center;
+  }
+  .pub__abstract p {
+    margin-block-start: var(--space-3);
+    max-inline-size: var(--width-measure);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+  }
+  .pub__abstract summary::before {
+    content: '+';
+    font-family: var(--font-mono);
+  }
+  .pub__abstract[open] summary::before {
+    content: '−';
+  }
+</style>

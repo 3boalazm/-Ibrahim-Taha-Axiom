@@ -1,0 +1,40 @@
+---
+/**
+ * Renders localized text. If only the other language exists, it is shown in its
+ * own language (correct lang/dir) with a visible "available in English only"
+ * note. Content is never machine-translated.
+ */
+import { pick } from '../../utils/content';
+import { t } from '../../i18n/ui';
+import type { Lang, LocalizedText } from '../../utils/schema';
+
+interface Props {
+  value: LocalizedText | undefined | null;
+  lang: Lang;
+  as?: 'span' | 'p' | 'div';
+  note?: boolean;
+}
+const { value, lang, as: Tag = 'span', note = false } = Astro.props;
+const r = pick(value, lang);
+---
+
+{
+  r && (
+    <>
+      <Tag lang={r.fallback ? r.lang : undefined} dir={r.fallback ? (r.lang === 'ar' ? 'rtl' : 'ltr') : undefined}>
+        {r.text}
+      </Tag>
+      {r.fallback && note && <small class="fallback-note">{t(lang).translationFallback}</small>}
+    </>
+  )
+}
+
+<style>
+  .fallback-note {
+    display: block;
+    margin-block-start: var(--space-1);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+</style>
