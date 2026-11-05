@@ -1,4 +1,5 @@
 ---
+import Mark from './Mark.astro';
 import { localePath } from '../../utils/paths';
 import { SITE_NAME } from '../../config/site';
 import type { Lang } from '../../utils/schema';
@@ -11,15 +12,11 @@ const { lang, size = 'sm' } = Astro.props;
 // The brand is written in Latin script in both languages and always reads LTR.
 const words = SITE_NAME.split(' ').filter((w) => !/^axiom$/i.test(w));
 const name = words.slice(-2).join(' ');
-const initials = words
-  .slice(-2)
-  .map((w) => w[0])
-  .join('');
 const axiom = SITE_NAME.split(' ').pop() ?? '';
 ---
 
 <a class:list={['wordmark', `wordmark--${size}`]} href={localePath(lang, '/')} dir="ltr" lang="en" aria-label={SITE_NAME}>
-  <span class="wordmark__mark" aria-hidden="true">{initials}</span>
+  <Mark size={size === 'lg' ? '2.9em' : '2.5em'} class="wordmark__mark" />
   <span class="wordmark__text">
     <span class="wordmark__name">{name}</span>
     <span class="wordmark__axiom">{axiom}</span>
@@ -36,25 +33,14 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
     white-space: nowrap;
   }
   .wordmark__mark {
-    display: grid;
-    place-items: center;
-    inline-size: 2.5em;
-    block-size: 2.5em;
-    border-radius: 50%;
-    border: 1px solid var(--color-rule-strong);
-    background: var(--color-accent);
+    color: var(--color-accent);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  :global(:root[data-theme='dark']) .wordmark__mark {
     color: var(--color-paper);
-    font-family: var(--font-serif);
-    font-size: var(--step--1);
-    font-weight: 500;
-    font-variation-settings: 'SOFT' 40, 'WONK' 1;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    transition: transform var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease);
   }
   .wordmark:hover .wordmark__mark {
-    transform: rotate(-6deg);
-    background: var(--color-accent-strong);
+    transform: rotate(-6deg) scale(1.04);
   }
   .wordmark__text {
     display: grid;
@@ -79,11 +65,7 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
   .wordmark:hover .wordmark__name {
     color: var(--color-accent-strong);
   }
-  .wordmark--lg .wordmark__mark {
-    inline-size: 2.9em;
-    block-size: 2.9em;
-    font-size: var(--step-0);
-  }
+
   .wordmark--lg .wordmark__name {
     font-size: var(--step-2);
   }

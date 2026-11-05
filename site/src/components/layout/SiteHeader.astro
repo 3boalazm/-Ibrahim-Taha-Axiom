@@ -1,7 +1,8 @@
 ---
 import LanguageSwitcher from '../navigation/LanguageSwitcher.astro';
+import Mark from '../shared/Mark.astro';
 import ThemeToggle from '../navigation/ThemeToggle.astro';
-import { SECTION_PATHS, navKeys, pageCopy } from '../../config/site';
+import { SECTION_PATHS, SITE_NAME, navKeys, pageCopy } from '../../config/site';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -16,14 +17,18 @@ const items = await Promise.all(
   navKeys.map(async (key) => ({ key, href: localePath(lang, SECTION_PATHS[key]), label: (await pageCopy(key, lang)).navLabel })),
 );
 const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SECTION_PATHS] || (path.startsWith(SECTION_PATHS[key as keyof typeof SECTION_PATHS]) && key !== 'home');
-// Two-word monogram, as in the wordmark.
-const monogram = 'IT';
+// The mark is the site's own symbol — a normal-density curve on its axis inside
+// a brass ring (public/images/mark.svg) — paired with the wordmark.
 ---
 
 <header class="site-header" data-site-header>
   <div class="container site-header__inner">
-    <a class="site-header__monogram" href={localePath(lang, '/')} aria-label={lang === 'ar' ? 'الصفحة الرئيسية' : 'Home'} dir="ltr">
-      <span aria-hidden="true">{monogram}</span>
+    <a class="site-header__brand" href={localePath(lang, '/')} aria-label={SITE_NAME}>
+      <Mark size="2.45rem" class="site-header__mark" />
+      <span class="site-header__wordmark" aria-hidden="true">
+        <span class="site-header__name">Ibrahim Taha</span>
+        <span class="site-header__axiom">Axiom</span>
+      </span>
     </a>
 
     <nav id="site-nav" class="site-nav" aria-label={ui.primaryNav}>
@@ -103,27 +108,61 @@ const monogram = 'IT';
     gap: var(--space-5);
     min-block-size: var(--header-height);
   }
-  .site-header__monogram {
-    display: grid;
-    place-items: center;
-    inline-size: 2.6rem;
-    block-size: 2.6rem;
-    border-radius: 50%;
-    border: 1px solid var(--color-rule-strong);
-    color: var(--color-ink);
-    font-family: var(--font-serif);
-    font-size: var(--step--1);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-decoration: none;
-    line-height: 1;
+  .site-header__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
     flex: none;
-    transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out);
+    text-decoration: none;
+    color: var(--color-ink);
   }
-  .site-header__monogram:hover {
-    background: var(--color-ink);
-    color: var(--color-paper);
-    transform: rotate(-6deg);
+  .site-header__mark {
+    inline-size: 2.45rem;
+    block-size: 2.45rem;
+    flex: none;
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  .site-header__brand:hover .site-header__mark {
+    transform: rotate(-6deg) scale(1.04);
+  }
+  /* the curve inherits ink, so the mark inverts with the theme */
+  .site-header__brand {
+    color: var(--color-ink);
+  }
+  .site-header__wordmark {
+    display: grid;
+    gap: 0.12em;
+    line-height: 1;
+  }
+  .site-header__name {
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    white-space: nowrap;
+  }
+  .site-header__axiom {
+    font-family: var(--font-sans);
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-brass);
+    white-space: nowrap;
+  }
+  .site-header__brand:hover .site-header__name {
+    color: var(--color-accent-strong);
+  }
+  .visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
   /* pill navigation, centred */
   .site-nav {
@@ -284,6 +323,15 @@ const monogram = 'IT';
   @media (max-width: 44rem) {
     .site-header__cta {
       display: none;
+    }
+    /* the mark alone carries the brand on phones; the wordmark is still read out */
+    .site-header__wordmark {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
   @media (max-width: 26rem) {
