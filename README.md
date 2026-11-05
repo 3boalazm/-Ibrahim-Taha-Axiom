@@ -37,7 +37,19 @@ ibrahim-taha-axiom/
 │   ├── information-architecture.md    site maps, content models, draft IA
 │   ├── ux-benchmark.md                UX scorecard, patterns, RTL readiness
 │   ├── technical-comparison.md        stacks, architecture, scored directions
-│   └── licensing-review.md            licences, third-party assets, service terms
+│   ├── licensing-review.md            licences, third-party assets, service terms
+│   │   ── Phase 2: research data (unreviewed by the researcher) ──
+│   ├── data-source-register.md        every source, access status, identity confidence
+│   ├── research-data-inventory.md     counts by status + publication catalog
+│   ├── author-identity-review.md      identity anchors, homonyms, authorship evidence
+│   ├── metrics-source-review.md       source-labelled, dated metrics
+│   ├── research-portfolio-analysis.md output, collaboration, research lines
+│   ├── data-quality-report.md         completeness, conflicts, website readiness
+│   ├── translation-inventory.md       AR/EN readiness
+│   ├── data-gaps-and-questions.md     questions for the researcher (Arabic)
+│   └── publication-reconciliation.csv, asset-inventory.csv
+├── scripts/ingestion/                 Phase 2 pipeline (s01…s08), see its README
+├── data-staging/                      LOCAL ONLY (gitignored): raw sources, evidence, exports
 ├── product/
 │   ├── product-brief.md               vision, audiences, modules M1–M6, MVP proposal
 │   └── architecture-recommendation.md architecture direction (Astro approved; libraries pending spikes)
@@ -70,4 +82,6 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 ## Status
 - [x] Phase 1: workspace, inspection, comparison, product brief, preliminary architecture
 - [x] Blocking decisions approved (2026-11-05): languages EN default + AR (D-03), Astro (D-04), BibTeX (D-05), MVP scope (D-11)
-- [ ] Phase 2: ready to start. Remaining open items in [`docs/decisions-pending.md`](docs/decisions-pending.md) are needed during Phase 2, not before it
+- [x] Hosting: Vercel project `ibrahim-taha-axiom` with a temporary EN/AR placeholder (see [`docs/deployment.md`](docs/deployment.md))
+- [x] Phase 2: research data collected, reconciled and analysed (reports in `research/`; data in local `data-staging/`)
+- [ ] Researcher review: answers to [`research/data-gaps-and-questions.md`](research/data-gaps-and-questions.md), then approval of the candidate BibTeX and profile

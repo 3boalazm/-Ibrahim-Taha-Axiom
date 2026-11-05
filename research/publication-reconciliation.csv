@@ -1,0 +1,92 @@
+source,source_record,canonical_id,bibtex_key,match_method,decision,reason
+crossref,10.1080/00949655.2026.2759110,pub-0001,taha2026analytical,exact DOI,canonical,
+orcid,10.1080/00949655.2026.2759110,pub-0001,taha2026analytical,exact DOI,linked,
+supplied_site,seed-03,pub-0002,abonazel2023beta,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.1080/03610918.2021.1960373,pub-0002,abonazel2023beta,exact DOI,canonical,
+openalex,https://openalex.org/W3191134718,pub-0002,abonazel2023beta,exact DOI,linked,
+orcid,10.1080/03610918.2021.1960373,pub-0002,abonazel2023beta,exact DOI,linked,
+semantic_scholar,10.1080/03610918.2021.1960373,pub-0002,abonazel2023beta,exact DOI,linked,
+google_scholar,Beta ridge regression estimators: simulation and application,pub-0002,abonazel2023beta,exact normalized title,linked,
+supplied_site,seed-01,pub-0003,seliem2024note,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.19139/soic-2310-5070-1752,pub-0003,seliem2024note,exact DOI,canonical,
+openalex,https://openalex.org/W4407239879,pub-0003,seliem2024note,exact DOI,linked,
+orcid,10.19139/soic-2310-5070-1752,pub-0003,seliem2024note,exact DOI,linked,
+google_scholar,A note on prior selection in bayesian estimation,pub-0003,seliem2024note,exact normalized title,linked,
+crossref,10.19139/soic-2310-5070-4220,pub-0004,taha2026development,exact DOI,canonical,
+openalex,https://openalex.org/W7119315020,pub-0004,taha2026development,exact DOI,linked,
+orcid,10.19139/soic-2310-5070-4220,pub-0004,taha2026development,exact DOI,linked,
+semantic_scholar,10.19139/soic-2310-5070-4220,pub-0004,taha2026development,exact DOI,linked,
+google_scholar,Development of Penalized Estimation for Conway-Maxwell-Poisson Regression under Multicollinearity and High Dimensionality,pub-0004,taha2026development,exact normalized title,linked,
+supplied_site,seed-06,pub-0005,,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.21203/rs.3.rs-1589828/v1,pub-0005,,exact DOI,canonical,
+orcid,10.21203/rs.3.rs-1589828/v1,pub-0005,,exact DOI,linked,
+google_scholar,Using TAM to Evaluate the Effect of intensive usage of Digital Payment in Egypt,pub-0005,,exact normalized title,linked,
+supplied_site,seed-06,pub-0006,elnady2022tam,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.21608/jstc.2022.274487,pub-0006,elnady2022tam,exact DOI,canonical,
+openalex,https://openalex.org/W4313212174,pub-0006,elnady2022tam,exact DOI,linked,
+semantic_scholar,10.21608/jstc.2022.274487,pub-0006,elnady2022tam,exact DOI,linked,
+google_scholar,Using TAM to Evaluate the Effect of intensive usage of Digital Payment in Egypt,pub-0006,elnady2022tam,exact normalized title,linked,
+supplied_site,seed-04,pub-0007,taha2023role,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.2478/eb-2023-0002,pub-0007,taha2023role,exact DOI,canonical,
+openalex,https://openalex.org/W4319457546,pub-0007,taha2023role,exact DOI,linked,
+semantic_scholar,10.2478/eb-2023-0002,pub-0007,taha2023role,exact DOI,linked,
+google_scholar,The role of environmental monitoring in promoting green creativity,pub-0007,taha2023role,exact normalized title,linked,
+supplied_site,seed-02,pub-0008,taha2025impact,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.2478/orga-2025-0006,pub-0008,taha2025impact,exact DOI,canonical,
+openalex,https://openalex.org/W4407926843,pub-0008,taha2025impact,exact DOI,linked,
+semantic_scholar,10.2478/orga-2025-0006,pub-0008,taha2025impact,exact DOI,linked,
+google_scholar,The impact of students’ cybersecurity vulnerability behavior on e-learning obstacles,pub-0008,taha2025impact,exact normalized title,linked,
+crossref,10.30657/pea.2026.32.12,pub-0009,abbas2026moderating,exact DOI,canonical,
+openalex,https://openalex.org/W7136958306,pub-0009,abbas2026moderating,exact DOI,linked,
+orcid,10.30657/pea.2026.32.12,pub-0009,abbas2026moderating,exact DOI,linked,
+semantic_scholar,10.30657/pea.2026.32.12,pub-0009,abbas2026moderating,exact DOI,linked,
+google_scholar,The moderating role of green human resource management practices on the relationship between green capital and sustainable manufacturing,pub-0009,abbas2026moderating,exact normalized title,linked,
+supplied_site,seed-05,pub-0010,abonazel2022two,"title search → DOI (exact or prefix title, author 'Taha')",linked,
+crossref,10.3389/fams.2021.780322,pub-0010,abonazel2022two,exact DOI,canonical,
+openalex,https://openalex.org/W4210313353,pub-0010,abonazel2022two,exact DOI,linked,
+orcid,10.3389/fams.2021.780322,pub-0010,abonazel2022two,exact DOI,linked,
+semantic_scholar,10.3389/fams.2021.780322,pub-0010,abonazel2022two,exact DOI,linked,
+google_scholar,"A new two-parameter estimator for beta regression model: method, simulation, and application",pub-0010,abonazel2022two,exact normalized title,linked,
+google_scholar,A new biased estimator for zero-inflated count regression models,pub-0011,rady2019biased,canonical (GS-only),canonical,
+supplied_site,seed-07,pub-0011,rady2019biased,normalized/prefix title,linked,
+google_scholar,Ridge estimators for the negative binomial regression model with application,pub-0012,rady2018ridge,canonical (GS-only),canonical,
+supplied_site,seed-09,pub-0012,rady2018ridge,normalized/prefix title,linked,
+google_scholar,New shrinkage parameters for Liu-type zero inflated negative binomial estimator,pub-0013,rady2019shrinkage,canonical (GS-only),canonical,
+supplied_site,seed-08,pub-0013,rady2019shrinkage,normalized/prefix title,linked,
+google_scholar,"A Comprehensive Guide to the ARDL Bounds Testing Approach for Cointegration Analysis Theory, Methodology, and Applications",pub-0014,taha2025comprehensivea,canonical (GS-only),canonical,
+google_scholar,Handling Multicollinearity Problem in Generalized Linear Models,pub-0015,taha2019handling,canonical (GS-only),canonical,
+google_scholar,A Comprehensive Guide to the ARDL Bounds Testing Approach for Cointegration Analysis,pub-0016,,canonical (GS-only),canonical,
+google_scholar,The Regression Handbook: 250+ Models Explained From Classical Regression to Deep Learning,pub-0017,taha2026regression,canonical (GS-only),canonical,
+google_scholar,Sample Size Calculation: From Classical Methods to Recent Developments,pub-0018,taha2026sample,canonical (GS-only),canonical,
+google_scholar,"A Comprehensive Guide to Ridge Regression: Theory, Methods, and Applications From Classical Ridge to Modern Extensions",pub-0019,taha2025comprehensive,canonical (GS-only),canonical,
+google_scholar,Sample Size Calculation,pub-0020,,canonical (GS-only),canonical,
+google_scholar,"A Comprehensive Guide to Ridge Regression Theory, Methods, and Applications",pub-0021,,canonical (GS-only),canonical,
+semantic_scholar,author 145792199 'Ibrahim B. M. Taha',,,author disambiguation,rejected,"different person: 80+ papers in electrical power engineering, different middle initials; only overlap is a misattributed SOIC 2024 paper"
+semantic_scholar,'Design of a small sample laboratory grain dryer' (1970) in author cluster 2142163895,,,topic/date plausibility,rejected,"agricultural engineering, dated 1970, no DOI; inconsistent with the researcher's career (employment from 2017)"
+orcid,"0000-0002-3108-2921 'Ibrahim Mohamed Taha (I.M.Taha)', Faculty of Agriculture, Al-Azhar University",,,author disambiguation,rejected,"homonym: same full name, different institution and field"
+crossref,"10.3389/fams.2021.780322 | A New Two-Parameter Estimator for Beta Regression Model: Method, Simulation, and Applicati",,,title search candidate,rejected,title similarity 0.622 < 0.85
+openalex,"10.1080/00949655.2020.1867549 | On some beta ridge regression estimators: method, simulation and application",,,title search candidate,rejected,no author named Taha; year 2021 vs listed 2023
+openalex,10.3934/math.2022062 | A new modified ridge-type estimator for the beta regression model: simulation and applicat,,,title search candidate,rejected,title similarity 0.623 < 0.85; no author named Taha; year 2021 vs listed 2023
+openalex,10.3389/fams.2022.775068 | Dawoud–Kibria Estimator for Beta Regression Model: Simulation and Application,,,title search candidate,rejected,title similarity 0.652 < 0.85; no author named Taha
+openalex,"10.3389/fams.2021.780322 | A New Two-Parameter Estimator for Beta Regression Model: Method, Simulation, and Applicati",,,title search candidate,rejected,title similarity 0.622 < 0.85
+openalex,10.1016/j.csda.2009.08.017 | Improved estimators for a general class of beta regression models,,,title search candidate,rejected,title similarity 0.617 < 0.85; no author named Taha; year 2009 vs listed 2022
+openalex,10.3934/math.2026785 | Mitigating multicollinearity issues to improve the two-parameter estimators for a Beta reg,,,title search candidate,rejected,title similarity 0.684 < 0.85; no author named Taha; year 2026 vs listed 2022
+openalex,10.1080/03610918.2025.2588689 | A new hybrid estimator for the beta regression model: simulations and applications,,,title search candidate,rejected,title similarity 0.632 < 0.85; no author named Taha; year 2025 vs listed 2022
+openalex,10.1002/cpe.7045 | A new Stein estimator for the zero‐inflated negative binomial regression model,,,title search candidate,rejected,title similarity 0.761 < 0.85; no author named Taha; year 2022 vs listed 2019
+openalex,10.1016/j.heliyon.2024.e24225 | A new modified biased estimator for Zero inflated Poisson regression model,,,title search candidate,rejected,no author named Taha; year 2024 vs listed 2019
+openalex,10.1038/s41598-025-06116-4 | New two parameter hybrid estimator for zero inflated negative binomial regression models,,,title search candidate,rejected,title similarity 0.724 < 0.85; no author named Taha; year 2025 vs listed 2019
+openalex,10.52866/2788-7421.1248 | A New Ridge-Type Estimator in the Zero-Inflated Bell Regression Model,,,title search candidate,rejected,title similarity 0.767 < 0.85; no author named Taha; year 2025 vs listed 2019
+openalex,10.15672/hujms.911424 | Improved shrinkage estimators in zero-inflated negative binomial regression model,,,title search candidate,rejected,title similarity 0.7 < 0.85; no author named Taha; year 2021 vs listed 2019
+openalex,10.1038/s41598-025-06116-4 | New two parameter hybrid estimator for zero inflated negative binomial regression models,,,title search candidate,rejected,title similarity 0.683 < 0.85; no author named Taha; year 2025 vs listed 2019
+openalex,10.1007/s42519-026-00628-6 | Performance of Link Functions and New Ridge Parameter Estimators for the Zero-Inflated Neg,,,title search candidate,rejected,title similarity 0.643 < 0.85; no author named Taha; year 2026 vs listed 2018
+openalex,None | A New Ridge Estimator for the Negative Binomial Regression Model,,,title search candidate,rejected,title similarity 0.829 < 0.85; no author named Taha; year 2020 vs listed 2018
+openalex,10.1088/1742-6596/1897/1/012019 | Generalized ridge estimator in negative binomial regression model,,,title search candidate,rejected,title similarity 0.723 < 0.85; no author named Taha; year 2021 vs listed 2018
+openalex,10.1080/00949655.2019.1628235 | Improved two-parameter estimators for the negative binomial and Poisson regression models,,,title search candidate,rejected,title similarity 0.691 < 0.85; no author named Taha
+crossref,10.1002/cpe.7045 | A new Stein estimator for the zero‐inflated negative binomial regression model,,,title search candidate,rejected,title similarity 0.761 < 0.85; no author named Taha; year 2022 vs listed 2019
+openalex,10.1007/s44199-024-00101-y | Liu Estimation Method in the Zero-Inflated Conway Maxwell Poisson Regression Model,,,title search candidate,rejected,title similarity 0.644 < 0.85; no author named Taha; year 2024 vs listed 2019
+openalex,10.59543/ijmscs.v1i.7713 | Modified Jackknife Ridge Estimator for Beta Regression Model with Application to Chemical ,,,title search candidate,rejected,title similarity 0.659 < 0.85; no author named Taha; year 2023 vs listed 2018
+openalex,"10.3389/fams.2021.780322 | A New Two-Parameter Estimator for Beta Regression Model: Method, Simulation, and Applicati",,,title search candidate,rejected,title similarity 0.618 < 0.85; year 2022 vs listed 2018
+openalex,10.3389/fams.2022.775068 | Dawoud–Kibria Estimator for Beta Regression Model: Simulation and Application,,,title search candidate,rejected,title similarity 0.671 < 0.85; no author named Taha; year 2022 vs listed 2018
+reconciliation,"A Comprehensive Guide to the ARDL Bounds Testing Approach for Cointegration Analysis Theory, Methodology, and Applications <> A Comprehensive Guide to the ARDL Bounds Testing Approach for Cointegration Analysis",pub-0014 <> pub-0016,,fuzzy/prefix title (similarity 0.824),"duplicate candidate: manual review, not merged",pub-0014 exported; pub-0016 held back until reviewed
+reconciliation,Sample Size Calculation: From Classical Methods to Recent Developments <> Sample Size Calculation,pub-0018 <> pub-0020,,fuzzy/prefix title (similarity 0.5),"duplicate candidate: manual review, not merged",pub-0018 exported; pub-0020 held back until reviewed
+reconciliation,"A Comprehensive Guide to Ridge Regression: Theory, Methods, and Applications From Classical Ridge to Modern Extensions <> A Comprehensive Guide to Ridge Regression Theory, Methods, and Applications",pub-0019 <> pub-0021,,fuzzy/prefix title (similarity 0.777),"duplicate candidate: manual review, not merged",pub-0019 exported; pub-0021 held back until reviewed
