@@ -2,7 +2,7 @@
 
 > Decision D-07 (hosting): **Vercel**, approved 2026-11-05. D-07b resolved the same day: a **new** Vercel project `ibrahim-taha-axiom` connected to this repository (the earlier project for the previous site is untouched). Domain (D-07a) is pending.
 >
-> Current deployment: a temporary EN/AR placeholder (see [`../site/README.md`](../site/README.md)), protected by Vercel Authentication (only team members can view it) and marked `noindex`.
+> Current deployment: a temporary EN/AR placeholder (see [`../site/README.md`](../site/README.md)), marked `noindex` and blocked in `robots.txt`. The production alias **https://ibrahim-taha-axiom.vercel.app is publicly reachable**. Per-deployment and preview URLs require a Vercel login.
 
 ## Layout
 
@@ -29,7 +29,8 @@ Only `site/` is deployed. Everything else in the repository is outside the Verce
 | Node.js version | 26.x (pinned with `engines.node` in `site/package.json`) |
 | Ignored Build Step | from `site/vercel.json`: skip if `site/package.json` is missing |
 | Preview deployments | On for pull requests and non-main branches (replaces the gh-pages PR previews used by Astro Scholar) |
-| Deployment Protection | Currently Vercel Authentication on all deployments except custom domains. Keep it for previews; make production public only at launch |
+| Deployment Protection | Vercel Authentication on previews and per-deployment URLs. The production `*.vercel.app` alias is public, so never deploy unreviewed researcher data to `main` |
+| Skip unaffected deployments | On: commits that don't change `site/` do not trigger a build |
 
 ## How the Astro app will target Vercel (build phase)
 
@@ -59,4 +60,4 @@ The project was created with Root Directory `site` and the Astro preset. **Do no
 ## Not done yet (by design)
 - No custom domain (D-07a).
 - No environment variables set on Vercel (none are needed by the placeholder).
-- Production stays behind Vercel Authentication until launch.
+- Search engines stay blocked (`noindex` + `robots.txt`) until launch.
