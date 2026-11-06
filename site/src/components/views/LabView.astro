@@ -1,0 +1,51 @@
+---
+/**
+ * /lab/ in both languages. Header figures come from the lab payload, so the
+ * page cannot claim more estimators, levels or replicates than were computed.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../shared/PageHeader.astro';
+import ShrinkageLab from '../lab/ShrinkageLab.astro';
+import SectionNav from '../shared/SectionNav.astro';
+import { PICTURES } from '../../utils/imagery';
+import { pageCopy, sectionNumber } from '../../config/site';
+import { LAB_PAYLOAD } from '../../lab/snapshots';
+import { localePath } from '../../utils/paths';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const copy = await pageCopy('lab', lang);
+const ui = t(lang);
+const crumbs = [{ label: ui.home, href: localePath(lang, '/') }, { label: copy.navLabel }];
+const stats = [
+  { value: String(LAB_PAYLOAD.meta.estimators.length), label: ar ? 'مقدِّرات' : 'estimators' },
+  { value: String(LAB_PAYLOAD.states.length), label: ar ? 'مستوى ارتباط' : 'collinearity levels' },
+  { value: String(LAB_PAYLOAD.meta.reps), label: ar ? 'عيّنة مُعادة لكل مستوى' : 'redrawn samples per level' },
+];
+const sections = [
+  { id: 'lab-heading', label: ar ? 'التجربة' : 'Experiment' },
+  { id: 'lab-shows', label: ar ? 'ما تُظهره' : 'What it shows' },
+  { id: 'lab-methods', label: ar ? 'المنهج' : 'Methods' },
+  { id: 'lab-revision', label: ar ? 'المراجعة' : 'Revision' },
+];
+---
+
+<BaseLayout lang={lang} path="/lab/" title={copy.title} description={copy.description}>
+  <PageHeader
+    lang={lang}
+    title={copy.title}
+    lead={copy.lead}
+    number={sectionNumber('lab')}
+    crumbs={crumbs}
+    picture={PICTURES.tangent}
+    stats={stats}
+    kicker={ar ? 'تجربة تفاعلية' : 'Interactive experiment'}
+  />
+  <SectionNav lang={lang} items={sections} />
+  <ShrinkageLab lang={lang} />
+</BaseLayout>
