@@ -48,29 +48,61 @@ export const PROFILE_FIELDS = [
   'authorMatch',
 ] as const;
 
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Use an ISO date (YYYY-MM-DD)' });
+/** Node references used by relationships: kind:id. */
+export const NODE_KINDS = ['publication', 'area', 'project', 'course', 'talk', 'method', 'dataset'] as const;
+export type NodeKind = (typeof NODE_KINDS)[number];
+const nodeRef = z.string().regex(/^(publication|area|project|course|talk|method|dataset):[a-z0-9-]+$/, {
+  message: 'Use kind:id with kind in publication|area|project|course|talk|method|dataset',
+});
+/** Fields a relationship may quote as machine-checkable evidence. */
+export const EVIDENCE_FIELDS = ['title', 'keywords', 'abstract', 'supp', 'links'] as const;
+
 export const ManifestSchema = z
   .object({
     schemaVersion: z.literal(1),
     status: z.string(),
-    lastReviewed: z.string().nullable(),
+    lastReviewed: isoDate.nullable(),
     reviewedBy: z.string().nullable(),
-    researcherApproval: z.object({
-      status: z.enum(['pending', 'partial', 'approved']),
-      reference: z.string().nullable(),
-    }),
+    researcherApproval: z
+      .object({
+        status: z.enum(['pending', 'partial', 'approved']),
+        reference: z.string().nullable(),
+        /** Who gave the approval (identity as published, with ORCID). */
+        researcher: z.object({ name: z.string().min(1), orcid: z.string().regex(/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/) }).optional(),
+        date: isoDate.optional(),
+        scope: z.array(z.string().min(1)).optional(),
+        exclusions: z.array(z.string().min(1)).default([]),
+        recordedBy: z.string().optional(),
+        basis: z.string().optional(),
+      })
+      .refine((a) => a.status !== 'approved' || (!!a.researcher && !!a.date && !!a.scope?.length && !!a.recordedBy && !!a.basis), {
+        message: 'researcherApproval: an approved record needs researcher, date, scope, recordedBy and basis',
+      }),
+    /** Earlier approval records, kept for the audit trail (never rewritten). */
+    approvalHistory: z
+      .array(z.object({ date: isoDate, status: z.string().min(1), by: z.string().min(1), scope: z.string().min(1), note: z.string().optional() }))
+      .default([]),
     profile: z.object({ approvedFields: z.array(z.enum(PROFILE_FIELDS)) }),
     publications: z.object({ approvedKeys: z.array(z.string()), selectedKeys: z.array(z.string()) }),
     researchAreas: z.object({ approvedIds: z.array(z.string()) }),
     projects: z.object({ approvedIds: z.array(z.string()) }),
     courses: z.object({ approvedIds: z.array(z.string()) }),
     talks: z.object({ approvedIds: z.array(z.string()) }),
+    /** Method and dataset nodes of the knowledge graph (derived from approved records). */
+    methods: z.object({ approvedIds: z.array(z.string()), basis: z.string().min(1) }),
+    datasets: z.object({ approvedIds: z.array(z.string()), basis: z.string().min(1) }),
     cv: z.object({ approved: z.boolean() }),
     metrics: z.object({ approved: z.boolean(), source: z.string(), note: z.string() }),
+    /** Display policy for Arabic drafts (src/data/translations/ar.json). */
+    translations: z.object({ ar: z.object({ showDrafts: z.boolean(), note: z.string().min(1) }) }),
     relationships: z.array(
       z.object({
-        from: z.string().regex(/^(publication|area|project|course|talk):.+$/),
-        to: z.string().regex(/^(publication|area|project|course|talk):.+$/),
+        from: nodeRef,
+        to: nodeRef,
         evidence: z.string().min(1),
+        /** Optional verbatim evidence, checked at build against the source record. */
+        source: z.object({ field: z.enum(EVIDENCE_FIELDS), quote: z.string().min(2) }).optional(),
       }),
     ),
   })
@@ -163,3 +195,60 @@ export const CvSchema = z.object({
   ),
 });
 export type Cv = z.infer<typeof CvSchema>;
+
+/** A statistical method used as a knowledge-graph node (site taxonomy, not a researcher claim). */
+export const MethodSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  title: RequiredLocalized,
+  summary: Localized,
+});
+export type Method = z.infer<typeof MethodSchema>;
+
+export const DatasetSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  title: RequiredLocalized,
+  summary: Localized,
+  doi: z.string().regex(/^10\.\d{4,9}\/\S+$/).optional(),
+  url: httpUrl,
+  licence: z.string().optional(),
+});
+export type Dataset = z.infer<typeof DatasetSchema>;
+
+/** Arabic drafts: keyed by the exact English text they translate (the fingerprint). */
+export const TranslationFileSchema = z.object({
+  schemaVersion: z.literal(1),
+  language: z.literal('ar'),
+  status: z.enum(['draft', 'reviewed']),
+  prepared: isoDate,
+  method: z.string().min(1),
+  reviewedBy: z.string().nullable(),
+  entries: z.array(
+    z.object({
+      ref: z.string().min(1),
+      en: z.string().min(1),
+      ar: z.string().min(1),
+      status: z.enum(['draft', 'reviewed']),
+    }),
+  ),
+});
+export type TranslationFile = z.infer<typeof TranslationFileSchema>;
+
+/** Data-quality register: unresolved questions, recorded with sources, never silently resolved. */
+export const OpenIssuesSchema = z.object({
+  schemaVersion: z.literal(1),
+  updated: isoDate,
+  issues: z.array(
+    z.object({
+      id: z.string().regex(/^DQ-\d{2}$/),
+      category: z.enum(['year', 'author-order', 'identity', 'classification', 'metadata', 'relationship', 'documentation']),
+      status: z.enum(['open', 'resolved']),
+      subjects: z.array(z.string().min(1)),
+      question: z.string().min(1),
+      current: z.string().min(1),
+      alternatives: z.array(z.string()).default([]),
+      sources: z.array(z.string().min(1)).min(1),
+      owner: z.string().min(1),
+    }),
+  ),
+});
+export type OpenIssues = z.infer<typeof OpenIssuesSchema>;

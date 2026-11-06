@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-11-06",
+  "issues": [
+    {
+      "id": "DQ-01",
+      "category": "year",
+      "status": "open",
+      "subjects": [
+        "publication:abonazel2023beta"
+      ],
+      "question": "Which year should the beta ridge paper carry: the print issue or the online-first date?",
+      "current": "2023 (Crossref print year, volume 52, issue 9)",
+      "alternatives": [
+        "2021 (published online first)"
+      ],
+      "sources": [
+        "research/data-quality-report.md (Year conflicts)",
+        "research/data-gaps-and-questions.md (question 6)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-02",
+      "category": "year",
+      "status": "open",
+      "subjects": [
+        "publication:seliem2024note"
+      ],
+      "question": "Which year should the SOIC prior-selection paper carry?",
+      "current": "2024 (first issued; Crossref has no print date)",
+      "alternatives": [
+        "2025 (volume 13(2), as shown by ORCID, Google Scholar and the earlier site)"
+      ],
+      "sources": [
+        "research/data-quality-report.md (Year conflicts)",
+        "research/data-gaps-and-questions.md (question 6)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-03",
+      "category": "year",
+      "status": "open",
+      "subjects": [
+        "publication:abonazel2022two"
+      ],
+      "question": "The record gives year 2022 with volume 7, while the DOI (10.3389/fams.2021.780322) encodes 2021. Which year and volume are correct?",
+      "current": "2022, volume 7",
+      "alternatives": [
+        "2021, volume 7"
+      ],
+      "sources": [
+        "site/src/data/approved/publications.bib (entry abonazel2022two)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-04",
+      "category": "author-order",
+      "status": "open",
+      "subjects": [
+        "publication:elnady2022tam"
+      ],
+      "question": "Which author order is official for the TAM paper?",
+      "current": "Elnady, Taha, Abdella (DOI deposit order)",
+      "alternatives": [
+        "Abdella, Taha, Elnady (OpenAlex, the preprint, Google Scholar and the earlier site)"
+      ],
+      "sources": [
+        "research/data-quality-report.md (Author-order conflict)",
+        "research/data-gaps-and-questions.md (question 7)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-05",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "profile:identifiers"
+      ],
+      "question": "ORCID lists two Scopus Author IDs. Are both the researcher’s, and should they be merged at Scopus?",
+      "current": "Both IDs (57226774796 and 58577960300) are listed as identifiers",
+      "alternatives": [],
+      "sources": [
+        "research/author-identity-review.md (item 1)",
+        "research/data-gaps-and-questions.md (question 4)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-06",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "profile:identifiers",
+        "project:statistical-guides",
+        "metrics:researchgate"
+      ],
+      "question": "Two ResearchGate addresses are in the approved data. Are they the same profile, and which is canonical?",
+      "current": "Identifier and project link use profile/Ibrahim_Taha11; the metrics snapshot uses profile/Ibrahim-Taha-5",
+      "alternatives": [],
+      "sources": [
+        "site/src/data/approved/profile.json",
+        "site/src/data/approved/projects.json",
+        "site/src/data/approved/research-metrics.json"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-07",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "profile:affiliations"
+      ],
+      "question": "Which Sadat Academy branch is current?",
+      "current": "Maadi, Cairo (biography, 2026 paper, earlier site)",
+      "alternatives": [
+        "Tanta (printed on the 2023 and 2025 papers)"
+      ],
+      "sources": [
+        "research/author-identity-review.md (item 2)",
+        "research/data-quality-report.md (readiness table)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-08",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "external:semantic-scholar"
+      ],
+      "question": "Semantic Scholar attributes the 2024 SOIC paper to a different “Ibrahim B. M. Taha” and adds a 1970 record to the correct profile. Will the researcher claim the profile and request corrections?",
+      "current": "Semantic Scholar figures are not used on the site",
+      "alternatives": [],
+      "sources": [
+        "research/author-identity-review.md (item 3)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-09",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "project:com-poisson-penalized-estimation",
+        "external:github"
+      ],
+      "question": "Is GitHub account IbrahimTaha2018 the researcher’s, what is the SVM_New repository, and which licence applies to the data repository (Zenodo says CC BY 4.0; the GitHub repository has none)?",
+      "current": "The GitHub data repository is linked from the project; SVM_New is not shown",
+      "alternatives": [],
+      "sources": [
+        "research/author-identity-review.md (item 4)",
+        "research/data-gaps-and-questions.md (question 5)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-10",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "profile:name"
+      ],
+      "question": "What is the official Arabic spelling of the researcher’s name?",
+      "current": "The Arabic pages keep the name in its original Latin form",
+      "alternatives": [],
+      "sources": [
+        "research/author-identity-review.md (item 5)",
+        "research/data-gaps-and-questions.md (missing data table)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-11",
+      "category": "identity",
+      "status": "open",
+      "subjects": [
+        "publication:rady2019biased",
+        "publication:rady2019shrinkage",
+        "publication:rady2018ridge"
+      ],
+      "question": "The co-author appears as “Rady, E. H. A.” in one record and “Rady, E. A.” in two. Is this one person, and which form should be cited?",
+      "current": "Kept as recorded; the explorer’s co-author filter treats them as separate names",
+      "alternatives": [],
+      "sources": [
+        "site/src/data/approved/publications.bib (entries rady2019biased, rady2019shrinkage, rady2018ridge)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-12",
+      "category": "classification",
+      "status": "open",
+      "subjects": [
+        "publication:taha2026panels",
+        "publication:taha2026logistic",
+        "publication:taha2026sample",
+        "publication:taha2026regression",
+        "publication:taha2025comprehensive",
+        "publication:taha2025comprehensivea",
+        "publication:taha2026fit",
+        "publication:taha2026normality"
+      ],
+      "question": "The self-published guides are typed inconsistently (book, misc, techreport). What type is each, and are “Sample Size Calculation” and “A Comprehensive Guide to Ridge Regression” duplicates of other entries?",
+      "current": "Types kept as recorded: four @book, two @misc, two @techreport",
+      "alternatives": [],
+      "sources": [
+        "research/data-gaps-and-questions.md (question 10)",
+        "research/data-quality-report.md (readiness table)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-13",
+      "category": "classification",
+      "status": "open",
+      "subjects": [
+        "talk:conference-2018-nb-ridge",
+        "talk:conference-2019-zinb-liu"
+      ],
+      "question": "Were the 2018 and 2019 conference papers published in proceedings, and did the researcher present them?",
+      "current": "Listed as conference papers; the presenter is not stated",
+      "alternatives": [],
+      "sources": [
+        "research/data-gaps-and-questions.md (question 9)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-14",
+      "category": "relationship",
+      "status": "open",
+      "subjects": [
+        "manifest:methods",
+        "publication:taha2026regression",
+        "publication:taha2026uncertainty"
+      ],
+      "question": "Phase 4 adds method nodes (ridge, Liu-type, LASSO/elastic net, PLS-SEM, Monte Carlo) linked only where a publication’s own text names the method. Are these labels acceptable? Two older area links are weak: taha2026regression → penalized-count-regression and taha2026uncertainty → bayesian-estimation.",
+      "current": "Method links quote the publication text and are checked at build; the two weak area links are kept as approved",
+      "alternatives": [],
+      "sources": [
+        "site/src/data/approved/public-content.manifest.json (relationships)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-15",
+      "category": "metadata",
+      "status": "open",
+      "subjects": [
+        "publication:elnady2022tam"
+      ],
+      "question": "The journal name was deposited with Persian letter forms (ی and ک instead of ي and ك), and the record is tagged langid english although the venue is Arabic. Should the venue be normalised?",
+      "current": "Kept exactly as deposited (search matches both letter forms)",
+      "alternatives": [],
+      "sources": [
+        "site/src/data/approved/publications.bib (entry elnady2022tam)"
+      ],
+      "owner": "researcher"
+    },
+    {
+      "id": "DQ-16",
+      "category": "metadata",
+      "status": "open",
+      "subjects": [
+        "publication:rady2019biased"
+      ],
+      "question": "Is there a file, DOI or link for the 2019 JMASM paper?",
+      "current": "Listed without DOI or URL",
+      "alternatives": [],
+      "sources": [
+        "research/data-gaps-and-questions.md (question 8)"
+      ],
+      "owner": "researcher"
+    }
+  ]
+}
