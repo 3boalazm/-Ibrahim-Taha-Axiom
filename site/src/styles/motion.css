@@ -1,0 +1,213 @@
+/* ==========================================================================
+   Motion patterns — the shared vocabulary (docs/motion-system.md)
+
+   Principles: quiet, mathematical, purposeful. Motion explains a change
+   (a curve is drawn, a relation is traced, a result moves) and then stops.
+   Nothing loops, nothing follows the cursor, nothing moves the background.
+
+   Safety model
+   - Any hidden starting state is scoped to html[data-motion]. The head script in
+     BaseLayout sets that attribute only when JavaScript runs AND the reader has
+     not asked for reduced motion; a watchdog removes it again if the motion
+     module fails to boot. Without JS, or with reduced motion, nothing is hidden.
+   - Animations use fill-mode `backwards`, so once they end the element's own
+     styles apply again (no stuck transforms fighting hover states).
+   - Durations come from tokens.css and are 0 under prefers-reduced-motion.
+   ========================================================================== */
+
+/* ------------------------------------------------------------ keyframes */
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--rise-md), 0);
+  }
+}
+@keyframes motion-rise-sm {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--rise-sm), 0);
+  }
+}
+/* transform only: for content that must never be invisible (page titles, the name) */
+@keyframes motion-settle {
+  from {
+    transform: translate3d(0, var(--rise-sm), 0);
+  }
+}
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes motion-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* line-draw: the element needs pathLength="1" */
+@keyframes motion-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+/* chart-reveal: bars grow from their baseline to their own (data) height */
+@keyframes motion-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes motion-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes motion-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes motion-focus {
+  from {
+    outline-offset: 7px;
+    outline-color: transparent;
+  }
+}
+
+/* ------------------------------------------------------------ page-transition
+   Cross-document View Transitions (Chromium 126+, Safari 18.2+; others simply
+   navigate). The old page steps back quickly, the new one settles in. The header
+   is its own static layer, so it never fades or jumps; only the current-page pill
+   slides from the old section to the new one. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root) {
+  animation: motion-fade-out var(--motion-fast) var(--ease-exit) both;
+}
+::view-transition-new(root) {
+  animation: motion-rise-sm var(--motion-page) var(--ease-emphasized) both;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-group(nav-current) {
+  animation-duration: var(--motion-base);
+  animation-timing-function: var(--ease-standard);
+  border-radius: var(--radius-pill);
+  overflow: clip;
+}
+::view-transition-old(nav-current),
+::view-transition-new(nav-current) {
+  block-size: 100%;
+  object-fit: none;
+  animation-duration: var(--motion-base);
+}
+
+/* ------------------------------------------------------------ reveal-once / stagger-group
+   <section data-reveal>          one block rises in the first time it is seen
+   <ul data-stagger>              its children rise in, one --stagger-step apart
+   data-reveal="fade"             opacity only (large blocks, figures)
+   style="--i: n"                 manual position in a sequence */
+html[data-motion] [data-reveal]:not(.is-revealed),
+html[data-motion] [data-stagger]:not(.is-revealed) > * {
+  opacity: 0;
+}
+html[data-motion] [data-reveal].is-revealed,
+html[data-motion] [data-stagger].is-revealed > * {
+  animation: motion-rise var(--motion-slow) var(--ease-emphasized) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-step));
+}
+html[data-motion] [data-reveal='fade'].is-revealed {
+  animation-name: motion-fade-in;
+}
+
+/* Page titles: transform only, so the heading is readable from the first frame. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: motion-settle var(--motion-slow) var(--ease-emphasized) backwards;
+  }
+  .reveal-2 {
+    animation-delay: calc(2 * var(--stagger-step));
+  }
+  .reveal-3 {
+    animation-delay: calc(4 * var(--stagger-step));
+  }
+}
+
+/* ------------------------------------------------------------ line-draw / chart-reveal
+   <path class="line-draw" pathLength="1">  inside a revealed group: drawn once
+   <rect class="chart-bar">                 inside a revealed group: grows from 0
+   No separate hidden state: the group itself is transparent until revealed, and
+   fill-mode `backwards` holds the undrawn frame through the stagger delay. */
+html[data-motion] .is-revealed .line-draw {
+  animation: motion-draw var(--motion-draw) var(--ease-draw) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-step));
+}
+html[data-motion] .is-revealed .chart-bar {
+  transform-origin: 50% 100%;
+  animation: motion-grow-y var(--motion-slow) var(--ease-emphasized) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-step));
+}
+
+/* ------------------------------------------------------------ hover-lift
+   Only for devices that really hover; touch never gets a stuck lifted card. */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
+  }
+  .hover-lift:hover {
+    transform: translate3d(0, var(--lift), 0);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* ------------------------------------------------------------ interaction feedback */
+:where(.button, button.chip, .segmented button, .site-header__cta, .search-trigger):active {
+  transform: scale(var(--press-scale));
+  transition-duration: var(--motion-instant);
+}
+
+/* focus-highlight: the ring closes in once when focus arrives (keyboard only) */
+html[data-motion] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  animation: motion-focus var(--motion-fast) var(--ease-emphasized);
+}
+
+/* ------------------------------------------------------------ disclosure (<details>)
+   Smooth open and close where the browser supports animating ::details-content
+   (Chromium 131+). Everywhere else the native instant toggle is kept. Add
+   .motion-static to a <details> to opt out. */
+@supports selector(::details-content) {
+  html[data-motion] details:not(.motion-static) {
+    interpolate-size: allow-keywords;
+  }
+  html[data-motion] details:not(.motion-static)::details-content {
+    block-size: 0;
+    overflow: clip;
+    overflow-clip-margin: 6px;
+    transition: block-size var(--motion-base) var(--ease-standard),
+      content-visibility var(--motion-base) var(--ease-standard) allow-discrete;
+  }
+  html[data-motion] details[open]:not(.motion-static)::details-content {
+    block-size: auto;
+  }
+}
+
+/* ------------------------------------------------------------ print & capture */
+@media print {
+  html[data-motion] [data-reveal],
+  html[data-motion] [data-stagger] > * {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

@@ -13,13 +13,15 @@ interface Props {
   /** Accessible name. Omit for a decorative mark sitting next to a wordmark. */
   label?: string;
   class?: string;
+  /** Play the one-time drawing intro (header only; once per browser session). */
+  intro?: boolean;
 }
-const { size = '2.45rem', label, class: cls } = Astro.props;
+const { size = '2.45rem', label, class: cls, intro = false } = Astro.props;
 const titleId = `mark-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
 <svg
-  class:list={['mark', cls]}
+  class:list={['mark', intro && 'mark--intro', cls]}
   viewBox="0 0 64 64"
   width={size}
   height={size}
@@ -30,10 +32,11 @@ const titleId = `mark-${Math.random().toString(36).slice(2, 9)}`;
 >
   {label && <title id={titleId}>{label}</title>}
   <g fill="none" stroke="var(--mark-ring, #a9843f)" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="32" cy="32" r="28.6" stroke-width="1.9" />
-    <path d="M10.8,45H53.2" stroke-width="1.5" />
+    <circle class="mark__ring" cx="32" cy="32" r="28.6" stroke-width="1.9" pathLength="1" />
+    <path class="mark__axis" d="M10.8,45H53.2" stroke-width="1.5" pathLength="1" />
   </g>
   <path
+    class="mark__curve"
     fill="currentColor"
     d="M13.4,42.5L14.2,42.0L15.1,41.4L15.9,40.7L16.7,40.0L17.5,39.2L18.4,38.3L19.2,37.4L20.1,36.3L20.9,35.3L21.7,34.2L22.6,33.0L23.4,31.9L24.3,30.7L25.1,29.6L25.9,28.5L26.7,27.5L27.5,26.6L28.3,25.7L29.1,25.0L29.9,24.4L30.7,23.9L31.5,23.6L32.0,23.5L32.5,23.6L33.3,23.9L34.1,24.4L34.9,25.0L35.7,25.7L36.5,26.6L37.3,27.5L38.1,28.5L38.9,29.6L39.7,30.7L40.6,31.9L41.4,33.0L42.3,34.2L43.1,35.3L43.9,36.3L44.8,37.4L45.6,38.3L46.5,39.2L47.3,40.0L48.1,40.7L48.9,41.4L49.8,42.0L50.6,42.5L49.9,43.1L49.1,43.6L48.3,43.9L47.5,44.0L46.7,43.9L45.9,43.6L45.1,43.1L44.3,42.5L43.5,41.8L42.7,40.9L41.9,40.0L41.1,39.0L40.3,37.9L39.5,36.8L38.6,35.6L37.8,34.5L36.9,33.4L36.1,32.4L35.3,31.5L34.4,30.6L33.6,29.9L32.8,29.3L32.0,29.1L31.2,29.3L30.4,29.9L29.6,30.6L28.7,31.5L27.9,32.4L27.1,33.4L26.2,34.5L25.4,35.6L24.5,36.8L23.7,37.9L22.9,39.0L22.1,40.0L21.3,40.9L20.5,41.8L19.7,42.5L18.9,43.1L18.1,43.6L17.3,43.9L16.5,44.0L15.7,43.9L14.9,43.6L14.1,43.1Z"
   />
@@ -44,5 +47,35 @@ const titleId = `mark-${Math.random().toString(36).slice(2, 9)}`;
     display: block;
     flex: none;
     overflow: visible;
+  }
+  /* Micro-interaction: on hover or keyboard focus of the link around the mark, the
+     density tightens — x scaled by 0.9, y by 1/0.9 about the mean on the axis. The
+     transformation preserves area, so the mark stays a valid normal density with a
+     smaller σ. */
+  .mark__curve {
+    transform-box: view-box;
+    transform-origin: 32px 44.5px;
+    transition: transform var(--motion-base) var(--ease-emphasized);
+  }
+  :global(a:hover) > .mark .mark__curve,
+  :global(a:focus-visible) > .mark .mark__curve {
+    transform: scale(0.9, 1.1111);
+  }
+  .mark__ring {
+    transform-box: view-box;
+    transform-origin: 32px 32px;
+    /* start the ring at twelve o'clock so the intro draws from the top */
+    transform: rotate(-90deg);
+  }
+  /* Intro: ring and axis are drawn, then the curve rises from its axis. Once per
+     browser session (head script sets data-mark-intro), never under reduced motion. */
+  :global(html[data-motion][data-mark-intro]) .mark--intro .mark__ring {
+    animation: motion-draw var(--motion-draw) var(--ease-draw) backwards;
+  }
+  :global(html[data-motion][data-mark-intro]) .mark--intro .mark__axis {
+    animation: motion-draw var(--motion-slow) var(--ease-draw) 160ms backwards;
+  }
+  :global(html[data-motion][data-mark-intro]) .mark--intro .mark__curve {
+    animation: motion-grow-y var(--motion-slow) var(--ease-emphasized) 380ms backwards;
   }
 </style>

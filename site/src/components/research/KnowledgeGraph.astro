@@ -220,6 +220,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
 </section>
 
 <script>
+  import { EASE, css, drawStrokes, motionAllowed, token } from '../../lib/motion.mjs';
   type Node = { ref: string; kind: string; label: string; lang?: string; href: string; side: 'start' | 'centre' | 'end'; row: number; draft?: boolean; year?: number | null };
   type Edge = { from: string; to: string; evidence: string; field?: string; quote?: string };
 
@@ -317,11 +318,50 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
       buttons.forEach((b) => (b.tabIndex = b === btn ? 0 : -1));
     }
 
+    /**
+     * Selection motion: the selected node's edges are redrawn outward from it (the
+     * end nearest the node is found geometrically, so mirrored RTL maps work too),
+     * dashed method links fade in, the node gets one focus-ring pulse and the
+     * evidence panel settles. Hover and focus previews stay instant (light()).
+     */
+    function animateSelection(ref: string) {
+      if (!motionAllowed() || root!.dataset.view !== 'map') return;
+      const b = btnOf.get(ref);
+      if (!b) return;
+      const r = b.getBoundingClientRect();
+      if (!r.width) return;
+      const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      const lit = paths.filter((p) => p.dataset.from === ref || p.dataset.to === ref);
+      const startsAtNode = (p: SVGPathElement) => {
+        const m = p.getScreenCTM();
+        if (!m) return true;
+        const a = p.getPointAtLength(0).matrixTransform(m);
+        const z = p.getPointAtLength(p.getTotalLength()).matrixTransform(m);
+        return Math.hypot(a.x - c.x, a.y - c.y) <= Math.hypot(z.x - c.x, z.y - c.y);
+      };
+      const slow = token('--motion-slow');
+      const solid = lit.filter((p) => !p.classList.contains('to-method'));
+      const forward = new Map(solid.map((p) => [p, startsAtNode(p)]));
+      drawStrokes(solid, { duration: slow, easing: EASE.emphasized, reverse: (p: SVGPathElement) => !forward.get(p), delay: (_: Element, i: number) => Math.min(i, 8) * 18 });
+      lit
+        .filter((p) => p.classList.contains('to-method'))
+        .forEach((p) => p.animate([{ opacity: 0, offset: 0 }], { duration: slow, easing: css(EASE.standard) }));
+      const accent = getComputedStyle(b).getPropertyValue('--color-accent').trim() || 'currentColor';
+      b.animate(
+        [{ boxShadow: `0 0 0 0 color-mix(in srgb, ${accent} 45%, transparent)` }, { boxShadow: `0 0 0 8px color-mix(in srgb, ${accent} 0%, transparent)` }],
+        { duration: slow, easing: css(EASE.emphasized) },
+      );
+    }
+
     function select(ref: string | null, focus = false) {
+      const changed = ref !== selected;
       selected = ref;
       buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ref === ref)));
       light(ref);
       renderPanel(ref);
+      if (changed && motionAllowed())
+        panel.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: token('--motion-base'), easing: css(EASE.emphasized) });
+      if (changed && ref) animateSelection(ref);
       if (ref) {
         const b = btnOf.get(ref);
         if (b) {
@@ -385,6 +425,53 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
       if (go) select(go.dataset.goto!, true);
     });
 
+    /**
+     * Entry (once): when the map first scrolls into view, nodes appear column by
+     * column and the edges are drawn from their source; dashed method links fade.
+     * The hidden state (.is-awaiting) is set here, by the script that removes it,
+     * and only when the map is not on screen yet — a deep link (?focus=) that lands
+     * on the graph shows it at once.
+     */
+    const canvas = root.querySelector<HTMLElement>('.graph__canvas');
+    function entry() {
+      root!.classList.remove('is-awaiting');
+      const slow = token('--motion-slow');
+      const step = token('--stagger-step');
+      columns.forEach((col, ci) =>
+        col.forEach((b, i) =>
+          b.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], {
+            duration: slow,
+            delay: ci * 140 + Math.min(i, 8) * step * 0.6,
+            easing: css(EASE.emphasized),
+            fill: 'backwards',
+          }),
+        ),
+      );
+      const colOf = (ref?: string) => Math.max(0, sides.indexOf(nodeOf.get(ref ?? '')?.side as Node['side']));
+      drawStrokes(
+        paths.filter((p) => !p.classList.contains('to-method')),
+        { delay: (p: SVGPathElement, i: number) => 120 + Math.min(colOf(p.dataset.from), colOf(p.dataset.to)) * 140 + (i % 6) * 30 },
+      );
+      paths
+        .filter((p) => p.classList.contains('to-method'))
+        .forEach((p, i) => p.animate([{ opacity: 0, offset: 0 }], { duration: slow, delay: 420 + (i % 6) * 30, easing: css(EASE.standard), fill: 'backwards' }));
+    }
+    function armEntry() {
+      if (!canvas || !motionAllowed() || typeof IntersectionObserver !== 'function') return;
+      const r = canvas.getBoundingClientRect();
+      if (r.width > 0 && r.top < innerHeight && r.bottom > 0) return;
+      root!.classList.add('is-awaiting');
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          io.disconnect();
+          entry();
+        },
+        { rootMargin: '0px 0px -12% 0px' },
+      );
+      io.observe(canvas);
+    }
+
     // views: map by default on wide screens, list on narrow ones
     const viewButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-graph-view]')];
     const setView = (v: string) => {
@@ -393,6 +480,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
     };
     viewButtons.forEach((b) => b.addEventListener('click', () => setView(b.dataset.graphView!)));
     setView(window.matchMedia('(min-width: 48rem)').matches ? 'map' : 'list');
+    armEntry();
 
     // ?focus=kind:id preselects a node (used by search results and chips)
     const focus = new URLSearchParams(location.search).get('focus');
@@ -509,7 +597,12 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
     stroke: var(--color-rule-strong);
     stroke-width: 1;
     opacity: 0.75;
-    transition: opacity var(--dur-1) var(--ease), stroke var(--dur-1) var(--ease);
+    transition: opacity var(--motion-fast) var(--ease-standard), stroke var(--motion-fast) var(--ease-standard),
+      stroke-width var(--motion-fast) var(--ease-standard);
+  }
+  /* entry hold: set and cleared by the graph script (never by CSS alone) */
+  .graph.is-awaiting .graph__canvas {
+    opacity: 0;
   }
   .graph__edge.to-project,
   .graph__edge.to-talk,

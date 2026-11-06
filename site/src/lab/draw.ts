@@ -45,6 +45,13 @@ export function coefDomain(states: DrawState[]): number {
   return Math.min(2.5, Math.ceil(m * 10) / 10 + 0.1);
 }
 
+/*
+ * Motion keys: data-k gives chart elements an identity across redraws so the lab can
+ * move them from the previous precomputed state to the selected one (FLIP, see
+ * lib/motion.mjs). data-ghost marks lines whose shape changes: those cross-fade, so
+ * no curve that was never computed is ever drawn. Keys change nothing in the values.
+ */
+
 /**
  * Coefficient panel: for each slope, one row per estimator showing the estimate
  * on the displayed dataset (dot) and the Monte Carlo mean ± 2 SD (whisker),
@@ -81,11 +88,11 @@ export function coefSvg(s: DrawState, truth: number[], domain: number, labels: {
       const hi = mc.mean[j] + 2 * mc.sd[j];
       const clipL = lo < -domain;
       const clipR = hi > domain;
-      out.push(`<line class="labfig__whisker is-${k}" x1="${f(x(lo))}" x2="${f(x(hi))}" y1="${cy}" y2="${cy}"/>`);
-      if (!clipL) out.push(`<line class="labfig__cap is-${k}" x1="${f(x(lo))}" x2="${f(x(lo))}" y1="${cy - 3}" y2="${cy + 3}"/>`);
-      if (!clipR) out.push(`<line class="labfig__cap is-${k}" x1="${f(x(hi))}" x2="${f(x(hi))}" y1="${cy - 3}" y2="${cy + 3}"/>`);
-      out.push(`<rect class="labfig__mean is-${k}" x="${f(x(mc.mean[j]) - 1)}" y="${cy - 4}" width="2" height="8"/>`);
-      out.push(`<circle class="labfig__dot is-${k}" cx="${f(x(s.est[k].beta[j]))}" cy="${cy}" r="4.2"/>`);
+      out.push(`<line class="labfig__whisker is-${k}" data-k="c-wh-${k}-${j}" x1="${f(x(lo))}" x2="${f(x(hi))}" y1="${cy}" y2="${cy}"/>`);
+      if (!clipL) out.push(`<line class="labfig__cap is-${k}" data-k="c-capl-${k}-${j}" x1="${f(x(lo))}" x2="${f(x(lo))}" y1="${cy - 3}" y2="${cy + 3}"/>`);
+      if (!clipR) out.push(`<line class="labfig__cap is-${k}" data-k="c-capr-${k}-${j}" x1="${f(x(hi))}" x2="${f(x(hi))}" y1="${cy - 3}" y2="${cy + 3}"/>`);
+      out.push(`<rect class="labfig__mean is-${k}" data-k="c-mean-${k}-${j}" x="${f(x(mc.mean[j]) - 1)}" y="${cy - 4}" width="2" height="8"/>`);
+      out.push(`<circle class="labfig__dot is-${k}" data-k="c-dot-${k}-${j}" cx="${f(x(s.est[k].beta[j]))}" cy="${cy}" r="4.2"/>`);
     });
   });
   out.push('</svg>');
@@ -107,10 +114,10 @@ export function cvSvg(s: DrawState, lambdas: number[], labels: { axis: string })
   const y = (v: number) => padT + (1 - (v - min) / Math.max(1e-9, max - min)) * (H - padT - padB);
   const out: string[] = [`<svg viewBox="0 0 ${W} ${H}" class="labfig" role="presentation" focusable="false">`];
   out.push(`<line class="labfig__grid" x1="${padL}" x2="${W - padR}" y1="${H - padB}" y2="${H - padB}"/>`);
-  out.push(`<polyline class="labfig__cv" points="${dev.map((v, i) => `${f(x(i))},${f(y(v))}`).join(' ')}"/>`);
+  out.push(`<polyline class="labfig__cv" data-k="v-line" data-ghost points="${dev.map((v, i) => `${f(x(i))},${f(y(v))}`).join(' ')}"/>`);
   dev.forEach((v, i) => {
     const chosen = i === s.cvBest;
-    out.push(`<circle class="labfig__cvdot${chosen ? ' is-chosen' : ''}" cx="${f(x(i))}" cy="${f(y(v))}" r="${chosen ? 5 : 2.6}"/>`);
+    out.push(`<circle class="labfig__cvdot${chosen ? ' is-chosen' : ''}" data-k="v-dot-${i}" cx="${f(x(i))}" cy="${f(y(v))}" r="${chosen ? 5 : 2.6}"/>`);
   });
   lambdas.forEach((l, i) => {
     if (i % 2 === 0 || i === s.cvBest)
@@ -139,10 +146,10 @@ export function mcSvg(states: DrawState[], metric: 'spread' | 'rmse', current: n
     out.push(`<line class="labfig__grid${t === 0 ? ' is-zero' : ''}" x1="${padL}" x2="${W - padR}" y1="${f(y(t))}" y2="${f(y(t))}"/>`);
     out.push(`<text class="labfig__tick" x="${padL - 6}" y="${f(y(t) + 3)}" text-anchor="end">${t.toFixed(1)}</text>`);
   }
-  out.push(`<line class="labfig__marker" x1="${f(x(current))}" x2="${f(x(current))}" y1="${padT - 4}" y2="${H - padB}"/>`);
+  out.push(`<line class="labfig__marker" data-k="m-marker" x1="${f(x(current))}" x2="${f(x(current))}" y1="${padT - 4}" y2="${H - padB}"/>`);
   for (const k of SERIES) {
-    out.push(`<polyline class="labfig__line is-${k}" points="${states.map((st, i) => `${f(x(i))},${f(y(val(st, k)))}`).join(' ')}"/>`);
-    out.push(`<circle class="labfig__dot is-${k}" cx="${f(x(current))}" cy="${f(y(val(states[current], k)))}" r="3.6"/>`);
+    out.push(`<polyline class="labfig__line is-${k}" data-k="m-line-${k}" data-ghost points="${states.map((st, i) => `${f(x(i))},${f(y(val(st, k)))}`).join(' ')}"/>`);
+    out.push(`<circle class="labfig__dot is-${k}" data-k="m-dot-${k}" cx="${f(x(current))}" cy="${f(y(val(states[current], k)))}" r="3.6"/>`);
   }
   const fixed = states.map((st, i) => (i === 0 || i === states.length - 1 || [0.6, 0.9].includes(st.rho) ? i : -1)).filter((i) => i >= 0);
   const show = new Set(fixed);

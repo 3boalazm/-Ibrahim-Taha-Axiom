@@ -104,12 +104,32 @@
   --shadow-lift: 0 30px 70px -32px rgb(16 30 25 / 0.42);
   --shadow-float: 0 10px 30px -14px rgb(16 30 25 / 0.28);
 
-  /* ---- motion ---- */
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-1: 140ms;
-  --dur-2: 260ms;
-  --dur-3: 520ms;
+  /* ---- motion (docs/motion-system.md) ----
+     Quiet mathematical motion: short, decelerating, never looping. Every duration
+     collapses to 0 under prefers-reduced-motion (see the media query below). */
+  --motion-instant: 90ms; /* press feedback, toggles */
+  --motion-fast: 160ms; /* hover, focus, small state changes */
+  --motion-base: 240ms; /* UI transitions: filters, results, panels, z marker */
+  --motion-slow: 420ms; /* entrances: reveal-once, stagger groups */
+  --motion-draw: 900ms; /* line-draw: curves, axes, graph edges, timeline */
+  --motion-page: 220ms; /* cross-document page transition */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* state changes */
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1); /* entrances: fast start, long settle */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15); /* leaving: accelerate out */
+  --ease-draw: cubic-bezier(0.65, 0, 0.35, 1); /* ink: even start and finish */
+  --stagger-step: 45ms; /* delay between siblings */
+  --stagger-cap: 8; /* siblings after the 8th share the last delay */
+  --rise-sm: 6px; /* entrance distance: small items, page content */
+  --rise-md: 14px; /* entrance distance: section blocks */
+  --lift: -2px; /* hover-lift */
+  --press-scale: 0.97; /* button press */
+
+  /* legacy aliases (pre-Phase 5 components); keep them on the shared scale */
+  --ease: var(--ease-standard);
+  --ease-out: var(--ease-emphasized);
+  --dur-1: var(--motion-fast);
+  --dur-2: var(--motion-base);
+  --dur-3: var(--motion-slow);
 
   color-scheme: light;
 }
@@ -196,5 +216,23 @@
     --shadow-lift: 0 30px 70px -30px rgb(0 0 0 / 0.85);
     --shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.7);
     color-scheme: dark;
+  }
+}
+
+/* Reduced motion: every motion token collapses to zero, so token-based transitions
+   become instant; global.css additionally cuts any hard-coded duration. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 0ms;
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+    --motion-draw: 0ms;
+    --motion-page: 0ms;
+    --stagger-step: 0ms;
+    --rise-sm: 0px;
+    --rise-md: 0px;
+    --lift: 0px;
+    --press-scale: 1;
   }
 }

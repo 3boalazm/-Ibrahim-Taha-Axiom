@@ -4,6 +4,12 @@
  * restrained statistical figure — the standard normal density. Pointer,
  * touch or arrow keys move z; the shaded area is Φ(z), computed (not drawn
  * by hand). Nothing moves on its own; there is no autoplay.
+ *
+ * Motion (docs/motion-system.md): on load the figure is drawn once — axis,
+ * ticks, curve, then the area accumulates from the left tail up to z, then the
+ * marker settles. On interaction the marker glides to the new z; every frame is
+ * computed by normal.mjs for the z actually shown, while the slider's ARIA value
+ * jumps straight to the target. The server-rendered SVG is the static fallback.
  */
 import LangText from '../shared/LangText.astro';
 import { pick, profile } from '../../utils/content';
@@ -92,11 +98,11 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
       >
         <svg viewBox={`0 0 ${FRAME.w} ${FRAME.h}`} aria-hidden="true" dir="ltr" direction="ltr">
           <path class="hnormal__area" d={areaPath(Z0)} data-normal-area></path>
-          <path class="hnormal__curve" d={densityPath()}></path>
-          <line class="hnormal__axis" x1={FRAME.left} x2={FRAME.right} y1={FRAME.base} y2={FRAME.base}></line>
+          <path class="hnormal__curve" d={densityPath()} pathLength="1"></path>
+          <line class="hnormal__axis" x1={FRAME.left} x2={FRAME.right} y1={FRAME.base} y2={FRAME.base} pathLength="1"></line>
           {
-            ticks.map((z) => (
-              <g>
+            ticks.map((z, i) => (
+              <g class="hnormal__tickgroup" style={`--i: ${i}`}>
                 <line class="hnormal__tick" x1={xOf(z)} x2={xOf(z)} y1={FRAME.base} y2={FRAME.base + 5} />
                 <text class="hnormal__ticklabel" x={xOf(z)} y={FRAME.base + 18} text-anchor="middle">
                   {z === 0 ? '0' : z > 0 ? `${z}` : `−${-z}`}
@@ -115,6 +121,7 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
 
 <script>
   import { areaPath, cdf, clampZ, pdf, xOf, yOf, zOf, FRAME, Z_MIN, Z_MAX } from '../../lib/normal.mjs';
+  import { EASE, travelDuration, tween } from '../../lib/motion.mjs';
 
   document.querySelectorAll<HTMLElement>('[data-normal]').forEach((fig) => {
     const plot = fig.querySelector<HTMLElement>('[data-normal-plot]')!;
@@ -125,54 +132,81 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
     const zOut = fig.querySelector<HTMLElement>('[data-normal-z]')!;
     const pOut = fig.querySelector<HTMLElement>('[data-normal-p]')!;
     const below = fig.dataset.below ?? '';
-    let z = Number(plot.getAttribute('aria-valuenow'));
+    // target: the value the slider holds (ARIA). shown: the z currently drawn.
+    let target = Number(plot.getAttribute('aria-valuenow'));
+    let shown = target;
     let frame = 0;
+    let stop = () => {};
 
-    function draw() {
-      frame = 0;
+    /** Draw the figure for z — geometry and readout are exact for the z on screen. */
+    function paint(z: number) {
+      shown = z;
       const x = xOf(z);
       area.setAttribute('d', areaPath(z));
       marker.setAttribute('x1', String(x));
       marker.setAttribute('x2', String(x));
       dot.setAttribute('cx', String(x));
       dot.setAttribute('cy', String(yOf(pdf(z))));
-      const p = cdf(z);
       zOut.textContent = z.toFixed(2);
-      pOut.textContent = p.toFixed(3);
+      pOut.textContent = cdf(z).toFixed(3);
+    }
+    function announce(z: number) {
+      const p = cdf(z);
       plot.setAttribute('aria-valuenow', z.toFixed(2));
       plot.setAttribute('aria-valuetext', `z = ${z.toFixed(2)}, Φ(z) = ${p.toFixed(3)} (${(p * 100).toFixed(1)}% ${below})`);
     }
-    const set = (v: number) => {
-      z = clampZ(v);
-      if (!frame) frame = requestAnimationFrame(draw);
-    };
-    const fromPointer = (e: PointerEvent) => {
+    /**
+     * glide: keys and clicks travel to the new z (90–240 ms, longer for longer jumps).
+     * follow: a dragging or hovering pointer is tracked directly; only a jump of more
+     * than half a unit (pointer entering from the side) glides.
+     */
+    function set(v: number, mode: 'glide' | 'follow') {
+      target = clampZ(v);
+      announce(target);
+      stop();
+      const from = shown;
+      if (mode === 'follow' && Math.abs(target - from) <= 0.5) {
+        if (!frame)
+          frame = requestAnimationFrame(() => {
+            frame = 0;
+            paint(target);
+          });
+        return;
+      }
+      if (frame) cancelAnimationFrame(frame), (frame = 0);
+      stop = tween({
+        duration: travelDuration(target - from, { min: 90, max: 240, full: 2 }),
+        easing: EASE.standard,
+        onFrame: (t) => paint(t >= 1 ? target : from + (target - from) * t),
+      });
+    }
+    const fromPointer = (e: PointerEvent, mode: 'glide' | 'follow') => {
       const r = svg.getBoundingClientRect();
       const x = ((e.clientX - r.left) / r.width) * FRAME.w;
-      set(zOf(x));
+      set(zOf(x), mode);
     };
     plot.addEventListener('pointermove', (e) => {
-      if (e.pointerType === 'mouse' || e.buttons) fromPointer(e);
+      if (e.pointerType === 'mouse' || e.buttons) fromPointer(e, 'follow');
     });
     plot.addEventListener('pointerdown', (e) => {
       plot.setPointerCapture(e.pointerId);
-      fromPointer(e);
+      fromPointer(e, 'glide');
     });
     plot.addEventListener('keydown', (e) => {
       const big = e.shiftKey ? 0.5 : 0.1;
       const map: Record<string, number | null> = {
-        ArrowRight: z + big,
-        ArrowUp: z + big,
-        ArrowLeft: z - big,
-        ArrowDown: z - big,
-        PageUp: z + 1,
-        PageDown: z - 1,
+        ArrowRight: target + big,
+        ArrowUp: target + big,
+        ArrowLeft: target - big,
+        ArrowDown: target - big,
+        PageUp: target + 1,
+        PageDown: target - 1,
         Home: Z_MIN,
         End: Z_MAX,
       };
       if (e.key in map) {
         e.preventDefault();
-        set(map[e.key]!);
+        set(map[e.key]!, 'glide');
       }
     });
   });
@@ -323,6 +357,61 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
   @media (max-width: 56rem) {
     .hhero__grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ---------------------------------------------------------------- entry (once, on load)
+     Gated by html[data-motion]: without JS or with reduced motion the figure is
+     simply there. Order: axis → ticks → curve → the area accumulates from the
+     left tail up to z (Φ(z) as an integral) → the marker settles. The readout is
+     visible from the first frame. Interaction works at any point of the sequence. */
+  :global(html[data-motion]) .hhero__copy > * {
+    animation: motion-rise-sm var(--motion-slow) var(--ease-emphasized) backwards;
+  }
+  /* the name and the lead never start invisible (reading first): transform only */
+  :global(html[data-motion]) .hhero__name,
+  :global(html[data-motion]) .hhero__lead {
+    animation-name: motion-settle;
+  }
+  :global(html[data-motion]) .hhero__copy > :nth-child(2) {
+    animation-delay: calc(1 * var(--stagger-step));
+  }
+  :global(html[data-motion]) .hhero__copy > :nth-child(3) {
+    animation-delay: calc(2 * var(--stagger-step));
+  }
+  :global(html[data-motion]) .hhero__copy > :nth-child(4) {
+    animation-delay: calc(3 * var(--stagger-step));
+  }
+  :global(html[data-motion]) .hhero__copy > :nth-child(5) {
+    animation-delay: calc(4 * var(--stagger-step));
+  }
+  :global(html[data-motion]) .hnormal__axis {
+    animation: motion-draw var(--motion-slow) var(--ease-draw) backwards;
+  }
+  :global(html[data-motion]) .hnormal__tickgroup {
+    animation: motion-rise-sm var(--motion-slow) var(--ease-emphasized) backwards;
+    animation-delay: calc(120ms + var(--i, 0) * var(--stagger-step));
+  }
+  :global(html[data-motion]) .hnormal__curve {
+    animation: motion-draw var(--motion-draw) var(--ease-draw) 200ms backwards;
+  }
+  :global(html[data-motion]) .hnormal__area {
+    animation: hnormal-accumulate var(--motion-draw) var(--ease-draw) 650ms backwards;
+  }
+  :global(html[data-motion]) .hnormal__marker {
+    animation: motion-fade-in var(--motion-base) var(--ease-standard) 1250ms backwards;
+  }
+  :global(html[data-motion]) .hnormal__dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: motion-pop var(--motion-base) var(--ease-emphasized) 1250ms backwards;
+  }
+  @keyframes hnormal-accumulate {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
     }
   }
 </style>

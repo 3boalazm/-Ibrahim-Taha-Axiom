@@ -48,7 +48,26 @@ const ui = t(lang);
     <script is:inline>
       (() => {
         // Marks that scripts run, so JS-only controls (e.g. the search button) can show.
-        document.documentElement.dataset.js = '';
+        const root = document.documentElement;
+        root.dataset.js = '';
+        // Motion layer (docs/motion-system.md): starting states that hide anything apply
+        // only under [data-motion], which needs JS and no reduced-motion preference. If the
+        // motion module has not booted 2.5 s after load, drop the attribute so nothing stays hidden.
+        if (window.matchMedia && matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+          root.dataset.motion = '';
+          try {
+            // the brand mark draws itself once per browser session, not on every page
+            if (!sessionStorage.getItem('axiom-mark')) {
+              root.dataset.markIntro = '';
+              sessionStorage.setItem('axiom-mark', '1');
+            }
+          } catch (_) {}
+          addEventListener('load', () =>
+            setTimeout(() => {
+              if (!window.__axiomMotion) root.removeAttribute('data-motion');
+            }, 2500),
+          );
+        }
         try {
           const s = localStorage.getItem('axiom-theme');
           if (s === 'light' || s === 'dark') document.documentElement.dataset.theme = s;
@@ -73,5 +92,18 @@ const ui = t(lang);
     </main>
     <SiteFooter lang={lang} path={navPath} />
     <SearchDialog lang={lang} />
+    <script>
+      import { initMotion } from '../lib/motion.mjs';
+      initMotion();
+      // A language switch mirrors the whole layout; a cross-fade with sliding parts would
+      // only confuse, so that one navigation skips the page transition.
+      const isAr = (p: string) => p === '/ar' || p.startsWith('/ar/');
+      window.addEventListener('pageswap', (e: Event) => {
+        const ev = e as Event & { viewTransition?: { skipTransition(): void } | null; activation?: { entry?: { url?: string } } | null };
+        const url = ev.activation?.entry?.url;
+        if (!ev.viewTransition || !url) return;
+        if (isAr(new URL(url).pathname) !== isAr(location.pathname)) ev.viewTransition.skipTransition();
+      });
+    </script>
   </body>
 </html>

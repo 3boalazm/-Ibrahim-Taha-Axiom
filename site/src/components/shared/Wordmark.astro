@@ -34,13 +34,9 @@ const axiom = SITE_NAME.split(' ').pop() ?? '';
   }
   .wordmark__mark {
     color: var(--color-accent);
-    transition: transform var(--dur-2) var(--ease-out);
   }
   :global(:root[data-theme='dark']) .wordmark__mark {
     color: var(--color-paper);
-  }
-  .wordmark:hover .wordmark__mark {
-    transform: rotate(-6deg) scale(1.04);
   }
   .wordmark__text {
     display: grid;

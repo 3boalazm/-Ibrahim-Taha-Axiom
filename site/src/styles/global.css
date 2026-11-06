@@ -1,4 +1,5 @@
 @import './tokens.css';
+@import './motion.css';
 
 /* ------------------------------------------------------------ reset */
 *,
@@ -448,41 +449,9 @@ main {
   margin-block-start: 1.6em;
 }
 
-/* ------------------------------------------------------------ motion */
-@view-transition {
-  navigation: auto;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .reveal {
-    animation: reveal var(--dur-3) var(--ease-out) both;
-  }
-  .reveal-2 {
-    animation-delay: 90ms;
-  }
-  .reveal-3 {
-    animation-delay: 180ms;
-  }
-  /* scroll-driven reveal where supported; content stays visible otherwise */
-  @supports (animation-timeline: view()) {
-    .in-view {
-      animation: in-view linear both;
-      animation-timeline: view();
-      animation-range: entry 5% cover 26%;
-    }
-  }
-}
-/* Motion only (no opacity): content stays visible even if animations are paused
-   (background tabs, print, capture tools). */
-@keyframes reveal {
-  from {
-    transform: translateY(10px);
-  }
-}
-@keyframes in-view {
-  from {
-    transform: translateY(18px);
-  }
-}
+/* ------------------------------------------------------------ motion
+   Patterns, page transitions and keyframes live in motion.css (imported above);
+   this block is the global reduced-motion guarantee for any hard-coded duration. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -491,8 +460,16 @@ main {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* separate rule: a browser that cannot parse these pseudo-elements must not drop the one above */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
   @view-transition {
     navigation: none;
