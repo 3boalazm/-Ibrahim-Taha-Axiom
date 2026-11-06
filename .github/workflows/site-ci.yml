@@ -54,7 +54,7 @@ jobs:
       - name: Unit and build tests
         run: npm test
 
-      - name: Browser tests (keyboard, URL state, RTL)
+      - name: Browser tests (keyboard, URL state, RTL, motion, reduced motion, no-JS)
         env:
           E2E_REQUIRED: '1'
         run: |

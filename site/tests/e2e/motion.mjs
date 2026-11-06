@@ -114,12 +114,11 @@ try {
   await sleep(450);
   const readout = await page.evaluate(() => [document.querySelector('[data-normal-z]').textContent, document.querySelector('[data-normal-p]').textContent]);
   ok(readout[0] === Z_MAX.toFixed(2) && readout[1] === cdf(Z_MAX).toFixed(3), `hero: after the glide the readout is exact (z = ${readout[0]}, Φ = ${readout[1]})`);
-  const markerX = await page.$eval('[data-normal-marker]', (m) => Number(m.getAttribute('x1')));
-  const expectX = await page.evaluate(() => {
-    const svg = document.querySelector('[data-normal-plot] svg');
-    return svg.viewBox.baseVal;
-  });
-  ok(markerX > expectX.width * 0.8, 'hero: the z marker has travelled to the right tail');
+  const marker = await page.evaluate(() => ({
+    x: Number(document.querySelector('[data-normal-marker]').getAttribute('x1')),
+    w: document.querySelector('[data-normal-plot] svg').viewBox.baseVal.width,
+  }));
+  ok(marker.x > marker.w * 0.8, `hero: the z marker has travelled to the right tail (x = ${marker.x} of ${marker.w})`);
 
   // reveal-once: every block below the fold reaches its end state
   await scrollThrough(page);
@@ -164,7 +163,8 @@ try {
     const st = payload.states[i];
     const want = `${(st.mc.est.ml.spread / st.mc.est.ridge.spread).toFixed(1)}×`;
     const got = await page.$eval('[data-lab="ratio"]', (e) => e.textContent);
-    const cell = await page.$eval('[data-lab-table="mc"] tr td:nth-child(2)', (td) => td.textContent);
+    // first data row, second <td> (the first is the true value): ML mean (sd)
+    const cell = await page.$eval('[data-lab-table="mc"] tr', (tr) => tr.querySelectorAll('td')[1].textContent);
     const wantCell = `${st.mc.est.ml.mean[0].toFixed(3)} (${st.mc.est.ml.sd[0].toFixed(3)})`;
     if (got !== want || cell !== wantCell) {
       exact = false;
