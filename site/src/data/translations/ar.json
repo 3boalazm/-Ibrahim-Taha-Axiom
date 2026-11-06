@@ -350,8 +350,8 @@
     },
     {
       "ref": "talks.*.summary",
-      "en": "Conference paper with E. A. Rady and M. R. Abonazel.",
-      "ar": "ورقة مؤتمر بالاشتراك مع E. A. Rady وM. R. Abonazel.",
+      "en": "Paper with E. A. Rady and M. R. Abonazel, published in the conference proceedings. Oral presentation by Ibrahim is not confirmed.",
+      "ar": "ورقة بالاشتراك مع E. A. Rady وM. R. Abonazel، منشورة في وقائع المؤتمر. أما تقديم ابراهيم لها شفهيًا فغير مؤكَّد.",
       "status": "draft"
     },
     {

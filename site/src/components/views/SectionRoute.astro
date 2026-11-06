@@ -101,7 +101,7 @@ const headerStats =
     : page === 'research'
       ? [{ value: String(researchAreas.length), label: ar ? 'مجالات' : 'areas' }]
       : page === 'talks'
-        ? [{ value: String(talks.length), label: ar ? 'محاضرة' : 'talks' }]
+        ? [{ value: String(talks.length), label: ar ? 'ورقة مؤتمر' : 'conference papers' }]
         : page === 'books'
           ? [{ value: String(books.length), label: ar ? 'كتاب' : 'books' }]
           : page === 'teaching'
@@ -248,6 +248,17 @@ const kicker = {
                       </a>
                     </p>
                   ))}
+                  {tk.links.length > 0 && (
+                    <ul class="cards__links" role="list">
+                      {tk.links.map((l) => (
+                        <li>
+                          <a class="chip" href={l.url} rel="noopener">
+                            <LangText value={l.label} lang={lang} />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {tk.slides && (
                     <a href={tk.slides} class="chip">
                       {ui.slides}

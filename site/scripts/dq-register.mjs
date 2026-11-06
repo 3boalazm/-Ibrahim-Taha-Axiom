@@ -37,6 +37,9 @@ export function renderRegister(data) {
   out.push('');
   for (const i of list) {
     out.push(`## ${i.id} · ${i.category} · ${i.status}`, '', `**Question.** ${i.question}`, '');
+    // A question narrowed or reworded later keeps its earlier form on record, so an answer
+    // given to the earlier form is never read as an answer to the new one.
+    for (const h of i.history ?? []) out.push(`- **Question history** (${h.date}, ${h.by}): ${h.change}`);
     out.push(`- **Applies to:** ${i.subjects.map(code).join(', ')}`);
     out.push(`- **${i.status === 'open' ? 'Shown now' : 'Shown before the decision'}:** ${i.current}`);
     if (i.alternatives?.length) out.push(`- **Alternatives on record:** ${i.alternatives.join('; ')}`);

@@ -21,7 +21,7 @@ CI runs build → qa → lab:verify → test → test:e2e on every pull request 
 The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. The researcher agreed to publication and the project owner confirmed it on 2026-11-06 (recorded in the manifest's `researcherApproval`). Approved now:
 - the profile, with direct contact details;
 - 22 bibliography entries (10 journal articles, 6 books, 2 technical reports, 2 conference papers, 1 master's thesis, 1 preprint; all 22 are in the Publications explorer, and the books also have a Books page);
-- 6 research areas, 3 projects, 5 courses, 2 talks, 5 methods and 1 dataset;
+- 6 research areas, 3 projects, 5 courses, 2 conference papers (`talks.json`, shown at `/talks/`), 5 methods and 1 dataset;
 - the CV, and a dated metrics snapshot;
 - 42 evidence-backed relationships.
 

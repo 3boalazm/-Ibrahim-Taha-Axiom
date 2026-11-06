@@ -14,7 +14,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 
 ## Site search (header button, Ctrl/⌘ K, `/`)
 
-- **Index:** `src/pages/search-index/[lang].json.ts` emits `/search-index/en.json` and `/ar.json`. Each holds 54 records: publications, books, research areas, projects, methods, teaching, talks and pages. They are built from approved data only, and each language's titles are what that language's pages show. The index is fetched on first open (about 35 KB), never on page load.
+- **Index:** `src/pages/search-index/[lang].json.ts` emits `/search-index/en.json` and `/ar.json`. Each holds 54 records: publications, books, research areas, projects, methods, teaching, conference papers and pages. They are built from approved data only, and each language's titles are what that language's pages show. The index is fetched on first open (about 35 KB), never on page load.
 - **Matching:** every query term must match. Matches can be exact words, prefixes, or glossary equivalents (الحرف ↔ ridge, التعدد الخطي ↔ multicollinearity …). So Arabic, author-name and mixed queries work without machine translation.
 - **UI:** a native `<dialog>` holds a combobox input with `aria-activedescendant` over a listbox.
   - Results are grouped by category and highlighted.
@@ -42,7 +42,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 - **Layout:** three columns, computed at build time (`src/utils/graph.ts`):
   - areas and methods on the start side;
   - publications in the centre;
-  - projects, talks and the dataset on the end side.
+  - projects, conference papers and the dataset on the end side.
 - **Rendering:** nodes are HTML buttons over an SVG edge layer, and the columns mirror in Arabic. 41 edges are drawn. The project → dataset link joins two end-column nodes, so it appears in the panel and the list rather than as a line.
 - **Keyboard:** the graph is one Tab stop (roving tabindex). Arrow keys move within and between columns, Enter or Space selects, and Escape clears.
   - Hovering or focusing a node lights its edges as a preview, instantly.
@@ -53,7 +53,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 
 ## Journey (`/about/`)
 
-Milestones are built only from dated approved records: education, roles, publications, talks and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن». In Arabic the " · " separator follows the page direction and only the numbers are isolated, so a range reads «التعليم · 2012–2015».
+Milestones are built only from dated approved records: education, roles, publications, conference papers and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن». In Arabic the " · " separator follows the page direction and only the numbers are isolated, so a range reads «التعليم · 2012–2015».
 
 Motion: the timeline line draws when it first enters view and the years rise in sequence. While reading, the dated year at the middle of the viewport is highlighted (visual only; the undated group never is). Year groups open and close smoothly where the browser supports it.
 
