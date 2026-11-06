@@ -121,8 +121,9 @@ const i18n = {
     let typing = 0;
     let announcing = 0;
 
+    // Arabic agreement: 3–10 (mod 100) take the plural, everything else the singular/accusative form.
     const countText = (n: number) =>
-      (n === 1 ? i18n.count.one : n === 2 ? i18n.count.two : n <= 10 ? i18n.count.few : i18n.count.many).replace('{n}', String(n));
+      (n === 1 ? i18n.count.one : n === 2 ? i18n.count.two : n % 100 >= 3 && n % 100 <= 10 ? i18n.count.few : i18n.count.many).replace('{n}', String(n));
     const history = (): string[] => {
       try {
         return JSON.parse(sessionStorage.getItem(KEY) ?? '[]');

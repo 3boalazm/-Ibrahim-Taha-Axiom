@@ -4,6 +4,12 @@
  */
 import type { Lang } from '../utils/schema';
 import type { PubType } from '../utils/publications';
+import { arNoun } from '../lib/text.mjs';
+
+/** Arabic counted noun: natural phrases for 0–2, then the number with the agreeing form
+ *  (3–10 plural, 11–99 accusative singular, round hundreds singular — see arNoun). */
+const arCount = (n: number, w: { zero?: string; one: string; two: string; sg: string; pl: string; acc: string }) =>
+  n === 0 && w.zero ? w.zero : n === 1 ? w.one : n === 2 ? w.two : `${n} ${arNoun(n, { one: w.sg, two: w.sg, few: w.pl, many: w.acc })}`;
 
 const en = {
   skip: 'Skip to content',
@@ -186,7 +192,7 @@ const ar: typeof en = {
   statusNotice: 'هذا الموقع قيد الإعداد. لا يُنشر أي محتوى خاص بالباحث إلا بعد مراجعته واعتماده للنشر.',
   statusLabel: 'الحالة',
   awaitingReview: 'بانتظار الاعتماد',
-  entries: (n: number) => (n === 1 ? 'عنصر واحد' : n === 2 ? 'عنصران' : n <= 10 ? `${n} عناصر` : `${n} عنصرًا`),
+  entries: (n: number) => arCount(n, { one: 'عنصر واحد', two: 'عنصران', sg: 'عنصر', pl: 'عناصر', acc: 'عنصرًا' }),
   contents: 'المحتويات',
   translationFallback: 'هذا المحتوى متاح بالإنجليزية فقط.',
   sectionFallback: 'محتوى هذا القسم متاح حاليًا بالإنجليزية فقط، إلى أن تُعتمد نسخته العربية.',
@@ -197,7 +203,7 @@ const ar: typeof en = {
   filterType: 'النوع',
   allTypes: 'الكل',
   selectedOnly: 'المختارة فقط',
-  results: (n: number) => (n === 0 ? 'لا منشورات' : n === 1 ? 'منشور واحد' : n === 2 ? 'منشوران' : n <= 10 ? `${n} منشورات` : `${n} منشورًا`),
+  results: (n: number) => arCount(n, { zero: 'لا منشورات', one: 'منشور واحد', two: 'منشوران', sg: 'منشور', pl: 'منشورات', acc: 'منشورًا' }),
   noMatches: 'لا توجد منشورات تطابق هذه المرشحات.',
   clearFilters: 'مسح المرشحات',
   selected: 'مختار',
@@ -264,7 +270,7 @@ const ar: typeof en = {
   searchRecent: 'عمليات البحث الأخيرة',
   searchClearRecent: 'مسح',
   searchRecentNote: 'تُحفظ في هذا التبويب فقط.',
-  searchCount: (n: number) => (n === 1 ? 'نتيجة واحدة' : n === 2 ? 'نتيجتان' : n <= 10 ? `${n} نتائج` : `${n} نتيجة`),
+  searchCount: (n: number) => arCount(n, { one: 'نتيجة واحدة', two: 'نتيجتان', sg: 'نتيجة', pl: 'نتائج', acc: 'نتيجة' }),
   searchClose: 'إغلاق',
   searchKeys: '↑ ↓ للتنقل · Enter للفتح · Esc للإغلاق',
   searchLoading: 'جارٍ التحميل…',
@@ -294,7 +300,7 @@ const ar: typeof en = {
   views: { list: 'قائمة', compact: 'مضغوط', cards: 'بطاقات' },
   timelineLabel: 'المنشورات في كل سنة',
   timelineHint: 'اختر سنة للتصفية، واخترها مرة أخرى للإلغاء.',
-  timelineBar: (y: number, n: number) => `${y}: ${n === 0 ? 'لا منشورات' : n === 1 ? 'منشور واحد' : n === 2 ? 'منشوران' : n <= 10 ? `${n} منشورات` : `${n} منشورًا`}`,
+  timelineBar: (y: number, n: number) => `${y}: ${arCount(n, { zero: 'لا منشورات', one: 'منشور واحد', two: 'منشوران', sg: 'منشور', pl: 'منشورات', acc: 'منشورًا' })}`,
   shareView: 'انسخ رابط هذا العرض',
   linkCopied: 'نُسخ الرابط',
   copyFailed: 'تعذّر النسخ؛ الرابط في شريط العنوان',
@@ -313,7 +319,7 @@ const ar: typeof en = {
   graphHint: 'تنقّل بين العناصر بمفاتيح الأسهم، واضغط Enter لعرض الروابط، وEscape للإلغاء.',
   graphEvidence: 'الدليل',
   graphQuoted: 'مقتبس من السجل',
-  graphConnections: (n: number) => (n === 0 ? 'لا روابط' : n === 1 ? 'رابط واحد' : n === 2 ? 'رابطان' : n <= 10 ? `${n} روابط` : `${n} رابطًا`),
+  graphConnections: (n: number) => arCount(n, { zero: 'لا روابط', one: 'رابط واحد', two: 'رابطان', sg: 'رابط', pl: 'روابط', acc: 'رابطًا' }),
   graphClear: 'إلغاء التحديد',
   graphNone: 'اختر عنصرًا لترى ما يرتبط به.',
   graphKinds: { area: 'مجال بحثي', method: 'أسلوب', publication: 'منشور', project: 'مشروع', talk: 'محاضرة', dataset: 'مجموعة بيانات', course: 'مقرر' },

@@ -202,6 +202,13 @@ const meta: [string, string | null, boolean][] = [
     font-size: var(--step--1);
     color: rgb(244 242 233 / 0.72);
   }
+  /* AuthorList uses page ink colours; on the dark image band they must be light. */
+  .pub-head :global(.authors) {
+    color: rgb(244 242 233 / 0.86);
+  }
+  .pub-head :global(.author--self) {
+    color: #f7f5ec;
+  }
   .detail {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 20rem;

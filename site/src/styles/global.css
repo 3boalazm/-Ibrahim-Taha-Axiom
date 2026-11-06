@@ -581,3 +581,12 @@ html:has(.section-nav) {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
+
+/* Arabic has no true italic: never let the browser slant Arabic glyphs to fake one.
+   Italic styling still applies to Latin runs marked lang="en" (journal names, titles). */
+:root:lang(ar) {
+  font-synthesis-style: none;
+}
+:root:lang(ar) [lang='en'] {
+  font-synthesis-style: auto;
+}

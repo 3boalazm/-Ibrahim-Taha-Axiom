@@ -151,6 +151,14 @@ const pic = picture ?? PICTURES.hero;
     font-size: var(--step-4);
     text-align: match-parent;
   }
+  /* A Latin title kept in its original form on an Arabic page: Latin display face
+     and Latin metrics, aligned to the page's start edge like the rest of the header. */
+  :global(:root:lang(ar)) h1[lang='en'] {
+    font-family: var(--font-serif);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-align: right;
+  }
   .page-header__footer {
     display: grid;
     gap: var(--space-4);

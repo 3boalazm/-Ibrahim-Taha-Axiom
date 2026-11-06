@@ -26,8 +26,8 @@ const ui = t(lang);
     <div class="cite__actions">
       <button type="button" class="button" data-copy="text" data-done={ui.copied}>{ui.copy}</button>
       <button type="button" class="button" data-copy="bibtex" data-done={ui.copied}>{ui.copy} BibTeX</button>
-      <button type="button" class="button" data-download="bib" data-filename={`${pub.key}.bib`}>{ui.download} .bib</button>
-      <button type="button" class="button" data-download="ris" data-filename={`${pub.key}.ris`}>{ui.download} .ris</button>
+      <button type="button" class="button" data-download="bib" data-filename={`${pub.key}.bib`}>{ui.download} <bdi dir="ltr">.bib</bdi></button>
+      <button type="button" class="button" data-download="ris" data-filename={`${pub.key}.ris`}>{ui.download} <bdi dir="ltr">.ris</bdi></button>
     </div>
     <pre class="cite__bibtex" dir="ltr" lang="en" tabindex="0" aria-label="BibTeX"><code data-cite-bibtex>{pub.citation.bibtex}</code></pre>
     <pre hidden data-cite-ris>{pub.citation.ris}</pre>
@@ -113,6 +113,8 @@ const ui = t(lang);
   .cite__text {
     font-size: var(--step--1);
     line-height: 1.6;
+    /* a DOI URL is one long word: let it break rather than widen a 320 px screen */
+    overflow-wrap: anywhere;
   }
   .cite__note {
     font-family: var(--font-ui);

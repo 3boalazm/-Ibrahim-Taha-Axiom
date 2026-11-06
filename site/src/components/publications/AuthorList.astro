@@ -28,6 +28,10 @@ const sep = lang === 'ar' ? '، ' : ', ';
     color: var(--color-ink-2);
     line-height: 1.55;
   }
+  /* keep each personal name on one line; the list still wraps between names */
+  .author {
+    white-space: nowrap;
+  }
   .author--self {
     color: var(--color-ink);
     font-weight: 600;
