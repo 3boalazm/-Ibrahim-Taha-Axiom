@@ -65,5 +65,6 @@ The project was created with Root Directory `site` and the Astro preset. **Do no
 
 ## Not done yet (by design)
 - No custom domain (D-07a).
-- No environment variables set on Vercel (none are needed by the placeholder).
-- Search engines stay blocked (`noindex` + `robots.txt`) until launch.
+- No environment variables set on Vercel (none are needed by the static site).
+
+Search indexing has been on since launch (2026-11-05): `allowIndexing: true` in `site/src/data/public-settings/launch.json`. See [website-launch-checklist.md](website-launch-checklist.md) to pause it.

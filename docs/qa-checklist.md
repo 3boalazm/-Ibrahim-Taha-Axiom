@@ -9,8 +9,8 @@ Runs on every pull request and every push to `main` that touches `site/`:
 | Build | `npm run build` | Content schemas; every manifest relationship resolves and quoted evidence is found; 67 HTML files |
 | QA | `npm run qa` | One h1 per page, internal links, language switch, approved mailto/tel only, forbidden files (raw .bib, manifest, profile JSON) and client-side model code absent, lab payload, colour contrast of token pairs, sitemap (66 URLs) |
 | Lab | `npm run lab:verify` | Recomputes all 15 states × 100 replicates from the seed, checks convergence, and checks every number quoted in EN/AR text (see [lab-methodology.md](lab-methodology.md)) |
-| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths |
-| Browser tests | `npm run test:e2e` | Headless Chrome: search keyboard flow and focus return, explorer URL state, graph roving focus and RTL columns, hero slider, identity tabs, journey, contact `?path=`, no JS errors |
+| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`) |
+| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. No JS errors in either suite |
 
 ## Run during Phase 4 (2026-11-06)
 
@@ -28,9 +28,64 @@ These were run in the development sandbox (Node 22, headless Chromium 153) on th
 | Header fit | Header fits from 961 to 1920 px; the menu collapses below 1024 px |
 | Visual review | The screenshots in [`screenshots/phase-4/`](screenshots/phase-4/README.md) were reviewed by eye. Fixes that came out of the review: Arabic fake-italic, author contrast on the publication header, the Latin title face on Arabic pages, isolation of the `.bib`/`.ris` labels, a DOI overflowing at 320 px, and personal names breaking across lines |
 
-CI runs Node 26 (`engines`). The first CI run is the first execution on Node 26.
+CI runs Node 26 (`engines`); the Phase 4 pull request and `main` have since passed on Node 26.
 
-**Not run:** axe or another automated accessibility engine, Lighthouse, real-device testing, VoiceOver/NVDA/TalkBack, and visual-regression diffing. Do not cite them as done.
+**Not run in Phase 4:** axe or another automated accessibility engine, Lighthouse, real-device testing, VoiceOver/NVDA/TalkBack, and visual-regression diffing. axe and Lighthouse were first run in Phase 5 (below).
+
+## Run during Phase 5 (2026-11-06)
+
+Run in the development sandbox (Node 22, headless Chromium 153) on the final tree of the Phase 5 branch:
+
+| Check | Result |
+| --- | --- |
+| `npm ci` → `npm run build` | 248 packages; 67 HTML files |
+| `npm run qa` | All QA checks passed; sitemap 66 URLs |
+| `npm run lab:verify` | ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 58 tests, 58 pass, 0 fail (Phase 4: 50) |
+| `npm run test:e2e` | 78 checks, all pass, no JavaScript errors: `keyboard.mjs` 37 (Phase 4: 34), `motion.mjs` 41 (new) |
+| Overflow sweep, 12 page types, EN/AR, light | No horizontal overflow at 320, 360, 390, 768, 1024, 1280 and 1440 px (168 combinations) before the accessibility fixes, and again at 320, 360 and 390 px after them (72 combinations) |
+| axe-core 4.14.0 (WCAG 2.2 AA rules) | **Before** (8 page types × EN/AR × light/dark, 1280 px, 32 runs): 5 rules violated, listed below. **After:** 0 violations in those 32 runs; 0 in 52 runs at 1280 px (13 page types incl. 404 × EN/AR × light/dark) and 0 in 52 runs at 390 px with reduced motion. Run after animations finish |
+| Lighthouse 12.8.2 | Table below |
+| Visual review | The screenshots and motion strips in [`screenshots/phase-5/`](screenshots/phase-5/README.md) were reviewed by eye |
+
+axe before the fixes:
+
+| Rule | Nodes / runs | Where | Fix |
+| --- | --- | --- | --- |
+| color-contrast | 94 / 24 | dark footer (1.04:1), brass small text in light mode (3.15–3.32:1), the count on the active type chip (3.8:1) | `--color-brass-ink` for small brass text; the footer uses the inverted-ink tokens in both themes; the count inherits the active chip's ink |
+| label-content-name-mismatch | 116 / 32 | brand link, wordmark; then, while fixing, the language switch and the year bars | Visible text kept in each accessible name ("Ibrahim Taha Axiom"); the language switch is named by its visible text; year bars show the full year ("2018", not "18"), with the count from `data-n` |
+| link-name | 32 / 32 | collapsed header CTA | Label visually hidden instead of `display: none` |
+| landmark-unique | 4 / 4 | graph map region | Distinct region name |
+| aria-prohibited-attr | 4 / 4 | explorer active filters | `role="group"` |
+
+Lighthouse 12.8.2, simulated mobile unless marked desktop, median of 3 runs. It ran against a local static server with Brotli and Vercel-like caching, built from `main` (`2f8c8d5`) and from this branch, because the sandbox cannot reach `vercel.app`. Use these numbers to compare the two builds, not as field data.
+
+| Page | Performance main → branch | LCP main → branch |
+| --- | --- | --- |
+| `/` | 87 → 90 | 3.5 s → 3.2 s |
+| `/ar/` | 76 → 75 | 4.4 s → 4.4 s |
+| `/` desktop | 99 → 99 | |
+| `/research/`, `/ar/research/` | 92 → 91, 77 → 77 | within ±0.1 s |
+| `/publications/`, `/ar/publications/` | 92 → 91, 79 → 77 | within ±0.1 s |
+| `/lab/` | 91 → 92 | within ±0.1 s |
+| `/publications/` desktop | 100 → 100 | |
+
+- **Accessibility:** 93–97 on `main`, 100 on all nine pages on the branch.
+
+- **TBT and SEO:** total blocking time is 0 ms and SEO 100 on every page in both builds.
+- **Best Practices:** 96 on `/`, `/ar/` and `/publications/` and 100 elsewhere, the same on `main`. The flagged item is Lighthouse's font-size audit, which reports 20.5 % (`/`) and 5.4 % (`/publications/`) legible text. A direct count of visible text at 412 px finds 72 % and 62 % at 12 px or more, so the cause is not established. The small text is `--step--2` (11.52 px).
+- **CLS:** at most 0.048, on both builds. It comes from the web-font swap shifting the hero figure, not from motion.
+- **LCP regression found and fixed:** an earlier branch build measured `/` at 84 (LCP 4.0 s) and `/ar/` at 72 (5.2 s). The hero name and lead faded in, because a scoped selector outranked the transform-only rule. The table shows the fixed build: LCP minus FCP is 0 on every page again, as on `main`. A first-frame e2e check now guards it ([motion-system.md](motion-system.md#above-the-fold)).
+- **JavaScript:** every page now also loads the motion boot and shared motion module (about 5 KB, 2.3 KB gzip), in addition to the search script that was already there.
+
+Bugs found by these checks and fixed on the branch:
+
+- the light-mode footer CTA was dark on dark (pre-existing);
+- keyboard focus on a graph node did not light its links;
+- the "On this page" bar kept a stale or empty item after a jump (pre-existing);
+- in Arabic, " · " separators inside LTR isolates were stranded at the far end of the line («· 2019جامعة القاهرة»). This was pre-existing, in the journey periods, identity and profile facts, and publication venue lines.
+
+**Still not run:** real-device testing, VoiceOver/NVDA/TalkBack, and visual-regression diffing. Do not cite them as done.
 
 ## Manual matrix (before a release)
 
@@ -45,7 +100,7 @@ Mark each cell after checking it in a real browser.
 
 Per cell:
 
-1. **Home:** the hero figure responds to the pointer and the arrow keys, identity tabs switch, the metric cards show the source and date, and nothing animates by itself.
+1. **Home:** the hero figure draws once on load and then responds to the pointer and the arrow keys (the readout is exact at every step), identity tabs switch, the metric cards show the source and date, and nothing else animates by itself.
 2. **Search:** Ctrl/⌘ K and `/` open it, Escape closes it and focus returns. Try `ridge`, `الحرف`, `Abonazel ٢٠٢٣` and `ridge انحدار`.
 3. **Publications:**
    - filter by type and by a year bar; set a co-author and an area;
@@ -60,5 +115,5 @@ Per cell:
    - the "not the published COM-Poisson method" statement is visible.
 7. **Contact:** each path prefills the subject, and a short message is refused. The mailto opens a draft and nothing claims to be "sent".
 8. **Arabic only:** draft labels are visible; DOIs, URLs and identifiers read left to right; ticks read −3 … 3; the footer shows «حالة الترجمة».
-9. **Reduced motion** (OS setting): there are no transitions.
+9. **Reduced motion** (OS setting): there are no transitions or entrances, and every element is visible on first paint; the hero, graph, explorer and lab still update to the same exact values.
 10. **Keyboard only:** every control is reachable, and the focus ring is visible on both themes.

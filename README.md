@@ -59,13 +59,15 @@ ibrahim-taha-axiom/
 │   ├── deployment.md                  Vercel setup, environment variables, release procedure
 │   ├── public-content-policy.md       what the website may show, the consent record, how to approve content
 │   ├── website-launch-checklist.md    indexing status + custom-domain steps
-│   ├── interaction-architecture.md    search, explorer, knowledge graph, journey, lab, contact (Phase 4)
+│   ├── interaction-architecture.md    search, explorer, knowledge graph, journey, lab, contact (Phase 4; motion in Phase 5)
+│   ├── motion-system.md               motion direction, tokens, patterns, per-surface choreography, rules, tests (Phase 5)
 │   ├── lab-methodology.md             the shrinkage lab: design, estimators, results, revision history
 │   ├── data-quality-register.md       open data issues (years, author order, identity, classification)
 │   ├── translation-status.md          Arabic drafts vs reviewed text, terminology, review steps
 │   ├── qa-checklist.md                automated checks, what was run, the manual EN/AR × light/dark matrix
 │   ├── branch-protection.md           recommended required checks for main (not applied)
-│   └── screenshots/phase-4/           review screenshots (EN/AR, light/dark, 390/1280)
+│   ├── screenshots/phase-4/           review screenshots (EN/AR, light/dark, 390/1280)
+│   └── screenshots/phase-5/           motion strips (frozen-timeline frames), static shots, motion review checklist
 ├── .github/workflows/site-ci.yml      CI: build → QA → lab verification → tests → browser tests
 └── .env.example                       environment template (real values never committed)
 ```
@@ -97,5 +99,6 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 - [x] Phase 3: bilingual website live at https://ibrahim-taha-axiom.vercel.app (EN `/`, AR `/ar/`). Researcher content is gated by [`docs/public-content-policy.md`](docs/public-content-policy.md); search indexing is ON (canonical: ibrahim-taha-axiom.vercel.app, custom domain pending; see [`docs/website-launch-checklist.md`](docs/website-launch-checklist.md))
 - [x] Researcher approval recorded (2026-11-06): the researcher agreed to publication and the project owner confirmed it ([`docs/public-content-policy.md`](docs/public-content-policy.md) §1)
 - [x] Phase 4: interactive academic experience: site search (Ctrl/⌘ K), publication explorer, knowledge graph from verified relationships, journey, corrected and verified shrinkage lab, contact composer, Arabic drafts with visible status, CI ([`docs/interaction-architecture.md`](docs/interaction-architecture.md))
+- [x] Phase 5: art-directed motion system ("quiet mathematical motion"): the hero curve and probability area draw once, graph edges trace on entry and selection, the journey line reveals, publication results and lab states move with keyed FLIP without interpolating numbers, page transitions within a language. Reduced motion and no-JS show everything at once. Includes axe and Lighthouse runs, accessibility and RTL fixes, a 41-check browser motion suite, 3 new keyboard checks and 8 motion unit tests ([`docs/motion-system.md`](docs/motion-system.md), [`docs/qa-checklist.md`](docs/qa-checklist.md))
 - [ ] Researcher review of the Arabic drafts ([`docs/translation-status.md`](docs/translation-status.md)) and answers to the open data questions ([`docs/data-quality-register.md`](docs/data-quality-register.md))
 - [ ] Custom domain (D-07a) and the remaining open decisions in [`docs/decisions-pending.md`](docs/decisions-pending.md)

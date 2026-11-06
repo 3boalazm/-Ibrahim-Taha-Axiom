@@ -53,12 +53,12 @@ src/
 ├── i18n/ui.ts         Interface strings (EN/AR)
 ├── lab/               The lab's statistics (build time only)
 ├── layouts/           BaseLayout.astro
-├── lib/               Framework-free logic shared by build, browser and tests: text, search, explorer, normal
+├── lib/               Framework-free logic shared by build, browser and tests: text, search, explorer, normal, motion
 ├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, /search-index/[lang].json, 404, robots.txt
-├── styles/            tokens.css (design tokens) + global.css
+├── styles/            tokens.css (design tokens) + global.css + motion.css (motion patterns)
 └── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), relations.ts, graph.ts, search-index.ts, format.ts, paths.ts
 scripts/               qa.mjs, lab-verify.mjs, content-inventory.mjs
-tests/                 node:test suites (+ e2e/keyboard.mjs, browser)
+tests/                 node:test suites (+ e2e/keyboard.mjs and e2e/motion.mjs, browser)
 ```
 
 ## Publications
@@ -80,6 +80,8 @@ Rules: the lab may never invent a number, and the maths is never changed for vis
 
 ## Design system
 `src/styles/tokens.css` is the whole system: colour (warm bone paper and deep pine-dark themes), typography (Fraunces for display, IBM Plex Sans for interface, IBM Plex Sans Arabic / Noto Kufi Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, radii, shadows and motion. Components only consume tokens, and `npm run qa` re-checks every text/background pair for WCAG contrast in both themes — change a hex and run it again.
+
+Motion is a small shared system: tokens in `tokens.css`, patterns in `styles/motion.css`, helpers in `lib/motion.mjs`. Every hidden starting state is gated on `html[data-motion]`, which needs JavaScript and no reduced-motion preference, so content never depends on an animation. Read [`../docs/motion-system.md`](../docs/motion-system.md) before adding any.
 
 The direction is **dark-forest editorial**: a full-bleed image masthead with the title set large, a pill navigation bar, brass-indexed numerals, soft `--radius-3`/`--radius-4` surfaces and generous white space. Layout uses CSS logical properties throughout, so RTL comes from `dir="rtl"` with no mirrored CSS.
 

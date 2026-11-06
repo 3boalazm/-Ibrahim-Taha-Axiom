@@ -39,11 +39,6 @@
     opacity: 0;
   }
 }
-@keyframes motion-fade-out {
-  to {
-    opacity: 0;
-  }
-}
 /* line-draw: the element needs pathLength="1" */
 @keyframes motion-draw {
   from {
@@ -69,11 +64,6 @@
   }
   to {
     clip-path: inset(0 0 0 0);
-  }
-}
-@keyframes motion-grow-x {
-  from {
-    transform: scaleX(0);
   }
 }
 @keyframes motion-pop {
@@ -184,23 +174,15 @@ html[data-motion] [data-reveal='fade'].is-revealed {
   }
 }
 
-/* ------------------------------------------------------------ line-draw / chart-reveal
-   <path class="line-draw" pathLength="1">  inside a revealed group: drawn once (solid strokes)
-   <path class="chart-wipe">                a data line revealed along x (any stroke, dashes kept)
-   <rect class="chart-bar">                 inside a revealed group: grows from 0
+/* ------------------------------------------------------------ chart-reveal (lines)
+   <path class="chart-wipe">  inside a revealed group: a data line revealed along x
+   (any stroke, dashes kept). Solid strokes use motion-draw with pathLength="1"
+   (hero, journey, mark); measured strokes use drawStrokes() in lib/motion.mjs
+   (graph edges); bars use motion-grow-y from their own baseline (histogram).
    No separate hidden state: the group itself is transparent until revealed, and
    fill-mode `backwards` holds the undrawn frame through the stagger delay. */
-html[data-motion] .is-revealed .line-draw {
-  animation: motion-draw var(--motion-draw) var(--ease-draw) backwards;
-  animation-delay: calc(var(--i, 0) * var(--stagger-step));
-}
 html[data-motion] .is-revealed .chart-wipe {
   animation: motion-wipe var(--motion-draw) var(--ease-draw) backwards;
-  animation-delay: calc(var(--i, 0) * var(--stagger-step));
-}
-html[data-motion] .is-revealed .chart-bar {
-  transform-origin: 50% 100%;
-  animation: motion-grow-y var(--motion-slow) var(--ease-emphasized) backwards;
   animation-delay: calc(var(--i, 0) * var(--stagger-step));
 }
 
