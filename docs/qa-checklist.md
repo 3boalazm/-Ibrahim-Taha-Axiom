@@ -110,6 +110,26 @@ Run in the development sandbox (Node 22, headless Chromium 153) on the final tre
 
 **Seen, not changed:** at 280 px, below the 320 px target, the header's menu button overflows by 6 px (English) and 18 px (Arabic). The header is not touched by this work.
 
+## Run for the conference-paper reclassification (2026-11-07)
+
+Run in the development sandbox (Node 22, headless Chromium 153) on the final tree of the branch that narrows DQ-13 and relabels the 2018 and 2019 records as conference papers ([data-quality-register.md](data-quality-register.md#dq-13--classification--open)):
+
+| Check | Result |
+| --- | --- |
+| `npm ci` → `npm run build` | 67 HTML files |
+| `npm run qa` | All QA checks passed (67 pages, 143 files, 30 external links) |
+| `npm run lab:verify` | Unchanged: ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 75 tests, 75 pass, 0 fail (before: 71). New in `data-quality.test.mjs`: DQ-13 is open only for oral-presentation attribution; both papers carry their source links (data and the built EN/AR pages); the labels read Conference Papers / أوراق المؤتمرات (title, h1, header count, search category, graph kind and column, every section link); no page or structured data claims a presentation. The existing "superseded identifiers" test now also rejects the footer label "Scopus (2 ids)" |
+| Negative checks | Each new test failed when its condition was broken and passed again after the file was restored (`cmp` identical): a sentence "Ibrahim presented this paper at the conference." added to `/talks/` failed the claim test; the old "Talks" nav label on `/` failed the label test; removing the 2018 source link failed the link test; restoring the old two-part DQ-13 question failed the DQ-13 test. The claim checker also rejects probe sentences in English and Arabic («قدّم ابراهيم الورقة في المؤتمر.», «ألقاها ابراهيم في المؤتمر.»). The extended identifiers test failed on the build made before the footer fix |
+| `E2E_REQUIRED=1 npm run test:e2e` | 78 checks, all pass, no JavaScript errors (`keyboard.mjs` 37, `motion.mjs` 41) |
+| axe-core 4.14.0 | 0 violations in 24 runs: home, conference papers, profile, research and the two papers' publication pages (EN/AR) × light/dark at 1280 px, with reduced motion |
+| Overflow | 0 px at 320 and 375 px for the same 12 pages (24 combinations) |
+| Visual review | The four screenshots in [`screenshots/conference-papers/`](screenshots/conference-papers/README.md) were reviewed by eye |
+
+**Not run:** Lighthouse (no script, image or loading change), real devices and screen readers.
+
+**Evidence, as checked on 2026-11-07.** Fetched and read: the 2019 full text on ResearchGate (running header of the 54th conference, 9–11 December 2019, first page 35, the three authors); the Crossref records of the two Wiley papers (`10.1002/cpe.6685` reference 29 and `10.1002/cpe.7045` reference 2, both citing the papers in the conference proceedings); the conference site, which announces the 53rd conference for 3–5 December 2018. Not opened: the official 2018 proceedings PDF returned HTTP 500 to the sandbox's fetcher twice over HTTPS and failed over HTTP, so its page range (49–66) is as reported by the project owner. No source examined says who presented either paper.
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
