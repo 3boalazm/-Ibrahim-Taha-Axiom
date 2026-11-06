@@ -14,11 +14,21 @@ Runs on every pull request and every push to `main` that touches `site/`:
 
 ## Run during Phase 4 (2026-11-06)
 
-These were run in the development sandbox with headless Chromium 153:
+These were run in the development sandbox (Node 22, headless Chromium 153) on the final tree:
 
-- `npm run build`, `npm run qa`, `npm run lab:verify`, `npm test` and `npm run test:e2e` all pass. Exact counts are in the pull request.
-- **Overflow sweep:** no horizontal overflow at 360, 390, 768, 1024, 1280 and 1440 px, in EN and AR, across 12 page types. The header was also swept at 961–1920 px.
-- **Visual review of screenshots** (`docs/screenshots/phase-4/`): home, research, publications, lab and contact, at 390 and 1280 px, EN/AR, light and dark.
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 HTML files |
+| `npm run qa` | All QA checks passed; sitemap 66 URLs |
+| `npm run lab:verify` | ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 50 tests, 50 pass, 0 fail |
+| `npm run test:e2e` | 34 checks, all pass, no JavaScript errors |
+| Overflow sweep, 13 page types | No horizontal overflow at 320, 360, 390, 768, 1024, 1280 and 1440 px, EN/AR (182 combinations) |
+| Overflow sweep, publication pages | All 22 publication pages, EN/AR, at 320 and 360 px (88 combinations): no overflow |
+| Header fit | Header fits from 961 to 1920 px; the menu collapses below 1024 px |
+| Visual review | The screenshots in [`screenshots/phase-4/`](screenshots/phase-4/README.md) were reviewed by eye. Fixes that came out of the review: Arabic fake-italic, author contrast on the publication header, the Latin title face on Arabic pages, isolation of the `.bib`/`.ris` labels, a DOI overflowing at 320 px, and personal names breaking across lines |
+
+CI runs Node 26 (`engines`). The first CI run is the first execution on Node 26.
 
 **Not run:** axe or another automated accessibility engine, Lighthouse, real-device testing, VoiceOver/NVDA/TalkBack, and visual-regression diffing. Do not cite them as done.
 
