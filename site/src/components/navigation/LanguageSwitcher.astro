@@ -10,9 +10,12 @@ interface Props {
 const { lang, path } = Astro.props;
 const target = otherLang(lang);
 const ui = t(lang);
+// The link is named by the target language's own name ("العربية" / "English",
+// spoken in that language via lang); the sentence is a description (title), so
+// the visible text stays the accessible name (WCAG 2.5.3).
 ---
 
-<a class="lang-switch" href={localePath(target, path)} hreflang={target} lang={target} title={ui.switchToLabel} aria-label={ui.switchToLabel}>
+<a class="lang-switch" href={localePath(target, path)} hreflang={target} lang={target} title={ui.switchToLabel}>
   {t(target).languageName}
 </a>
 

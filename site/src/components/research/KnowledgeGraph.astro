@@ -87,7 +87,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
   <div class="graph__mapwrap" data-graph-map>
     <p class="graph__hint" id="graph-hint">{ui.graphHint}</p>
     <div class="graph__layout">
-      <div class="graph__scroll" role="region" aria-label={ui.graphTitle} tabindex="-1">
+      <div class="graph__scroll" role="region" aria-label={ui.graphMap} tabindex="-1">
         <div class="graph__colheads" aria-hidden="true">
           <span>{ui.graphColumns.left}</span>
           <span>{ui.graphColumns.centre}</span>
@@ -570,7 +570,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
     font-size: var(--step--2);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
   }
   :global(:lang(ar)) .graph__colheads {
     letter-spacing: 0;
@@ -742,7 +742,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
   .graph__panel :global(.graph__panel-kind) {
     font-family: var(--font-ui);
     font-size: var(--step--2);
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
   }
   .graph__panel :global(.graph__panel-title) {
     font-family: var(--font-serif);

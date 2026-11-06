@@ -25,8 +25,10 @@
   --color-focus: #8e4a14;
   --color-selection: #dce6dd;
 
-  /* decorative only — never used behind body text */
+  /* brass: strokes, rings and large marks. Small brass text uses --color-brass-ink,
+     which keeps the hue and clears 4.5:1 on paper, surface-1 and surface-2. */
   --color-brass: #a9843f;
+  --color-brass-ink: #7e632f;
   --color-brass-soft: #e8d9b8;
   --color-scrim: rgb(16 30 25 / 0.55);
   --color-glass: rgb(252 250 246 / 0.72);
@@ -35,6 +37,7 @@
   /* inverted panels (footer): deep ink in light mode, surface in dark mode */
   --color-invert-bg: #10241b;
   --color-invert-fg: #f7f4ee;
+  --color-invert-brass: #e8d9b8;
 
   /* content-type hues (small markers and hairline accents) */
   --type-publication: #1e4b3a;
@@ -162,6 +165,7 @@
   --color-focus: #e9a96b;
   --color-selection: #24463a;
   --color-brass: #d8b578;
+  --color-brass-ink: #d8b578;
   --color-brass-soft: #3a2f1d;
   --color-scrim: rgb(6 12 9 / 0.66);
   --color-glass: rgb(20 29 25 / 0.66);
@@ -169,6 +173,7 @@
   --color-glass-strong: rgb(14 21 18 / 0.88);
   --color-invert-bg: #141d19;
   --color-invert-fg: #efefe7;
+  --color-invert-brass: #d8b578;
   --type-publication: #9ed0b4;
   --type-project: #a8c79b;
   --type-teaching: #e0ae6f;
@@ -197,6 +202,7 @@
     --color-focus: #e9a96b;
     --color-selection: #24463a;
     --color-brass: #d8b578;
+    --color-brass-ink: #d8b578;
     --color-brass-soft: #3a2f1d;
     --color-scrim: rgb(6 12 9 / 0.66);
     --color-glass: rgb(20 29 25 / 0.66);
@@ -204,8 +210,7 @@
     --color-glass-strong: rgb(14 21 18 / 0.88);
     --color-invert-bg: #141d19;
     --color-invert-fg: #efefe7;
-  --color-invert-bg: #141d19;
-  --color-invert-fg: #efefe7;
+    --color-invert-brass: #d8b578;
     --type-publication: #9ed0b4;
     --type-project: #a8c79b;
     --type-teaching: #e0ae6f;

@@ -189,10 +189,10 @@ main {
   letter-spacing: 0;
 }
 .label--brass {
-  color: var(--color-brass);
+  color: var(--color-brass-ink);
 }
 :lang(ar) .label--brass {
-  color: var(--color-brass);
+  color: var(--color-brass-ink);
 }
 .rule {
   border: 0;

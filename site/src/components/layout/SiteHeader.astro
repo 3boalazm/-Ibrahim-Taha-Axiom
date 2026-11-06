@@ -26,7 +26,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     <a class="site-header__brand" href={localePath(lang, '/')} aria-label={SITE_NAME}>
       <Mark size="2.45rem" class="site-header__mark" intro />
       <span class="site-header__wordmark" aria-hidden="true">
-        <span class="site-header__name">Ibrahim Taha</span>
+        <span class="site-header__name">Ibrahim Taha</span>{' '}
         <span class="site-header__axiom">Axiom</span>
       </span>
     </a>
@@ -157,7 +157,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     font-weight: 600;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
     white-space: nowrap;
   }
   .site-header__brand:hover .site-header__name {
@@ -342,10 +342,17 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       padding: 0.5em 0.62em;
       font-size: var(--step--2);
     }
+    /* Visually collapsed, never removed: the link keeps its accessible name. */
     .site-header__cta span:first-child {
-      display: none;
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
     .site-header__cta {
+      position: relative;
       padding: 0.62em 0.8em;
     }
   }
@@ -354,7 +361,11 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       margin-inline-start: auto;
     }
     .site-header__cta span:first-child {
-      display: inline;
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      overflow: visible;
+      clip-path: none;
     }
     .site-header__cta {
       padding: 0.62em 1.05em;

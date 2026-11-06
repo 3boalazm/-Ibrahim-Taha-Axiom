@@ -209,25 +209,22 @@ const labels = {
               aria-pressed="false"
               aria-label={ui.timelineBar(y, yearCount(y))}
               disabled={yearCount(y) === 0}
+              data-n={yearCount(y) || ''}
               style={`--h: ${yearCount(y) / maxCount}; --i: ${yearRange.indexOf(y)}`}
             >
               <span class="explorer__bar-fill" aria-hidden="true" />
-              <span class="explorer__bar-n ltr" aria-hidden="true" data-x-year-count>
-                {yearCount(y) || ''}
-              </span>
               <span class="explorer__bar-y ltr" aria-hidden="true">
-                {String(y).slice(2)}
+                {y}
               </span>
             </button>
           ))
         }
       </div>
-      <div class="explorer__axis ltr" aria-hidden="true" dir="ltr"><span>{minYear}</span><span>{maxYear}</span></div>
     </figure>
 
     <div class="explorer__status">
       <p class="explorer__count" aria-live="polite" data-x-count>{ui.results(pubs.length)}</p>
-      <div class="explorer__active" data-x-active aria-label={ui.activeFilters}></div>
+      <div class="explorer__active" role="group" data-x-active aria-label={ui.activeFilters}></div>
       <div class="explorer__tools">
         <button type="button" class="button explorer__clear" data-x-clear hidden>{ui.clearFilters}</button>
         <button type="button" class="button" data-x-share>{ui.shareView}</button>
@@ -358,8 +355,7 @@ const labels = {
         b.setAttribute('aria-label', L.bar[`${y}:${h.count}`] ?? `${y}: ${h.count}`);
         b.setAttribute('aria-pressed', String(state.from === y && state.to === y));
         b.classList.toggle('is-in-range', (state.from === null || y >= state.from) && (state.to === null || y <= state.to) && (state.from !== null || state.to !== null));
-        const n = b.querySelector('[data-x-year-count]');
-        if (n) n.textContent = h.count ? String(h.count) : '';
+        b.dataset.n = h.count ? String(h.count) : '';
       });
       const tc = typeCounts(items, state);
       root.querySelectorAll<HTMLElement>('[data-x-type-count]').forEach((el) => (el.textContent = String(tc[el.dataset.xTypeCount!] ?? 0)));
@@ -513,8 +509,12 @@ const labels = {
     gap: var(--space-2);
   }
   .explorer__n {
-    opacity: 0.7;
     margin-inline-start: 0.2rem;
+    color: var(--color-ink-3);
+  }
+  :global(button.chip[aria-pressed='true']) .explorer__n {
+    color: inherit;
+    opacity: 0.8;
   }
   .explorer__selects {
     display: grid;
@@ -615,7 +615,12 @@ const labels = {
   .explorer__bar[aria-pressed='true'] .explorer__bar-fill {
     background: var(--color-accent);
   }
-  .explorer__bar-n {
+  /* The visible label of each bar is its full year, the first word of the
+     accessible name ("2018: 1 publication"), so speech input can target it
+     (WCAG 2.5.3). The count is the bar's value, not its label, and is drawn from
+     data-n. Nine full-year ticks fit at 320px (25px columns, 21px labels). */
+  .explorer__bar::before {
+    content: attr(data-n);
     grid-row: 1;
     color: var(--color-ink-2);
   }
@@ -627,13 +632,6 @@ const labels = {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
     border-radius: 2px;
-  }
-  .explorer__axis {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
   }
 
   /* -------------------------------------------------------------- status */
