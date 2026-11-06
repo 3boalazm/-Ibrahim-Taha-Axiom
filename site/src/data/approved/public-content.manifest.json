@@ -1,12 +1,53 @@
 {
   "schemaVersion": 1,
-  "status": "approved for publication by the project owner on behalf of the researcher",
-  "lastReviewed": "2026-11-05",
-  "reviewedBy": "Project owner (GitHub: 3boalazm)",
+  "status": "approved for publication by the researcher; consent recorded by the project owner on 2026-11-06",
+  "lastReviewed": "2026-11-06",
+  "reviewedBy": "Project owner (GitHub: 3boalazm), recording the researcher’s consent",
   "researcherApproval": {
     "status": "approved",
-    "reference": "Blanket approval of all reviewed Phase 2 data, given in the project chat on 2026-11-05 by the project owner on behalf of the researcher. Personal e-mail and phone remain excluded by policy."
+    "reference": "The researcher agreed to publication and the project owner confirmed it in the project chat on 2026-11-06. This supersedes the 2026-11-05 record made on the researcher’s behalf (kept in approvalHistory).",
+    "researcher": {
+      "name": "Ibrahim Mohamed Taha",
+      "orcid": "0000-0002-6141-5387"
+    },
+    "date": "2026-11-06",
+    "scope": [
+      "Publication of every profile field, publication, research area, project, course, talk, CV entry and platform-metrics snapshot listed in this manifest, on the public website ibrahim-taha-axiom.vercel.app.",
+      "Public e-mail address and phone number as they appear in profile.json.",
+      "Search-engine indexing (canonical URLs, sitemap, robots.txt) as set in public-settings/launch.json.",
+      "Presentation of that approved data through the Phase 4 interactive features (search, publication explorer, knowledge graph, journey timeline, lab)."
+    ],
+    "exclusions": [
+      "AI-assisted Arabic drafts in src/data/translations/ar.json are not covered until the researcher reviews them; they are shown only with a visible draft label.",
+      "Unresolved data-quality questions in src/data/review/open-issues.json are not decided by this approval.",
+      "No private data beyond the approved fields; nothing from data-staging/ is published."
+    ],
+    "recordedBy": "Project owner (GitHub: 3boalazm)",
+    "basis": "Statement in the project chat on 2026-11-06 that the researcher agreed and the project owner confirmed. No signed document is held, and this record does not claim one."
   },
+  "approvalHistory": [
+    {
+      "date": "2026-11-05",
+      "status": "approved on behalf of the researcher",
+      "by": "Project owner (GitHub: 3boalazm)",
+      "scope": "All reviewed Phase 2 data: profile, publications, research areas, teaching and CV (decision D-16).",
+      "note": "Blanket approval given in the project chat on behalf of the researcher. The record at the time said personal e-mail and phone were excluded; later the same day they were approved on explicit request, together with two talks and three projects (D-16)."
+    },
+    {
+      "date": "2026-11-05",
+      "status": "approved on behalf of the researcher",
+      "by": "Project owner (GitHub: 3boalazm)",
+      "scope": "Public e-mail and phone, two talks (the 2018 and 2019 conference papers) and three evidence-backed projects (D-16).",
+      "note": "Explicit request recorded in docs/decisions-pending.md (D-16)."
+    },
+    {
+      "date": "2026-11-06",
+      "status": "approved",
+      "by": "Ibrahim Mohamed Taha (researcher), recorded by the project owner",
+      "scope": "See researcherApproval.scope.",
+      "note": "Researcher consent; supersedes the on-behalf records above without deleting them."
+    }
+  ],
   "profile": {
     "approvedFields": [
       "name",
@@ -85,8 +126,35 @@
       "conference-2018-nb-ridge"
     ]
   },
+  "methods": {
+    "approvedIds": [
+      "ridge-estimation",
+      "liu-type-estimation",
+      "lasso-elastic-net",
+      "pls-sem",
+      "monte-carlo-simulation"
+    ],
+    "basis": "Site taxonomy derived from approved publication records: a method node appears only where a publication’s own title, keywords or abstract names it, quoted verbatim in the relationship and checked at build. Labels await the researcher’s confirmation (open issue DQ-14)."
+  },
+  "datasets": {
+    "approvedIds": [
+      "zenodo-23120962"
+    ],
+    "basis": "The supplementary dataset already approved as a project link and recorded in the supp field of taha2026analytical."
+  },
   "cv": {
     "approved": true
+  },
+  "metrics": {
+    "approved": true,
+    "source": "research-metrics.json",
+    "note": "Platform metrics are snapshots, not permanent facts: figures are printed with the platform and retrieval date, and must be re-verified (or the block removed) at the next content review. Never present them as institutional or official metrics."
+  },
+  "translations": {
+    "ar": {
+      "showDrafts": true,
+      "note": "AI-assisted Modern Standard Arabic drafts prepared on 2026-11-06 and not yet reviewed by the researcher. Each is shown with the label “ترجمة مبدئية — لم يراجعها الباحث بعد”. Set showDrafts to false to hide them; English fallbacks then return."
+    }
   },
   "relationships": [
     {
@@ -228,11 +296,132 @@
       "from": "publication:taha2026uncertainty",
       "to": "area:bayesian-estimation",
       "evidence": "The paper compares Bayesian statistics with four other approaches under uncertainty."
+    },
+    {
+      "from": "publication:rady2018ridge",
+      "to": "method:ridge-estimation",
+      "evidence": "The title names ridge estimators.",
+      "source": {
+        "field": "title",
+        "quote": "Ridge estimators"
+      }
+    },
+    {
+      "from": "publication:abonazel2023beta",
+      "to": "method:ridge-estimation",
+      "evidence": "The title names beta ridge regression estimators.",
+      "source": {
+        "field": "title",
+        "quote": "Beta ridge regression estimators"
+      }
+    },
+    {
+      "from": "publication:taha2025comprehensive",
+      "to": "method:ridge-estimation",
+      "evidence": "The title names ridge regression.",
+      "source": {
+        "field": "title",
+        "quote": "Ridge Regression"
+      }
+    },
+    {
+      "from": "publication:abonazel2022two",
+      "to": "method:ridge-estimation",
+      "evidence": "A keyword names ridge beta regression.",
+      "source": {
+        "field": "keywords",
+        "quote": "ridge beta regression"
+      }
+    },
+    {
+      "from": "publication:rady2019shrinkage",
+      "to": "method:liu-type-estimation",
+      "evidence": "The title names a Liu-type estimator.",
+      "source": {
+        "field": "title",
+        "quote": "Liu-type"
+      }
+    },
+    {
+      "from": "publication:abonazel2022two",
+      "to": "method:liu-type-estimation",
+      "evidence": "A keyword names Liu beta regression.",
+      "source": {
+        "field": "keywords",
+        "quote": "Liu beta regression"
+      }
+    },
+    {
+      "from": "publication:taha2026analytical",
+      "to": "method:lasso-elastic-net",
+      "evidence": "The title names elastic-net estimators.",
+      "source": {
+        "field": "title",
+        "quote": "elastic-net estimators"
+      }
+    },
+    {
+      "from": "publication:taha2026development",
+      "to": "method:lasso-elastic-net",
+      "evidence": "The abstract introduces COMP-LASSO estimators.",
+      "source": {
+        "field": "abstract",
+        "quote": "COMP-LASSO"
+      }
+    },
+    {
+      "from": "publication:taha2025impact",
+      "to": "method:pls-sem",
+      "evidence": "A keyword names PLS-SEM.",
+      "source": {
+        "field": "keywords",
+        "quote": "PLS-SEM"
+      }
+    },
+    {
+      "from": "publication:abbas2026moderating",
+      "to": "method:pls-sem",
+      "evidence": "The abstract names Partial Least Squares–Structural Equation Modeling (PLS-SEM).",
+      "source": {
+        "field": "abstract",
+        "quote": "Partial Least Squares–Structural Equation Modeling (PLS-SEM)"
+      }
+    },
+    {
+      "from": "publication:seliem2024note",
+      "to": "method:monte-carlo-simulation",
+      "evidence": "The abstract reports Monte Carlo simulation experiments.",
+      "source": {
+        "field": "abstract",
+        "quote": "Monte Carlo simulation"
+      }
+    },
+    {
+      "from": "publication:abonazel2022two",
+      "to": "method:monte-carlo-simulation",
+      "evidence": "The abstract reports a Monte Carlo simulation study.",
+      "source": {
+        "field": "abstract",
+        "quote": "Monte Carlo simulation study"
+      }
+    },
+    {
+      "from": "publication:taha2026analytical",
+      "to": "dataset:zenodo-23120962",
+      "evidence": "The supplementary-data field of the record is the Zenodo DOI.",
+      "source": {
+        "field": "supp",
+        "quote": "10.5281/zenodo.23120962"
+      }
+    },
+    {
+      "from": "project:com-poisson-penalized-estimation",
+      "to": "dataset:zenodo-23120962",
+      "evidence": "The approved project links to the Zenodo dataset.",
+      "source": {
+        "field": "links",
+        "quote": "10.5281/zenodo.23120962"
+      }
     }
-  ],
-  "metrics": {
-    "approved": true,
-    "source": "research-metrics.json",
-    "note": "Platform metrics are snapshots, not permanent facts: figures are printed with the platform and retrieval date, and must be re-verified (or the block removed) at the next content review. Never present them as institutional or official metrics."
-  }
+  ]
 }

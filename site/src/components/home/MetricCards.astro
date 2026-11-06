@@ -1,0 +1,222 @@
+---
+/**
+ * Research metrics as two separate source cards (OpenAlex, ResearchGate).
+ * Every figure carries its source, retrieval date and counting method; the
+ * cards never add, rank or chart the platforms against each other, and no
+ * history is shown because none was recorded (one snapshot per source).
+ */
+import { metrics, primaryMetrics, secondaryMetrics } from '../../utils/metrics';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const nf = new Intl.NumberFormat(ar ? 'ar-EG-u-nu-latn' : 'en-GB');
+const date = (iso: string) => new Intl.DateTimeFormat(ar ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${iso}T00:00:00Z`));
+const cards = [
+  {
+    id: 'openalex',
+    source: metrics.source,
+    url: metrics.url,
+    linkLabel: metrics.sourceLabel,
+    retrieved: metrics.retrieved,
+    method: ar
+      ? 'يحصي الأعمال التي فهرسها OpenAlex لمعرّف ORCID الخاص بالباحث، والاستشهادات بينها داخل الفهرس.'
+      : 'Counts works OpenAlex has indexed for the researcher’s ORCID iD, and citations between works inside that index.',
+    figures: [
+      { value: primaryMetrics.works, label: ar ? 'أعمال مفهرسة' : 'indexed works', how: ar ? 'أعمال مرتبطة بمعرّف ORCID في OpenAlex' : 'Works linked to the ORCID iD in OpenAlex' },
+      { value: primaryMetrics.citations, label: ar ? 'استشهادات' : 'citations', how: ar ? 'استشهادات من أعمال أخرى مفهرسة في OpenAlex' : 'Citations from other works indexed in OpenAlex' },
+      { value: primaryMetrics.hIndex, label: ar ? 'مؤشر h' : 'h-index', how: ar ? 'أكبر h بحيث يكون لـ h عملًا h استشهادًا على الأقل' : 'The largest h such that h works have at least h citations each' },
+      { value: primaryMetrics.i10Index, label: ar ? 'مؤشر i10' : 'i10-index', how: ar ? 'عدد الأعمال التي لها 10 استشهادات أو أكثر' : 'Works with at least 10 citations' },
+    ],
+  },
+  {
+    id: 'researchgate',
+    source: secondaryMetrics.source,
+    url: secondaryMetrics.url,
+    linkLabel: ar ? 'الملف على ResearchGate' : 'ResearchGate profile',
+    retrieved: secondaryMetrics.retrieved,
+    method: ar
+      ? 'يحصي المواد المرفوعة على الملف (ومنها الكتب والأدلة والتقارير والمسودات)، والقراءات والاستشهادات التي يرصدها ResearchGate.'
+      : 'Counts items uploaded to the profile (including books, guides, reports and preprints), and the reads and citations ResearchGate detects.',
+    figures: [
+      { value: secondaryMetrics.figures.publications, label: ar ? 'مواد' : 'items', how: ar ? 'كل ما رُفع على الملف، لا الأبحاث المحكّمة وحدها' : 'Everything uploaded to the profile, not only peer-reviewed papers' },
+      { value: secondaryMetrics.figures.reads, label: ar ? 'قراءات' : 'reads', how: ar ? 'مرات عرض المواد أو تنزيلها على المنصة' : 'Views or downloads of the items on the platform' },
+      { value: secondaryMetrics.figures.citations, label: ar ? 'استشهادات' : 'citations', how: ar ? 'استشهادات يرصدها ResearchGate من مصادره الخاصة' : 'Citations ResearchGate detects from its own sources' },
+    ],
+  },
+];
+---
+
+<section class="mcards container" aria-labelledby="mcards-title">
+  <div class="mcards__head">
+    <p class="kicker">{ar ? 'المؤشرات' : 'Metrics'}</p>
+    <h2 id="mcards-title" class="mcards__title">{ar ? 'أرقامٌ بمصادرها' : 'Numbers with their sources'}</h2>
+    <p class="mcards__note" role="note">
+      {
+        ar
+          ? 'منصّتان مختلفتان بطريقتَي عدٍّ مختلفتين: لا تُجمع أرقامهما ولا تُقارن. كل رقم هنا لقطة واحدة بتاريخ استرجاعها، وليس مؤشرًا مؤسسيًا رسميًا.'
+          : metrics.note
+      }
+    </p>
+  </div>
+  <div class="mcards__grid">
+    {
+      cards.map((c) => (
+        <article class="mcard" aria-labelledby={`mcard-${c.id}`}>
+          <header class="mcard__head">
+            <h3 id={`mcard-${c.id}`} class="mcard__source">
+              {c.source}
+            </h3>
+            <p class="mcard__date">
+              {ar ? 'استُرجعت في' : 'Retrieved'} <time datetime={c.retrieved}>{date(c.retrieved)}</time>
+            </p>
+          </header>
+          <dl class="mcard__figures">
+            {c.figures.map((f) => (
+              <div class="mcard__fig" title={f.how}>
+                <dt>{f.label}</dt>
+                <dd class="ltr">{nf.format(f.value)}</dd>
+              </div>
+            ))}
+          </dl>
+          <p class="mcard__method">{c.method}</p>
+          <details class="disclosure disclosure--marked mcard__how">
+            <summary>{ar ? 'ماذا يعني كل رقم؟' : 'What does each number count?'}</summary>
+            <dl>
+              {c.figures.map((f) => (
+                <div>
+                  <dt>{f.label}</dt>
+                  <dd>{f.how}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+          <a class="mcard__link" href={c.url} rel="me noopener">
+            {c.linkLabel} <span aria-hidden="true">↗</span>
+          </a>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .mcards {
+    display: grid;
+    gap: var(--space-5);
+    padding-block: clamp(var(--space-6), 5vw, var(--space-8));
+  }
+  .mcards__head {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .mcards__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .mcards__note {
+    max-inline-size: 48rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .mcards__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-4);
+  }
+  .mcard {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    padding: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-surface-1);
+  }
+  .mcard__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+    padding-block-end: var(--space-3);
+    border-block-end: var(--border-hairline);
+  }
+  .mcard__source {
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    font-weight: 500;
+  }
+  .mcard__date {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .mcard__figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .mcard__fig {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.1rem;
+    cursor: help;
+  }
+  .mcard__fig dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--color-ink);
+  }
+  .mcard__fig dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .mcard__method {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.55;
+    color: var(--color-ink-2);
+  }
+  .mcard__how summary {
+    min-block-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+  .mcard__how dl {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.5;
+  }
+  .mcard__how dt {
+    font-weight: 600;
+  }
+  .mcard__how dd {
+    margin: 0;
+    color: var(--color-ink-2);
+  }
+  .mcard__link {
+    justify-self: start;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+</style>

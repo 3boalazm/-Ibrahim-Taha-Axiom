@@ -1,13 +1,19 @@
 ---
 /**
- * The shrinkage lab: the interactive centrepiece.
+ * The shrinkage lab — an illustrative, controlled experiment.
  *
- * A controlled experiment rather than a chart: the visitor changes one thing —
- * how collinear the predictors are — and watches three estimators disagree.
- * Every state is precomputed at build (see src/lab/snapshots.ts), so the browser
- * only swaps text and draws bars; no statistics code ships to the client.
+ * The visitor changes one thing (how collinear the predictors are) and sees
+ * three estimators respond. Every state is precomputed at build time
+ * (src/lab/snapshots.ts) and every number in the prose comes from the same
+ * payload (`CLAIMS`), which scripts/lab-verify.mjs re-derives after each build.
+ * The figures are drawn by src/lab/draw.ts on the server for the first state
+ * and redrawn in the browser from payload values; no model code ships.
  */
-import { LAB_PAYLOAD, SNAPSHOTS, TRUTH } from '../../lab/snapshots';
+import DraftNote from '../shared/DraftNote.astro';
+import { CLAIMS, DEFAULT_RHO, LAB_PAYLOAD, LAMBDA_GRID, PRESETS, REGIMES, STATES, TRUTH } from '../../lab/snapshots';
+import { coefDomain, coefSvg, cvSvg, fmtRho, mcSvg } from '../../lab/draw';
+import { getPublication } from '../../utils/publications';
+import { localePath } from '../../utils/paths';
 import type { Lang } from '../../utils/schema';
 
 interface Props {
@@ -15,151 +21,332 @@ interface Props {
 }
 const { lang } = Astro.props;
 const ar = lang === 'ar';
-const initial = SNAPSHOTS.findIndex((s) => s.rho === 0.9) >= 0 ? SNAPSHOTS.findIndex((s) => s.rho === 0.9) : 8;
-const start = SNAPSHOTS[initial];
+const C = CLAIMS;
+const reps = LAB_PAYLOAD.meta.reps;
+const initial = Math.max(0, STATES.findIndex((s) => s.rho === DEFAULT_RHO));
+const start = LAB_PAYLOAD.states[initial];
+const domain = coefDomain(LAB_PAYLOAD.states);
+const n2 = (v: number) => v.toFixed(2);
+const n3 = (v: number) => v.toFixed(3);
+const ratioOf = (s: (typeof LAB_PAYLOAD.states)[number]) => s.mc.est.ml.spread / s.mc.est.ridge.spread;
+const stateAt = (rho: number) => LAB_PAYLOAD.states.find((s) => s.rho === rho)!;
+const regimeOf = (rho: number) => (rho >= REGIMES.high ? 'high' : rho >= REGIMES.moderate ? 'moderate' : 'low');
+const truthList = TRUTH.map((v) => n2(v)).join(ar ? '، ' : ', ');
+
+const name = {
+  ml: ar ? 'الإمكان الأعظم' : 'Maximum likelihood',
+  ridge: ar ? 'الحَرْف (Ridge)' : 'Ridge',
+  ns: ar ? 'حَرْف بمعلمة مُعدَّلة بالمعيار' : 'Norm-scaled ridge',
+  truth: ar ? 'القيمة الحقيقية' : 'Truth',
+};
+const short = {
+  ml: ar ? 'الإمكان الأعظم' : 'ML',
+  ridge: ar ? 'الحَرْف' : 'Ridge',
+  ns: ar ? 'الحَرْف المُعدَّل' : 'NS ridge',
+};
 
 const copy = {
-  control: ar ? 'الارتباط بين المتغيرات المستقلة' : 'Collinearity between the predictors',
+  kicker: ar ? 'تجربة مضبوطة للتوضيح' : 'Illustrative controlled experiment',
+  title: ar ? 'ارفع الارتباط بين المتغيرات، وراقب ما يفعله كل مقدِّر.' : 'Turn up the collinearity. Watch what each estimator does with it.',
+  lead: ar
+    ? 'أربعة متغيرات تفسيرية، وبيانات عدّ مُحاكاة، وثلاثة مقدِّرات تُطبَّق على المشاهدات نفسها في ظل نموذج عمل واحد. المؤشر يغيّر شيئًا واحدًا: قوة الارتباط بين المتغيرات التفسيرية. السحبات العشوائية لا تتغيّر أبدًا؛ تُعاد فقط صياغة المتغيرات التفسيرية — والمشاهدات العدّية المبنية عليها — عند كل مستوى.'
+    : 'Four predictors, simulated count data and three estimators fitted to the same rows under one working model. The dial changes one thing: how strongly the predictors are correlated. The random draws never change; only the predictors — and the counts built from them — are rebuilt at each level.',
+  disclaimer: ar
+    ? 'تجربة تعليمية، لا نتيجة بحثية. لا تُطبِّق المقدِّرات المنشورة للباحث (مقدِّرات COM-Poisson الجزائية أو LASSO أو الشبكة المرنة المرجَّحة بالارتباط)، وأرقامها مستمدّة من هذه المحاكاة وحدها.'
+    : 'A teaching experiment, not a research result. It does not implement the researcher’s published COM-Poisson, LASSO or correlation-weighted elastic-net estimators, and its numbers come from this simulation alone.',
+  control: ar ? 'الارتباط بين المتغيرات التفسيرية (ρ)' : 'Collinearity between the predictors (ρ)',
   controlNote: ar
-    ? 'حرِّك المؤشر: كل شيء آخر ثابت — نفس المشاهدات ونفس البواقي.'
-    : 'Move the dial. Nothing else changes: same rows, same errors.',
-  vif: ar ? 'أقصى VIF' : 'Max VIF',
-  lambda: ar ? 'λ المختار' : 'λ chosen',
-  spreadMl: ar ? 'اهتزاز الإمكان الأقصى' : 'ML spread (±2 SD)',
-  spreadRidge: ar ? 'اهتزاز المُقلِّص' : 'Ridge spread (±2 SD)',
-  coef: ar ? 'المعاملات مقابل القيمة الحقيقية' : 'Coefficients against the truth',
+    ? 'السحبات العشوائية نفسها في كل موضع؛ تُعاد صياغة المتغيرات التفسيرية والمشاهدات العدّية لكل قيمة من ρ.'
+    : 'Same random draws at every position; the predictors and the counts are rebuilt for each ρ.',
+  vif: ar ? 'أكبر VIF' : 'Max VIF',
+  lambda: ar ? 'λ للحَرْف (بالتحقق المتقاطع)' : 'Ridge λ (by CV)',
+  spreadMl: ar ? 'تشتُّت الإمكان الأعظم' : 'ML spread',
+  spreadRidge: ar ? 'تشتُّت الحَرْف' : 'Ridge spread',
+  ratio: ar ? 'النسبة (الإمكان الأعظم ÷ الحَرْف)' : 'Ratio ML ÷ ridge',
+  presets: ar ? 'مواضع جاهزة' : 'Presets',
+  dialTitle: ar ? 'ماذا يغيّر المؤشر؟' : 'What does the dial change?',
+  share: ar ? 'انسخ رابط هذه الحالة' : 'Copy a link to this state',
+  shared: ar ? 'نُسخ الرابط' : 'Link copied',
+  shareFail: ar ? 'تعذّر النسخ؛ الرابط في شريط العنوان' : 'Could not copy; the link is in the address bar',
+  coef: ar ? 'التقديرات مقابل القيمة الحقيقية' : 'Estimates against the truth',
   coefNote: ar
-    ? 'الخط المتقطّع هو القيمة الحقيقية التي وُلِّدت بها البيانات. الأعمدة هي ما قدَّره كل مُقدِّر من نفس المشاهدات.'
-    : 'The dashed line is the true value the data were generated from. The bars are what each estimator recovers from the same rows.',
-  cv: ar ? 'منحنى التحقق المتقاطع' : 'Cross-validation curve',
+    ? `النقاط: التقديرات من العيّنة المعروضة. الخطوط الأفقية: متوسط مونت كارلو ± انحرافين معياريين عبر ${reps} عيّنة مُعادة. الخط المتقطّع: القيمة الحقيقية.`
+    : `Dots: estimates from the displayed sample. Whiskers: Monte Carlo mean ± 2 SD over ${reps} redrawn samples. Dashed line: the true value.`,
+  cv: ar ? 'اختيار λ بالتحقق المتقاطع' : 'Choosing λ by cross-validation',
   cvNote: ar
-    ? 'الانحراف على البيانات المحجوزة مقابل λ. النقطة النحاسية هي λ الذي اختاره التحقق — لا نُدخله يدويًا.'
-    : 'Held-out deviance against λ. The brass dot is the λ the cross-validation picked — it is not hand-set.',
-  spread: ar ? 'لماذا يهمّ: تشتُّت التقدير' : 'Why it matters: sampling spread',
-  spreadNote: ar
-    ? '٢٠ عيّنة مُعادة لكل مستوى ارتباط. المحور الرأسي هو الانحراف المعياري للمعاملات عبر العيّنات، أي مدى اهتزاز التقدير لو أُعيدت الدراسة.'
-    : 'Twenty redrawn samples at each level of collinearity. The vertical axis is the standard deviation of the coefficients across samples — how much the estimate would move if the study were re-run.',
-  ml: ar ? 'الإمكان الأقصى' : 'Maximum likelihood',
-  ridge: ar ? 'تلالي سلبي ثنائي الحد' : 'NB ridge',
-  cw: ar ? 'تلالي مرجَّح بالارتباط' : 'Correlation-weighted ridge',
-  truth: ar ? 'الحقيقة' : 'truth',
-  no: 'no',
-  yes: 'yes',
-  presetIndependent: ar ? 'مستقلة' : 'Independent',
-  presetCorrelated: ar ? 'مترابطة' : 'Correlated',
-  presetCollinear: ar ? 'شبه متطابقة' : 'Nearly identical',
-  numbers: ar ? 'الأرقام كما هي' : 'The numbers, as they are',
-  skip: ar ? 'انتقل إلى الأرقام' : 'Skip to the numbers',
-  formulaLabel: ar ? 'النموذج' : 'The model',
-  noteLabel: ar ? 'ملاحظة على المنهج' : 'A note on method',
-  note: ar
-    ? 'هذه تجربة مضبوطة لا محاكاة حيّة: العيّنة والبواقي مُولَّدة مرة واحدة ببذرة ثابتة (٢٠٢٦١١٠٥)، فلا يتغيّر شيء عند إعادة التحميل، وكل رقم على الصفحة محسوب من هذه البيانات. النموذج السلبي الثنائي الحد بنسبة تشتت φ = ٦٫٥، وλ يُختار بخمس طيّات، والمعاملات مُعيارية. الشيفرة كلها مفتوحة في المستودع.'
-    : 'This is a controlled experiment, not a live simulation: the rows and errors are drawn once from a fixed seed (20261105), so nothing changes on reload and every figure on the page is computed from that one dataset. Overdispersed counts (NB2, φ = 6.5), λ chosen by five-fold cross-validation, standardised predictors. The code is in the repository.',
-} as const;
+    ? 'متوسط الانحرافية (deviance) لنموذج بواسون على البيانات المحجوزة لكل مشاهدة (خمس طيّات) عند كل قيمة من شبكة λ. النقطة النحاسية هي أصغر قيمة؛ نقاط الشبكة متساوية التباعد وليست بمقياس حقيقي.'
+    : 'Mean held-out Poisson deviance per row (five folds) at each grid value of λ. The brass dot is the minimum; grid points are evenly spaced, not to scale.',
+  cvAxis: ar ? 'شبكة λ (تباعد متساوٍ، ليس بمقياس)' : 'λ grid (evenly spaced, not to scale)',
+  mc: ar ? `عبر ${reps} عيّنة مُعادة` : `Over ${reps} redrawn samples`,
+  mcSpread: ar ? 'التشتُّت (± انحرافان معياريان)' : 'Spread (± 2 SD)',
+  mcRmse: ar ? 'جذر متوسط مربعات الخطأ' : 'RMSE',
+  mcNoteSpread: ar
+    ? 'مدى تحرّك كل مقدِّر من عيّنة إلى أخرى: ضعف الجذر التربيعي لمتوسط مربعات الانحرافات المعيارية للمعاملات الأربعة.'
+    : 'How far each estimator moves from sample to sample: 2 × the root mean square of the four slopes’ standard deviations.',
+  mcNoteRmse: ar
+    ? 'مدى بُعد كل مقدِّر عن القيمة الحقيقية في المتوسط: جذر متوسط مربعات الخطأ عبر المعاملات الأربعة. صِغَر التشتُّت لا يعني الدقة.'
+    : 'How far each estimator lands from the truth on average: root-mean-square error over the four slopes. Low spread is not the same as accuracy.',
+  mcAxis: ar ? 'ρ (مواضع المؤشر، تباعد متساوٍ)' : 'ρ (dial positions, evenly spaced)',
+  metricLabel: ar ? 'المقياس المعروض' : 'Metric shown',
+  numbers: ar ? 'الأرقام عند هذا المستوى' : 'The numbers at this level',
+  predictor: ar ? 'المتغير' : 'Predictor',
+  meanSd: ar ? 'المتوسط (الانحراف المعياري)' : 'mean (SD)',
+  rmse: 'RMSE',
+  seNote: ar
+    ? `الأخطاء المعيارية تقريبية ومبنية على النموذج (معكوس مصفوفة معلومات فيشر الجزائية في ظل نموذج العمل). تتجاهل تحيّز الانكماش وسوء تحديد التباين؛ وهي للإمكان الأعظم أكبر من انحراف مونت كارلو المعياري بنسبة تتراوح بين ${n2(C.mlSeOverSdMin)} و${n2(C.mlSeOverSdMax)} مرة على امتداد المؤشر.`
+    : `Standard errors are approximate and model-based (inverse penalised Fisher information under the working model). They ignore shrinkage bias and the misspecified variance; for ML they run ${n2(C.mlSeOverSdMin)}–${n2(C.mlSeOverSdMax)}× the Monte Carlo SD across the dial.`,
+  scopeShows: ar ? 'ما تُظهره التجربة' : 'What this shows',
+  scopeNot: ar ? 'ما لا تُظهره' : 'What it does not show',
+  methods: ar ? 'المنهج والافتراضات' : 'Methods and assumptions',
+  glossary: ar ? 'مسرد المصطلحات' : 'Glossary',
+  related: ar ? 'حيث يمضي البحث أبعد' : 'Where the research goes further',
+  relatedNote: ar
+    ? 'تدرس منشورات الباحث مقدِّرات جزائية في نماذج أغنى. نُدرجها هنا للقراءة؛ ولا يُطبَّق أيٌّ منها في هذا المختبر.'
+    : 'The researcher’s publications study penalised estimators in richer models. They are listed for reading; none of them is implemented in this lab.',
+  notImplemented: ar ? 'غير مُطبَّق هنا' : 'Not implemented here',
+  dataset: ar ? 'مجموعة البيانات التكميلية (Zenodo، CC BY 4.0)' : 'Supplementary dataset (Zenodo, CC BY 4.0)',
+  revision: ar ? 'سجل المراجعة' : 'Revision note',
+};
 
-const regime = [
+/* Prose with computed numbers. Every number sits in a [data-claim] element whose
+   data-value lab-verify compares with the payload. */
+const claim = (key: keyof typeof C, text: string) => `<span data-claim="${key}" data-value="${Array.isArray(C[key]) ? (C[key] as number[]).join(',') : C[key]}">${text}</span>`;
+
+const regimes = [
   {
     id: 'low',
-    title: ar ? 'عندما تكون المتغيرات مستقلة' : 'When the predictors are independent',
+    title: ar ? `دون ρ = ${REGIMES.moderate}: لا شيء يحتاج إلى علاج` : `Below ρ = ${REGIMES.moderate}: nothing to fix`,
     body: ar
-      ? 'لا مشكلة. التلالي يدفع المعاملات قليلًا نحو الصفر مقابل انحياز صغير، وقد يكون أدقّ من الإمكان الأقصى أو أدنى منه قليلًا — الفرق هنا في حدود ٠٫٠٥.'
-      : 'No problem to solve. Ridge trades a little bias for a little variance, and may be a touch worse than maximum likelihood here — the difference is about 0.05. Shrinkage is a price, not a gift.',
+      ? `مع ارتباط ضعيف تتفق المقدِّرات: في العيّنة المعروضة لا يزيد الفرق بين الإمكان الأعظم والحَرْف على ${claim('maxDiffAt0', n2(C.maxDiffAt0))} عند ρ = 0، وتشتُّتهما عبر العيّنات المُعادة متساوٍ (النسبة ${claim('ratioAt0', C.ratioAt0.toFixed(1))}). الانكماش لا يضيف شيئًا هنا.`
+      : `With little collinearity the estimators agree: on the displayed sample ML and ridge differ by at most ${claim('maxDiffAt0', n2(C.maxDiffAt0))} at ρ = 0, and over redrawn samples their spreads match (ratio ${claim('ratioAt0', C.ratioAt0.toFixed(1))}). Shrinkage buys nothing here.`,
   },
   {
-    id: 'mid',
-    title: ar ? 'بين ٠٫٦ و٠٫٩: إشارة أولى' : 'Between 0.6 and 0.9: the first warning',
+    id: 'moderate',
+    title: ar ? `من ${REGIMES.moderate} إلى ما دون ${REGIMES.high}: إنذارات ومكاسب محدودة` : `From ${REGIMES.moderate} to below ${REGIMES.high}: warnings, modest gains`,
     body: ar
-      ? 'تتضخّم معاملات تضخّم التباين وتكبر الأخطاء المعيارية، ويبدأ الإمكان الأقصى في توزيع «وزن» المتغيرات المترابطة عشوائيًا بينها.'
-      : 'Variance-inflation factors climb and standard errors widen. Maximum likelihood starts splitting the shared information between correlated predictors almost arbitrarily.',
+      ? `يتجاوز VIF القيمة 5 عند ρ = ${claim('firstRhoVif5', String(C.firstRhoVif5))} والقيمة 10 عند ρ = ${claim('firstRhoVif10', String(C.firstRhoVif10))}، ويتّسع تشتُّت المقدِّرات كلها. لكن أفضلية الحَرْف تبقى محدودة: تشتُّت الإمكان الأعظم ${claim('ratioAt09', C.ratioAt09.toFixed(1))} مرة قدر تشتُّت الحَرْف عند ρ = 0.9، و${claim('ratioAt095', C.ratioAt095.toFixed(1))} مرة عند 0.95.`
+      : `VIF passes 5 at ρ = ${claim('firstRhoVif5', String(C.firstRhoVif5))} and 10 at ρ = ${claim('firstRhoVif10', String(C.firstRhoVif10))}, and every estimator’s spread grows. Ridge’s advantage stays modest: ML’s spread is ${claim('ratioAt09', C.ratioAt09.toFixed(1))}× ridge’s at ρ = 0.9 and ${claim('ratioAt095', C.ratioAt095.toFixed(1))}× at 0.95.`,
   },
   {
     id: 'high',
-    title: ar ? 'فوق ٠٫٩٥: انهيار التقدير' : 'Above 0.95: the estimate collapses',
+    title: ar ? `من ρ = ${REGIMES.high}: ثباتٌ ثمنه التحيّز` : `From ρ = ${REGIMES.high}: stability bought with bias`,
     body: ar
-      ? 'عند هذا المستوى تهتزّ معاملات الإمكان الأقصى من عيّنة إلى أخرى بأكثر من عشرة أضعاف اهتزاز التقدير المُقلِّص، وتنكمش تقديراتها نحو بعضها فتفقد معناها الفردي.'
-      : 'Here the unpenalised coefficients swing more than ten times as much from sample to sample as the penalised ones, and they collapse towards each other until their individual values stop meaning anything.',
+      ? `هنا يبلغ تشتُّت الإمكان الأعظم ${claim('ratioMax', C.ratioMax.toFixed(1))} مرة قدر تشتُّت الحَرْف عند ρ = ${claim('rhoMax', String(C.rhoMax))} (VIF ${claim('vifMax', C.vifMax.toFixed(1))}). يبقى الإمكان الأعظم متمركزًا حول القيمة الحقيقية لكنه يتأرجح بشدة؛ أما الحَرْف فثابت لكنه متحيّز: يشدّ المعاملات الأربعة نحو قيمة مشتركة (متوسطات تقديره ${claim('ridgeMeansMax', C.ridgeMeansMax.map(n2).join('، '))} مقابل القيم الحقيقية ${truthList})، فيحافظ تقريبًا على مجموعها (${claim('ridgeMeanSumMax', n2(C.ridgeMeanSumMax))} مقابل ${claim('truthSum', n2(C.truthSum))}) ويقلب إشارة x3. ومع ذلك يبقى جذر متوسط مربعات خطئه أقل (${claim('rmseRidgeMax', n2(C.rmseRidgeMax))} مقابل ${claim('rmseMlMax', n2(C.rmseMlMax))}).`
+      : `Here ML’s spread reaches ${claim('ratioMax', C.ratioMax.toFixed(1))}× ridge’s at ρ = ${claim('rhoMax', String(C.rhoMax))} (VIF ${claim('vifMax', C.vifMax.toFixed(1))}). ML stays centred on the truth but swings widely; ridge is steady but biased — it pulls the four slopes toward a shared value (average estimates ${claim('ridgeMeansMax', C.ridgeMeansMax.map(n2).join(', '))} against the truth ${truthList}), roughly preserving their sum (${claim('ridgeMeanSumMax', n2(C.ridgeMeanSumMax))} vs ${claim('truthSum', n2(C.truthSum))}) while flipping the sign of x3. Its RMSE is still lower (${claim('rmseRidgeMax', n2(C.rmseRidgeMax))} vs ${claim('rmseMlMax', n2(C.rmseMlMax))}).`,
   },
 ];
+const lambdaNote = ar
+  ? `يرفع التحقق المتقاطع λ من ${claim('lambdaLow', String(C.lambdaLow))} إلى ${claim('lambdaMax', String(C.lambdaMax))} عند ρ = ${claim('lambdaJumpRho', String(C.lambdaJumpRho))} لأنه يختار من شبكة خشنة؛ ولهذا تنعطف منحنيات الحَرْف هناك.`
+  : `Cross-validation moves λ from ${claim('lambdaLow', String(C.lambdaLow))} to ${claim('lambdaMax', String(C.lambdaMax))} at ρ = ${claim('lambdaJumpRho', String(C.lambdaJumpRho))} because it picks from a coarse grid — that is why the ridge curves bend there.`;
+
+const presetText = (rho: number) => {
+  const s = stateAt(rho);
+  const v = s.vif.toFixed(1);
+  if (rho === 0) return { label: ar ? 'مستقلة' : 'Independent', note: ar ? `VIF ${v}: لا شيء يحتاج إلى علاج` : `VIF ${v}: nothing to fix` };
+  if (rho === 0.8) return { label: ar ? 'VIF يتجاوز 5' : 'VIF passes 5', note: `VIF ${v}` };
+  if (rho === 0.9) return { label: ar ? 'VIF يتجاوز 10' : 'VIF passes 10', note: `VIF ${v}` };
+  if (rho === C.rhoMax) return { label: ar ? 'شبه منفردة' : 'Near-singular', note: `VIF ${v}` };
+  return {
+    label: ar ? 'ارتباط حاد' : 'Severe',
+    note: ar ? `تشتُّت الإمكان الأعظم ${ratioOf(s).toFixed(1)}× الحَرْف` : `ML spread ${ratioOf(s).toFixed(1)}× ridge`,
+  };
+};
+const presets = PRESETS.map((rho) => ({ rho, index: LAB_PAYLOAD.rho.indexOf(rho), ...presetText(rho) }));
+
+const shows = ar
+  ? [
+      'في ظل ارتباط قوي، تتباين تقديرات الإمكان الأعظم غير المعاقَبة عبر العيّنات المتكررة أكثر بكثير من تقديرات الحَرْف (محسوبة أعلاه).',
+      'العقوبة تقايض التباين بالتحيّز، والتحقق المتقاطع يختار هذه المقايضة من البيانات.',
+      'مع متغيرات مستقلة لا يكاد الانكماش يضيف شيئًا.',
+    ]
+  : [
+      'Under strong collinearity, unpenalised estimates vary far more across repeated samples than ridge estimates (computed above).',
+      'A penalty trades variance for bias, and cross-validation picks that trade-off from the data.',
+      'With independent predictors there is little to gain from shrinkage.',
+    ];
+const notShows = ar
+  ? [
+      'أن الحَرْف — أو الانكماش عمومًا — أفضل دائمًا: إنه متحيّز، بل يقلب هنا إشارة أحد المعاملات.',
+      'أي شيء عن المقدِّرات المنشورة للباحث (COM-Poisson الجزائية، والشبكة المرنة المرجَّحة بالارتباط)؛ لا يُطبَّق أيٌّ منها هنا.',
+      'أداءً عامًا: إنه تصميم واحد فقط (n = 240، وأربعة متغيرات، ونمط ارتباط واحد، ومعلمة تشتت ثابتة φ = 6.5).',
+      'استدلالًا إحصائيًا: الأخطاء المعيارية تقريبية، ولا يتضمّن شيئًا من اختبارات الفرضيات.',
+    ]
+  : [
+      'That ridge — or shrinkage in general — is always better: it is biased, and here it even flips the sign of a coefficient.',
+      'Anything about the researcher’s published estimators (penalised COM-Poisson, correlation-weighted elastic net); none of them is implemented here.',
+      'General performance: this is one design (n = 240, four predictors, one correlation pattern, a fixed working dispersion φ = 6.5).',
+      'Inference: the standard errors are approximations, and nothing here is a hypothesis test.',
+    ];
+
+const glossary = ar
+  ? [
+      ['التعدد الخطي', 'ارتباط قوي بين المتغيرات التفسيرية يجعل فصل أثر كلٍّ منها صعبًا.'],
+      ['معامل تضخّم التباين (VIF)', 'مقدار تضخّم تباين تقدير المعامل بسبب ارتباط متغيره بالمتغيرات الأخرى؛ ويُعدّ تجاوز 5 أو 10 إنذارًا شائعًا.'],
+      ['معلمة الجزاء λ', 'قوة العقوبة على حجم المعاملات؛ λ = 0 يعني عدم وجود عقوبة.'],
+      ['التحقق المتقاطع', 'تقسيم البيانات إلى طيّات، والتقدير على بعضها، وقياس الخطأ على الطيّة المحجوزة.'],
+      ['الانحرافية (deviance)', 'مقياس لعدم مطابقة القيم المتنبأ بها للمشاهدات العدّية؛ الأصغر أفضل.'],
+      ['مونت كارلو', 'تكرار التجربة على عيّنات مُحاكاة كثيرة لمعرفة سلوك المقدِّر.'],
+      ['التشتُّت', 'مدى تحرّك التقدير من عيّنة إلى أخرى (هنا: ± انحرافان معياريان).'],
+      ['جذر متوسط مربعات الخطأ (RMSE)', 'متوسط بُعد التقدير عن القيمة الحقيقية؛ يجمع التحيّز والتباين.'],
+      ['التحيّز', 'الفرق بين متوسط التقديرات عبر العيّنات والقيمة الحقيقية.'],
+      ['الخطأ المعياري', 'تقدير لتباين المعامل من عيّنة واحدة؛ هنا تقريبي ومبني على النموذج.'],
+    ]
+  : [
+      ['Collinearity', 'Strong correlation between predictors, which makes their separate effects hard to tell apart.'],
+      ['VIF (variance inflation factor)', 'How much a coefficient’s variance is inflated by its predictor’s correlation with the others; 5 and 10 are common warning lines.'],
+      ['Penalty λ', 'How strongly large coefficients are penalised; λ = 0 means no penalty.'],
+      ['Cross-validation', 'Split the data into folds, fit on all but one, and measure the error on the held-out fold.'],
+      ['Deviance', 'A measure of how badly predicted counts match the observed ones; smaller is better.'],
+      ['Monte Carlo', 'Repeating the experiment on many simulated samples to see how an estimator behaves.'],
+      ['Spread', 'How far the estimate moves from sample to sample (here: ± 2 SD).'],
+      ['RMSE', 'Root-mean-square error: the typical distance from the truth, combining bias and variance.'],
+      ['Bias', 'The gap between the average estimate over samples and the true value.'],
+      ['Standard error', 'An estimate of a coefficient’s variability from one sample; here approximate and model-based.'],
+    ];
+
+const relatedKeys = ['taha2026analytical', 'taha2026development', 'rady2018ridge', 'abonazel2023beta'];
+const related = relatedKeys.map((k) => getPublication(k)).filter((p) => p !== undefined);
+const repoDoc = 'https://github.com/3boalazm/-Ibrahim-Taha-Axiom/blob/main/docs/lab-methodology.md';
+
+/* Strings the client needs (labels and the live summary template). */
+const i18n = {
+  truth: ar ? 'الحقيقة' : 'truth',
+  zero: '0',
+  cvAxis: copy.cvAxis,
+  mcAxis: copy.mcAxis,
+  mcNoteSpread: copy.mcNoteSpread,
+  mcNoteRmse: copy.mcNoteRmse,
+  shared: copy.shared,
+  shareFail: copy.shareFail,
+  regimes: {
+    low: ar ? 'ارتباط ضعيف' : 'low collinearity',
+    moderate: ar ? 'ارتباط متوسط' : 'moderate collinearity',
+    high: ar ? 'ارتباط حاد' : 'severe collinearity',
+  },
+  live: ar
+    ? 'ρ = {rho} ({regime}): أكبر VIF {vif}، λ = {lambda}، التشتُّت: الإمكان الأعظم {ml} والحَرْف {ridge} (النسبة {ratio}).'
+    : 'ρ = {rho} ({regime}): max VIF {vif}, λ = {lambda}, spread: ML {ml}, ridge {ridge} (ratio {ratio}).',
+};
+const startRegime = regimeOf(start.rho);
 ---
 
-<section class="lab" aria-labelledby="lab-heading">
+<section class="lab" aria-labelledby="lab-heading" data-lab data-i18n={JSON.stringify(i18n)} data-domain={domain} data-lambdas={JSON.stringify(LAMBDA_GRID)}>
   <div class="container lab__head">
-    <p class="kicker">{ar ? 'الورشة' : 'The lab'}</p>
-    <h2 id="lab-heading" class="lab__title">
-      {ar ? 'حرِّك الارتباط، وشاهد التقدير ينهار — ثم يثبت.' : 'Turn up the correlation and watch the estimate fall apart — then hold.'}
-    </h2>
-    <p class="lab__lead">
-      {ar
-        ? 'أربعة متغيرات مستقلة، ومشاهدات عدّية، ومُقدِّر واحد صحيح. المؤشر يغيّر شيئًا واحدًا فقط: مقدار الارتباط بين المتغيرات. الباقي — المشاهدات والبواقي والقيمة الحقيقية — ثابت.'
-        : 'Four predictors, count data, one correct model. The dial changes one thing only: how correlated the predictors are. The rows, the errors and the true coefficients stay fixed.'}
-    </p>
+    <p class="kicker">{copy.kicker}</p>
+    <h2 id="lab-heading" class="lab__title">{copy.title}</h2>
+    <p class="lab__lead">{copy.lead}</p>
+    <p class="lab__disclaimer" role="note" data-lab-disclaimer>{copy.disclaimer}</p>
+    {ar && <DraftNote lang={lang} />}
   </div>
 
   <div class="container lab__grid">
-    <!-- ---------------------------------------------------------- controls -->
+    <!-- ------------------------------------------------------------ controls -->
     <div class="lab__controls panel">
       <label class="label" for="lab-range">{copy.control}</label>
-      <p class="lab__hint">{copy.controlNote}</p>
+      <p class="lab__hint" id="lab-hint">{copy.controlNote}</p>
 
       <div class="lab__dial" dir="ltr">
         <input
           id="lab-range"
           type="range"
           min="0"
-          max={SNAPSHOTS.length - 1}
+          max={LAB_PAYLOAD.states.length - 1}
           step="1"
           value={initial}
           data-lab-range
           aria-describedby="lab-hint"
+          aria-valuetext={`ρ = ${fmtRho(start.rho)}`}
+          style={`--lab-progress: ${(initial / (LAB_PAYLOAD.states.length - 1)) * 100}%`}
         />
         <div class="lab__scale" aria-hidden="true">
-          {SNAPSHOTS.map((s) => (
-            <span class={s.rho === start.rho ? 'is-current' : ''}>{s.rho === 0 ? '0' : s.rho.toFixed(2).replace(/^0/, '')}</span>
-          ))}
+          {LAB_PAYLOAD.states.map((s, i) => <span class={i === initial ? 'is-current' : ''}>{fmtRho(s.rho)}</span>)}
         </div>
       </div>
-      <p class="lab__rho"><span data-lab="rho">ρ = {start.rho.toFixed(2)}</span></p>
+      <p class="lab__rho">
+        <span class="ltr" data-lab="rho">ρ = {fmtRho(start.rho)}</span>
+        <span class="lab__regime" data-lab="regime">{i18n.regimes[startRegime]}</span>
+      </p>
 
       <dl class="lab__readout">
         <div>
           <dt>{copy.vif}</dt>
-          <dd data-lab="vif">{start.vif.toFixed(1)}</dd>
+          <dd class="ltr" data-lab="vif">{start.vif.toFixed(1)}</dd>
         </div>
         <div>
           <dt>{copy.lambda}</dt>
-          <dd data-lab="lambda">{start.ridge.lambda}</dd>
+          <dd class="ltr" data-lab="lambda">{start.lambda}</dd>
         </div>
         <div>
           <dt>{copy.spreadMl}</dt>
-          <dd data-lab="spread-ml">{start.spread.ml.toFixed(2)}</dd>
+          <dd class="ltr" data-lab="spread-ml">{n3(start.mc.est.ml.spread)}</dd>
         </div>
         <div>
           <dt>{copy.spreadRidge}</dt>
-          <dd data-lab="spread-ridge">{start.spread.ridge.toFixed(2)}</dd>
+          <dd class="ltr" data-lab="spread-ridge">{n3(start.mc.est.ridge.spread)}</dd>
+        </div>
+        <div class="lab__readout-wide">
+          <dt>{copy.ratio}</dt>
+          <dd class="ltr" data-lab="ratio">{ratioOf(start).toFixed(1)}×</dd>
         </div>
       </dl>
 
-      <div class="lab__presets">
-        <button type="button" data-lab-preset="0">{copy.presetIndependent}</button>
-        <button type="button" data-lab-preset={String(SNAPSHOTS.findIndex((s) => s.rho === 0.8))}>{copy.presetCorrelated}</button>
-        <button type="button" data-lab-preset={String(SNAPSHOTS.length - 1)}>{copy.presetCollinear}</button>
+      <fieldset class="lab__presets">
+        <legend class="label">{copy.presets}</legend>
+        <div class="lab__preset-list">
+          {
+            presets.map((p) => (
+              <button type="button" class="lab__preset" data-lab-preset={p.index} aria-pressed={String(p.index === initial)}>
+                <span class="lab__preset-label">{p.label}</span>
+                <span class="lab__preset-note ltr">
+                  ρ = {fmtRho(p.rho)} · {p.note}
+                </span>
+              </button>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <details class="disclosure lab__explain">
+        <summary>{copy.dialTitle}</summary>
+        <p>
+          {
+            ar
+              ? 'x1 = z1 وxj = ρ·z1 + √(1−ρ²)·zj حيث j = 2، 3، 4. لذا يرتبط x1 بكل متغير آخر بنحو ρ، وترتبط المتغيرات الثلاثة الأخرى فيما بينها بنحو ρ². في العيّنة المعروضة عند هذا المستوى:'
+              : 'x1 = z1 and xj = ρ·z1 + √(1−ρ²)·zj for j = 2, 3, 4. So x1 correlates with each other predictor at about ρ, and the other three with each other at about ρ². In the displayed sample at this level:'
+          }
+        </p>
+        <dl class="lab__corr">
+          <div>
+            <dt>{ar ? 'متوسط corr(x1, xj)' : 'mean corr(x1, xj)'}</dt>
+            <dd class="ltr" data-lab="corr-x1">{start.corr.x1.toFixed(3)}</dd>
+          </div>
+          <div>
+            <dt>{ar ? 'متوسط corr(xj, xk)' : 'mean corr(xj, xk)'}</dt>
+            <dd class="ltr" data-lab="corr-others">{start.corr.others.toFixed(3)}</dd>
+          </div>
+        </dl>
+      </details>
+
+      <div class="lab__share">
+        <button type="button" class="button" data-lab-share>{copy.share}</button>
+        <span class="lab__share-status" role="status" data-lab-share-status></span>
       </div>
     </div>
 
-    <!-- ---------------------------------------------------------- figures -->
+    <!-- ------------------------------------------------------------- figures -->
     <div class="lab__figures">
       <figure class="lab__figure panel">
         <figcaption>
           <span class="lab__figlabel">{copy.coef}</span>
           <span class="lab__fignote">{copy.coefNote}</span>
         </figcaption>
-        <div class="coef" dir="ltr" data-lab-coef aria-hidden="true"></div>
-        <div class="coef__legend" dir="ltr" aria-hidden="true">
-          <span class="coef__key coef__key--ml"></span>{copy.ml}
-          <span class="coef__key coef__key--ridge"></span>{copy.ridge}
-          <span class="coef__key coef__key--cw"></span>{copy.cw}
-          <span class="coef__key coef__key--truth"></span>{copy.truth}
-        </div>
+        <div class="lab__svg" dir="ltr" aria-hidden="true" data-lab-coef set:html={coefSvg(start, LAB_PAYLOAD.truth, domain, { truth: i18n.truth, zero: '0' })} />
+        <ul class="lab__legend" role="list">
+          <li><span class="lab__key is-ml" aria-hidden="true"></span>{name.ml}</li>
+          <li><span class="lab__key is-ridge" aria-hidden="true"></span>{name.ridge}</li>
+          <li><span class="lab__key is-ns" aria-hidden="true"></span>{name.ns}</li>
+          <li><span class="lab__key is-truth" aria-hidden="true"></span>{name.truth}</li>
+        </ul>
       </figure>
 
       <div class="lab__pair">
@@ -168,333 +355,470 @@ const regime = [
             <span class="lab__figlabel">{copy.cv}</span>
             <span class="lab__fignote">{copy.cvNote}</span>
           </figcaption>
-          <div class="cv" dir="ltr" data-lab-cv aria-hidden="true"></div>
+          <div class="lab__svg" dir="ltr" aria-hidden="true" data-lab-cv set:html={cvSvg(start, LAMBDA_GRID, { axis: copy.cvAxis })} />
         </figure>
 
         <figure class="lab__figure panel">
           <figcaption>
-            <span class="lab__figlabel">{copy.spread}</span>
-            <span class="lab__fignote">{copy.spreadNote}</span>
+            <span class="lab__figlabel">{copy.mc}</span>
+            <span class="lab__fignote" data-lab-mc-note>{copy.mcNoteSpread}</span>
           </figcaption>
-          <div class="spread" dir="ltr" data-lab-spread aria-hidden="true"></div>
+          <div class="lab__toggle" role="group" aria-label={copy.metricLabel}>
+            <button type="button" aria-pressed="true" data-lab-metric="spread">{copy.mcSpread}</button>
+            <button type="button" aria-pressed="false" data-lab-metric="rmse">{copy.mcRmse}</button>
+          </div>
+          <div class="lab__svg" dir="ltr" aria-hidden="true" data-lab-mc set:html={mcSvg(LAB_PAYLOAD.states, 'spread', initial, { axis: copy.mcAxis })} />
+          <p class="lab__fignote lab__lambda-note" set:html={lambdaNote} />
         </figure>
       </div>
     </div>
   </div>
 
+  <p class="visually-hidden" aria-live="polite" data-lab-live></p>
+
   <!-- ------------------------------------------------------------ readings -->
   <div class="container lab__readings">
     {
-      regime.map((r) => (
-        <article class="lab__reading" data-lab-regime={r.id}>
+      regimes.map((r) => (
+        <article class="lab__reading" data-lab-regime={r.id} data-active={r.id === startRegime ? '' : undefined}>
           <h3>{r.title}</h3>
-          <p>{r.body}</p>
+          <p set:html={r.body} />
         </article>
       ))
     }
     <p class="lab__callout">
-      {ar
-        ? 'الخلاصة ليست «التقليص أفضل دائمًا». الخلاصة أن جودة التقدير يجب أن تُقاس بتشتُّته، لا بقربه من عيّنة واحدة.'
-        : 'The lesson is not "shrinkage always wins". It is that the quality of an estimate is measured by its spread, not by how well it fits one sample.'}
+      {
+        ar
+          ? 'الخلاصة ليست «الانكماش يفوز دائمًا». يُحكم على المقدِّر بسلوكه عبر العيّنات المتكررة — تشتُّته وتحيّزه — لا بمدى مطابقته لعيّنة واحدة.'
+          : 'The lesson is not “shrinkage always wins”. An estimator is judged by how it behaves over repeated samples — its spread and its bias — not by how well it fits one dataset.'
+      }
     </p>
   </div>
 
-  <!-- ----------------------------------------------------------- data table -->
+  <!-- ---------------------------------------------------------- data tables -->
   <div class="container">
-    <details class="lab__data" data-lab-data>
-      <summary>{copy.numbers}</summary>
-      <div class="lab__tablewrap">
+    <details class="lab__data" open>
+      <summary>{copy.numbers} <span class="ltr" data-lab="rho-inline">(ρ = {fmtRho(start.rho)})</span></summary>
+      <div class="lab__tablewrap" role="region" aria-labelledby="lab-t1-caption" tabindex="0">
         <table>
-          <caption>
-            {ar ? 'المعاملات عند المستوى المعروض (الخطأ المعياري بين قوسين)' : 'Coefficients at the displayed level (standard error in brackets)'}
+          <caption id="lab-t1-caption">
+            {ar ? 'العيّنة المعروضة: التقديرات مع أخطاء معيارية تقريبية مبنية على النموذج بين قوسين' : 'Displayed sample: estimates with approximate model-based standard errors in brackets'}
           </caption>
           <thead>
             <tr>
-              <th scope="col">{ar ? 'المتغير' : 'Predictor'}</th>
-              <th scope="col">{copy.truth}</th>
-              <th scope="col">{copy.ml}</th>
-              <th scope="col">{copy.ridge}</th>
-              <th scope="col">{copy.cw}</th>
+              <th scope="col">{copy.predictor}</th>
+              <th scope="col">{name.truth}</th>
+              <th scope="col">{name.ml}</th>
+              <th scope="col">{name.ridge}</th>
+              <th scope="col">{name.ns}</th>
             </tr>
           </thead>
-          <tbody data-lab-table>
-            {TRUTH.map((t, j) => (
-              <tr>
-                <th scope="row">x{j + 1}</th>
-                <td>{t.toFixed(2)}</td>
-                <td>{start.ml.beta[j].toFixed(2)} ({start.ml.se[j].toFixed(2)})</td>
-                <td>{start.ridge.beta[j].toFixed(2)} ({start.ridge.se[j].toFixed(2)})</td>
-                <td>{start.cw.beta[j].toFixed(2)} ({start.cw.se[j].toFixed(2)})</td>
-              </tr>
-            ))}
+          <tbody data-lab-table="sample">
+            {
+              LAB_PAYLOAD.truth.map((tv, j) => (
+                <tr>
+                  <th scope="row" class="ltr">x{j + 1}</th>
+                  <td class="ltr">{n2(tv)}</td>
+                  {(['ml', 'ridge', 'ns'] as const).map((k) => (
+                    <td class="ltr">
+                      {n3(start.est[k].beta[j])} ({n3(start.est[k].se[j])})
+                    </td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">λ</th>
+              <td></td>
+              {(['ml', 'ridge', 'ns'] as const).map((k) => <td class="ltr" data-lab-lambda={k}>{start.est[k].lambda}</td>)}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="lab__tablewrap" role="region" aria-labelledby="lab-t2-caption" tabindex="0">
+        <table>
+          <caption id="lab-t2-caption">
+            {ar ? `عبر ${reps} عيّنة مُعادة: المتوسط (الانحراف المعياري) وجذر متوسط مربعات الخطأ` : `Over ${reps} redrawn samples: mean (SD) and RMSE`}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" rowspan="2">{copy.predictor}</th>
+              <th scope="col" rowspan="2">{name.truth}</th>
+              <th scope="colgroup" colspan="2">{short.ml}</th>
+              <th scope="colgroup" colspan="2">{short.ridge}</th>
+              <th scope="colgroup" colspan="2">{short.ns}</th>
+            </tr>
+            <tr>
+              {(['ml', 'ridge', 'ns'] as const).map(() => (
+                <>
+                  <th scope="col">{copy.meanSd}</th>
+                  <th scope="col">{copy.rmse}</th>
+                </>
+              ))}
+            </tr>
+          </thead>
+          <tbody data-lab-table="mc">
+            {
+              LAB_PAYLOAD.truth.map((tv, j) => (
+                <tr>
+                  <th scope="row" class="ltr">x{j + 1}</th>
+                  <td class="ltr">{n2(tv)}</td>
+                  {(['ml', 'ridge', 'ns'] as const).map((k) => (
+                    <>
+                      <td class="ltr">
+                        {n3(start.mc.est[k].mean[j])} ({n3(start.mc.est[k].sd[j])})
+                      </td>
+                      <td class="ltr">{n3(start.mc.est[k].rmse[j])}</td>
+                    </>
+                  ))}
+                </tr>
+              ))
+            }
           </tbody>
         </table>
       </div>
+      <p class="lab__note">{copy.seNote}</p>
     </details>
+  </div>
+
+  <!-- ---------------------------------------------------------------- scope -->
+  <div class="container lab__scope">
+    <section class="lab__scope-col" aria-labelledby="lab-shows">
+      <h3 id="lab-shows">{copy.scopeShows}</h3>
+      <ul role="list">{shows.map((s) => <li>{s}</li>)}</ul>
+    </section>
+    <section class="lab__scope-col lab__scope-col--not" aria-labelledby="lab-not">
+      <h3 id="lab-not">{copy.scopeNot}</h3>
+      <ul role="list">{notShows.map((s) => <li>{s}</li>)}</ul>
+    </section>
   </div>
 
   <!-- --------------------------------------------------------------- method -->
   <div class="container lab__method">
-    <p class="kicker">{copy.formulaLabel}</p>
-    <div class="lab__math" dir="ltr">
-      <code>y<sub>i</sub> ~ NB2(μ<sub>i</sub>, φ), &nbsp; log μ<sub>i</sub> = β<sub>0</sub> + x<sub>i</sub><sup>⊤</sup>β, &nbsp; β̂ = argmin [ −ℓ(β) + λ‖β‖² ]</code>
-      <code>x<sub>j</sub> = ρ z<sub>1</sub> + √(1−ρ²) z<sub>j</sub>, &nbsp; j = 2,3,4 &nbsp;&nbsp;·&nbsp;&nbsp; ρ ∈ [0, 0.995]</code>
-    </div>
-    <p class="lab__note">{copy.note}</p>
+    <details class="lab__methods" id="lab-methods">
+      <summary>{copy.methods}</summary>
+      <div class="lab__methods-body">
+        <section>
+          <h3>{ar ? 'توليد البيانات' : 'Data-generating process'}</h3>
+          <div class="lab__math" dir="ltr">
+            <code>z<sub>1</sub>, …, z<sub>4</sub>, e ~ N(0, 1), drawn once (seed {LAB_PAYLOAD.meta.seed}, n = {LAB_PAYLOAD.meta.n})</code>
+            <code>x<sub>1</sub> = z<sub>1</sub>, &nbsp; x<sub>j</sub> = ρ z<sub>1</sub> + √(1−ρ²) z<sub>j</sub> &nbsp;(j = 2, 3, 4), then standardised</code>
+            <code>η = 0.45 + 0.62 x<sub>1</sub> + 0.44 x<sub>2</sub> − 0.33 x<sub>3</sub> + 0.15 x<sub>4</sub>, &nbsp; y = round(exp(η + 0.45 e))</code>
+          </div>
+          <p>
+            {
+              ar
+                ? 'المشاهدات العدّية لوغاريتمية-طبيعية مقرَّبة إلى أعداد صحيحة، فهي مفرطة التشتت. السحبات ثابتة، لكن x — ومن ثمّ y — يُعاد بناؤهما عند كل ρ.'
+                : 'The counts are rounded log-normal values, so they are overdispersed. The draws are fixed, but x — and therefore y — is rebuilt at every ρ.'
+            }
+          </p>
+        </section>
+        <section>
+          <h3>{ar ? 'نموذج العمل والمقدِّرات' : 'Working model and estimators'}</h3>
+          <div class="lab__math" dir="ltr">
+            <code>log μ<sub>i</sub> = β<sub>0</sub> + x<sub>i</sub><sup>⊤</sup>β, &nbsp; Var(y<sub>i</sub>) = μ<sub>i</sub> + μ<sub>i</sub>²/φ, &nbsp; φ = {LAB_PAYLOAD.meta.phi} (fixed)</code>
+            <code>β̂<sub>λ</sub> = argmax<sub>β</sub> &#123; (1/n) Σ ℓ<sub>i</sub>(β) − (λ/2) Σ<sub>j=1..4</sub> β<sub>j</sub>² &#125;</code>
+            <code>λ<sub>NS</sub> = min({LAB_PAYLOAD.meta.nsCap}, λ<sub>CV</sub> / ‖β̂<sub>ridge</sub>‖²)</code>
+          </div>
+          <p>
+            {
+              ar
+                ? 'نموذج العمل هو علاقة المتوسط بالتباين في ذي الحدين السالب (NB2) بمعلمة تشتت ثابتة، وهو ليس النموذج الذي وُلِّدت منه البيانات — عن قصد. تُقدَّر المعاملات بطريقة فيشر (Fisher scoring) دون معاقبة الحد الثابت. الإمكان الأعظم: λ = 0. الحَرْف: λ بالتحقق المتقاطع. الحَرْف المُعدَّل بالمعيار قاعدة بسيطة على غرار قاعدة Hoerl–Kennard–Baldwin، لا تستخدم أوزان ارتباط، وليست مقدِّر الباحث.'
+                : 'The working model is the negative binomial (NB2) mean–variance relation with a fixed dispersion; it is not the model that generated the data — on purpose. Coefficients are fitted by Fisher scoring with the intercept unpenalised. ML: λ = 0. Ridge: λ by cross-validation. The norm-scaled ridge is a simple plug-in rule in the spirit of Hoerl–Kennard–Baldwin; it uses no correlation weights and is not the researcher’s estimator.'
+            }
+          </p>
+        </section>
+        <section>
+          <h3>{ar ? 'اختيار λ' : 'Choosing λ'}</h3>
+          <p>
+            {
+              ar
+                ? `تحقق متقاطع بخمس طيّات متداخلة (المشاهدة i في الطيّة i mod 5) على الانحرافية لنموذج بواسون، عبر الشبكة ${LAMBDA_GRID.join('، ')}. يُختار أصغر متوسط؛ والشبكة خشنة عن قصد.`
+                : `Five interleaved folds (row i in fold i mod 5), scored by held-out Poisson deviance over the grid ${LAMBDA_GRID.join(', ')}. The smallest mean wins; the grid is deliberately coarse.`
+            }
+          </p>
+        </section>
+        <section>
+          <h3>{ar ? 'تصميم مونت كارلو' : 'Monte Carlo design'}</h3>
+          <p>
+            {
+              ar
+                ? `${reps} عيّنة مُعادة عند كل موضع من مواضع المؤشر الخمسة عشر. تُعاد سحب z2–z4 وe ويبقى x1 ثابتًا. يُثبَّت λ الحَرْف عند قيمته المختارة بالتحقق المتقاطع للعيّنة المعروضة، ويُعاد حساب λ المُعدَّل بالمعيار في كل تكرار. التشتُّت = 2 × الجذر التربيعي لمتوسط مربعات الانحرافات المعيارية (بالقسمة على n − 1)؛ وخطأ مونت كارلو في الانحراف المعياري نحو 7%.`
+                : `${reps} redrawn samples at each of the fifteen dial positions. z2–z4 and e are redrawn; x1 is held fixed. Ridge λ is held at the value cross-validation chose for the displayed sample; the norm-scaled λ is recomputed in every replicate. Spread = 2 × the root mean square of the standard deviations (n − 1 divisor); the Monte Carlo error of an SD is about 7%.`
+            }
+          </p>
+        </section>
+        <section>
+          <h3>{ar ? 'الأخطاء المعيارية وVIF' : 'Standard errors and VIF'}</h3>
+          <p>
+            {
+              ar
+                ? 'الأخطاء المعيارية هي الجذور التربيعية لقطر معكوس مصفوفة معلومات فيشر الجزائية — تقريب مبني على النموذج يتجاهل تحيّز الانكماش وسوء تحديد التباين، ولذلك يُعرض بجانبها الانحراف المعياري لمونت كارلو. VIF هو قطر معكوس مصفوفة الارتباط بين المتغيرات المعيارية في العيّنة المعروضة.'
+                : 'Standard errors are the square roots of the diagonal of the inverse penalised Fisher information — a model-based approximation that ignores shrinkage bias and the misspecified variance, which is why the Monte Carlo SD is shown beside them. VIF is the diagonal of the inverse correlation matrix of the standardised predictors in the displayed sample.'
+            }
+          </p>
+        </section>
+        <section>
+          <h3>{ar ? 'قابلية إعادة الإنتاج' : 'Reproducibility'}</h3>
+          <p>
+            {
+              ar
+                ? 'كل شيء يُحسب مرة واحدة عند بناء الموقع (src/lab/)، ويُشحن حمولةً ثابتة، ويُتحقق منه بالسكربت scripts/lab-verify.mjs مع كل بناء. المتصفح يعرض الأرقام فقط ولا يقدّر أي نموذج.'
+                : 'Everything is computed once at build time (src/lab/), shipped as a static payload and checked by scripts/lab-verify.mjs on every build. The browser only displays numbers; it fits nothing.'
+            }
+          </p>
+        </section>
+        <section class="lab__glossary">
+          <h3>{copy.glossary}</h3>
+          <dl>
+            {
+              glossary.map(([term, def]) => (
+                <div>
+                  <dt>{term}</dt>
+                  <dd>{def}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+      </div>
+    </details>
+  </div>
+
+  <!-- --------------------------------------------------------- publications -->
+  <div class="container lab__related">
+    <h3>{copy.related}</h3>
+    <p class="lab__note">{copy.relatedNote}</p>
+    <ul role="list" class="lab__related-list">
+      {
+        related.map((p) => (
+          <li>
+            <span class="lab__related-flag">{copy.notImplemented}</span>
+            <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
+              {p.title}
+            </a>
+            <span class="lab__related-meta">
+              {p.venue && (
+                <cite lang={p.venueLang ?? undefined} dir="auto">
+                  {p.venue}
+                </cite>
+              )}{' '}
+              <span class="ltr">{p.year}</span>
+            </span>
+          </li>
+        ))
+      }
+      <li>
+        <span class="lab__related-flag">{copy.notImplemented}</span>
+        <a href="https://doi.org/10.5281/zenodo.23120962" rel="noopener">{copy.dataset}</a>
+        <span class="lab__related-meta ltr">doi:10.5281/zenodo.23120962</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="container">
+    <aside class="lab__revision" aria-labelledby="lab-revision">
+      <h3 id="lab-revision" class="label">{copy.revision}</h3>
+      <p>
+        {
+          ar ? (
+            <>
+              <time datetime="2026-11-06">6 نوفمبر 2026</time>: كشفت مراجعةٌ أن خطوة التقدير كانت تقسم دالة الدرجة (score) على وزن العمل مرتين. صُحِّحت الدالة، وأُعيد حساب لوحة مونت كارلو عند كل موضع للمؤشر بـ{reps} تكرارًا (بدلًا من 20 تكرارًا عند 9 مستويات كانت تستعيرها المواضع المجاورة)، وأُعيدت تسمية المقدِّر الثالث (كان يُوصف خطأً بأنه «مرجَّح بالارتباط»)، وأُعيدت صياغة الجمل التي لم تدعمها الأرقام المصحَّحة.{' '}
+              <a href={repoDoc} rel="noopener">
+                التفاصيل في مستودع المشروع
+              </a>
+              .
+            </>
+          ) : (
+            <>
+              <time datetime="2026-11-06">6 November 2026</time>: an audit found that the fitting step divided the score by the working weight twice. The score was corrected, the Monte Carlo panel was recomputed at every dial position with {reps} replicates (previously 20 replicates at 9 levels, borrowed by neighbouring positions), the third estimator was renamed (it was mislabelled “correlation-weighted”), and sentences the corrected numbers did not support were rewritten.{' '}
+              <a href={repoDoc} rel="noopener">
+                Details in the project repository
+              </a>
+              .
+            </>
+          )
+        }
+      </p>
+    </aside>
   </div>
 </section>
 
 <script type="application/json" id="lab-payload" set:html={JSON.stringify(LAB_PAYLOAD)} />
 
 <script>
-  type Estimate = { beta: number[]; se: number[]; lambda: number };
-  type State = {
-    rho: number;
+  import { coefSvg, cvSvg, fmtRho, mcSvg, type DrawState } from '../../lab/draw';
+
+  type Key = 'ml' | 'ridge' | 'ns';
+  type Est = { beta: number[]; se: number[]; lambda: number };
+  type Mc = { mean: number[]; sd: number[]; rmse: number[]; spread: number; rmseAll: number };
+  type State = DrawState & {
     vif: number;
-    lambda: number;
-    cv: number[];
-    ml: Estimate;
-    ridge: Estimate;
-    cw: Estimate;
-    spread: { ml: number; ridge: number; cw: number };
+    corr: { x1: number; others: number };
+    est: Record<Key, Est>;
+    mc: { vifMean: number; est: Record<Key, Mc> };
   };
-  type Payload = { truth: number[]; rho: number[]; states: State[] };
+  type Payload = {
+    truth: number[];
+    rho: number[];
+    states: State[];
+    meta: { regimes: { moderate: number; high: number }; defaultRho: number };
+  };
+  type I18n = {
+    truth: string;
+    cvAxis: string;
+    mcAxis: string;
+    mcNoteSpread: string;
+    mcNoteRmse: string;
+    shared: string;
+    shareFail: string;
+    regimes: Record<'low' | 'moderate' | 'high', string>;
+    live: string;
+  };
 
-  const root = document.querySelector<HTMLElement>('[data-lab-range]');
+  const root = document.querySelector<HTMLElement>('[data-lab]');
   const payloadEl = document.getElementById('lab-payload');
-  if (root && payloadEl) {
-    const cfg: Payload = JSON.parse(payloadEl.textContent ?? '{}');
-    const range = root as HTMLInputElement;
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const coef = document.querySelector<HTMLElement>('[data-lab-coef]');
-    const cvBox = document.querySelector<HTMLElement>('[data-lab-cv]');
-    const spreadBox = document.querySelector<HTMLElement>('[data-lab-spread]');
-    const table = document.querySelector<HTMLElement>('[data-lab-table]');
-    const readings = Array.from(document.querySelectorAll<HTMLElement>('[data-lab-regime]'));
-    const num = (name: string) => document.querySelectorAll<HTMLElement>(`[data-lab="${name}"]`);
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const range = root?.querySelector<HTMLInputElement>('[data-lab-range]');
+  if (root && payloadEl && range) {
+    const cfg = JSON.parse(payloadEl.textContent ?? '{}') as Payload;
+    const i18n = JSON.parse(root.dataset.i18n ?? '{}') as I18n;
+    const domain = Number(root.dataset.domain);
+    const lambdas = JSON.parse(root.dataset.lambdas ?? '[]') as number[];
+    const KEYS: Key[] = ['ml', 'ridge', 'ns'];
+    const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel);
+    const coefBox = $<HTMLElement>('[data-lab-coef]');
+    const cvBox = $<HTMLElement>('[data-lab-cv]');
+    const mcBox = $<HTMLElement>('[data-lab-mc]');
+    const mcNote = $<HTMLElement>('[data-lab-mc-note]');
+    const live = $<HTMLElement>('[data-lab-live]');
+    const presets = [...root.querySelectorAll<HTMLButtonElement>('[data-lab-preset]')];
+    const metricButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-lab-metric]')];
+    const readings = [...root.querySelectorAll<HTMLElement>('[data-lab-regime]')];
+    const scale = [...root.querySelectorAll<HTMLElement>('.lab__scale span')];
+    let metric: 'spread' | 'rmse' = 'spread';
+    let current = Number(range.value);
+    let liveTimer = 0;
 
-    const DOMAIN = 1.1; // coefficient axis, ±
+    const regimeOf = (rho: number) => (rho >= cfg.meta.regimes.high ? 'high' : rho >= cfg.meta.regimes.moderate ? 'moderate' : 'low');
+    const setText = (name: string, value: string) => root.querySelectorAll<HTMLElement>(`[data-lab="${name}"]`).forEach((el) => (el.textContent = value));
+    const nearest = (rho: number) => cfg.rho.reduce((best, r, i) => (Math.abs(r - rho) < Math.abs(cfg.rho[best] - rho) ? i : best), 0);
 
-    /* ---------------------------------------------------------- coefficient bars */
-    function drawCoef(s: State) {
-      if (!coef) return;
-      const rows = cfg.truth.map((truth, j) => ({ truth, j }));
-      coef.textContent = '';
-      for (const { truth, j } of rows) {
-        const row = document.createElement('div');
-        row.className = 'coef__row';
-
-        const name = document.createElement('span');
-        name.className = 'coef__name';
-        name.textContent = `x${j + 1}`;
-        row.append(name);
-
-        const track = document.createElement('div');
-        track.className = 'coef__track';
-
-        for (const [key, cls] of [
-          ['ml', 'is-ml'],
-          ['ridge', 'is-ridge'],
-          ['cw', 'is-cw'],
-        ] as const) {
-          const value = s[key].beta[j];
-          const bar = document.createElement('span');
-          bar.className = `coef__bar ${cls}`;
-          const lo = Math.max(-DOMAIN, Math.min(0, value));
-          const hi = Math.min(DOMAIN, Math.max(0, value));
-          bar.style.left = `${((lo + DOMAIN) / (2 * DOMAIN)) * 100}%`;
-          bar.style.width = `${((hi - lo) / (2 * DOMAIN)) * 100}%`;
-          track.append(bar);
-        }
-
-        const tick = document.createElement('span');
-        tick.className = 'coef__truth';
-        tick.style.left = `${((truth + DOMAIN) / (2 * DOMAIN)) * 100}%`;
-        track.append(tick);
-
-        const axis = document.createElement('span');
-        axis.className = 'coef__zero';
-        axis.style.left = '50%';
-        track.append(axis);
-
-        row.append(track);
-
-        const val = document.createElement('span');
-        val.className = 'coef__value';
-        val.textContent = s.ml.beta[j].toFixed(2);
-        row.append(val);
-
-        coef.append(row);
-      }
+    function readUrl(): number | null {
+      const raw = new URLSearchParams(location.search).get('rho');
+      if (raw === null || raw.trim() === '') return null;
+      const v = Number(raw);
+      return Number.isFinite(v) && v >= 0 && v <= 1 ? nearest(v) : null;
+    }
+    function writeUrl(i: number) {
+      const url = new URL(location.href);
+      if (cfg.rho[i] === cfg.meta.defaultRho) url.searchParams.delete('rho');
+      else url.searchParams.set('rho', String(cfg.rho[i]));
+      history.replaceState(history.state, '', url);
     }
 
-    /* ------------------------------------------------------------------ CV curve */
-    function drawCv(s: State) {
-      if (!cvBox) return;
-      const w = 320;
-      const h = 130;
-      const pad = 14;
-      const dev = s.cv;
-      const min = Math.min(...dev);
-      const max = Math.max(...dev);
-      const x = (i: number) => pad + (i * (w - 2 * pad)) / (dev.length - 1);
-      const y = (v: number) => h - pad - ((v - min) / Math.max(1e-6, max - min)) * (h - 2 * pad);
-
-      cvBox.textContent = '';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      svg.setAttribute('class', 'cv__svg');
-      svg.setAttribute('role', 'presentation');
-
-      const line = document.createElementNS(svgNS, 'polyline');
-      line.setAttribute('points', dev.map((v, i) => `${x(i)},${y(v)}`).join(' '));
-      line.setAttribute('class', 'cv__line');
-      svg.append(line);
-
-      dev.forEach((v, i) => {
-        const dot = document.createElementNS(svgNS, 'circle');
-        dot.setAttribute('cx', `${x(i)}`);
-        dot.setAttribute('cy', `${y(v)}`);
-        dot.setAttribute('r', i === s.cv.indexOf(min) ? '4.5' : '2.4');
-        dot.setAttribute('class', i === s.cv.indexOf(min) ? 'cv__dot is-chosen' : 'cv__dot');
-        svg.append(dot);
-      });
-
-      const labels = document.createElementNS(svgNS, 'text');
-      labels.setAttribute('x', `${pad}`);
-      labels.setAttribute('y', `${h - 2}`);
-      labels.setAttribute('class', 'cv__axis');
-      labels.textContent = 'λ 0';
-      svg.append(labels);
-      const labels2 = document.createElementNS(svgNS, 'text');
-      labels2.setAttribute('x', `${w - pad}`);
-      labels2.setAttribute('y', `${h - 2}`);
-      labels2.setAttribute('text-anchor', 'end');
-      labels2.setAttribute('class', 'cv__axis');
-      labels2.textContent = 'λ 300';
-      svg.append(labels2);
-
-      cvBox.append(svg);
+    function drawMc() {
+      if (mcBox) mcBox.innerHTML = mcSvg(cfg.states, metric, current, { axis: i18n.mcAxis });
+      if (mcNote) mcNote.textContent = metric === 'spread' ? i18n.mcNoteSpread : i18n.mcNoteRmse;
     }
 
-    /* -------------------------------------------------------------- spread chart */
-    function drawSpread(s: State) {
-      if (!spreadBox) return;
-      const w = 320;
-      const h = 150;
-      const pad = 16;
-      const all = cfg.states.map((st) => Math.max(st.spread.ml, st.spread.ridge, st.spread.cw));
-      const maxY = Math.max(...all) * 1.08;
-      const x = (i: number) => pad + (i * (w - 2 * pad)) / (cfg.states.length - 1);
-      const y = (v: number) => h - pad - (v / maxY) * (h - 2 * pad);
-
-      spreadBox.textContent = '';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', `0 0 ${w} ${h + 10}`);
-      svg.setAttribute('class', 'spread__svg');
-      svg.setAttribute('role', 'presentation');
-
-      const series: Array<['ml' | 'ridge' | 'cw', string]> = [
-        ['ml', 'spread__line is-ml'],
-        ['ridge', 'spread__line is-ridge'],
-        ['cw', 'spread__line is-cw'],
-      ];
-      for (const [key, cls] of series) {
-        const line = document.createElementNS(svgNS, 'polyline');
-        line.setAttribute('points', cfg.states.map((st, i) => `${x(i)},${y(st.spread[key])}`).join(' '));
-        line.setAttribute('class', cls);
-        svg.append(line);
-      }
-
-      const here = Math.max(0, cfg.states.findIndex((st) => st.rho === s.rho));
-      const marker = document.createElementNS(svgNS, 'line');
-      marker.setAttribute('x1', `${x(here)}`);
-      marker.setAttribute('x2', `${x(here)}`);
-      marker.setAttribute('y1', '6');
-      marker.setAttribute('y2', `${h - pad}`);
-      marker.setAttribute('class', 'spread__marker');
-      svg.append(marker);
-
-      const zero = document.createElementNS(svgNS, 'text');
-      zero.setAttribute('x', '2');
-      zero.setAttribute('y', `${h - pad + 12}`);
-      zero.setAttribute('class', 'spread__axis');
-      zero.textContent = 'ρ 0';
-      svg.append(zero);
-      const top = document.createElementNS(svgNS, 'text');
-      top.setAttribute('x', `${w - 2}`);
-      top.setAttribute('y', `${h - pad + 12}`);
-      top.setAttribute('text-anchor', 'end');
-      top.setAttribute('class', 'spread__axis');
-      top.textContent = 'ρ 0.995';
-      svg.append(top);
-
-      spreadBox.append(svg);
-    }
-
-    /* --------------------------------------------------------------------- table */
-    function drawTable(s: State) {
-      if (!table) return;
-      const rows = Array.from(table.querySelectorAll('tr'));
-      rows.forEach((tr, j) => {
-        const cells = tr.querySelectorAll('td');
-        if (cells.length < 4) return;
-        cells[1].textContent = `${s.ml.beta[j].toFixed(2)} (${s.ml.se[j].toFixed(2)})`;
-        cells[2].textContent = `${s.ridge.beta[j].toFixed(2)} (${s.ridge.se[j].toFixed(2)})`;
-        cells[3].textContent = `${s.cw.beta[j].toFixed(2)} (${s.cw.se[j].toFixed(2)})`;
-      });
-    }
-
-    /* -------------------------------------------------------------------- render */
-    function setText(name: string, value: string) {
-      for (const el of num(name)) el.textContent = value;
-    }
-
-    function render(index: number) {
-      const s = cfg.states[index];
+    function render(i: number, opts: { url?: boolean; announce?: boolean } = {}) {
+      const s = cfg.states[i];
       if (!s) return;
-      const isAr = document.documentElement.lang === 'ar';
-      setText('rho', `ρ = ${s.rho === 0 ? '0' : s.rho.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}`);
+      current = i;
+      const rhoText = `ρ = ${fmtRho(s.rho)}`;
+      const ratio = s.mc.est.ml.spread / s.mc.est.ridge.spread;
+      const regime = regimeOf(s.rho);
+      range!.value = String(i);
+      range!.setAttribute('aria-valuetext', rhoText);
+      range!.style.setProperty('--lab-progress', `${(i / (cfg.states.length - 1)) * 100}%`);
+      setText('rho', rhoText);
+      setText('rho-inline', `(${rhoText})`);
+      setText('regime', i18n.regimes[regime]);
       setText('vif', s.vif.toFixed(1));
-      setText('lambda', String(s.ridge.lambda));
-      setText('spread-ml', s.spread.ml.toFixed(2));
-      setText('spread-ridge', s.spread.ridge.toFixed(2));
-      range.setAttribute('aria-valuetext', `${isAr ? 'ارتباط' : 'correlation'} ${s.rho.toFixed(3)}, VIF ${s.vif.toFixed(0)}`);
-      drawCoef(s);
-      drawCv(s);
-      drawSpread(s);
-      drawTable(s);
+      setText('lambda', String(s.lambda));
+      setText('spread-ml', s.mc.est.ml.spread.toFixed(3));
+      setText('spread-ridge', s.mc.est.ridge.spread.toFixed(3));
+      setText('ratio', `${ratio.toFixed(1)}×`);
+      setText('corr-x1', s.corr.x1.toFixed(3));
+      setText('corr-others', s.corr.others.toFixed(3));
+      scale.forEach((el, k) => el.classList.toggle('is-current', k === i));
+      presets.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.labPreset) === i)));
+      readings.forEach((r) => r.toggleAttribute('data-active', r.dataset.labRegime === regime));
 
-      const level = s.rho >= 0.95 ? 'high' : s.rho >= 0.6 ? 'mid' : 'low';
-      for (const block of readings) {
-        block.toggleAttribute('data-active', block.dataset.labRegime === level);
-      }
-      document.querySelectorAll<HTMLElement>('.lab__scale span').forEach((bullet, i) => {
-        bullet.classList.toggle('is-current', i === index);
+      if (coefBox) coefBox.innerHTML = coefSvg(s, cfg.truth, domain, { truth: i18n.truth, zero: '0' });
+      if (cvBox) cvBox.innerHTML = cvSvg(s, lambdas, { axis: i18n.cvAxis });
+      drawMc();
+
+      root!.querySelectorAll<HTMLTableRowElement>('[data-lab-table="sample"] tr').forEach((tr, j) => {
+        const cells = tr.querySelectorAll('td');
+        KEYS.forEach((k, c) => (cells[c + 1].textContent = `${s.est[k].beta[j].toFixed(3)} (${s.est[k].se[j].toFixed(3)})`));
       });
-      document.documentElement.style.setProperty('--lab-progress', `${(index / (cfg.states.length - 1)) * 100}%`);
+      KEYS.forEach((k) => {
+        const cell = root!.querySelector(`[data-lab-lambda="${k}"]`);
+        if (cell) cell.textContent = String(s.est[k].lambda);
+      });
+      root!.querySelectorAll<HTMLTableRowElement>('[data-lab-table="mc"] tr').forEach((tr, j) => {
+        const cells = tr.querySelectorAll('td');
+        KEYS.forEach((k, c) => {
+          const m = s.mc.est[k];
+          cells[1 + c * 2].textContent = `${m.mean[j].toFixed(3)} (${m.sd[j].toFixed(3)})`;
+          cells[2 + c * 2].textContent = m.rmse[j].toFixed(3);
+        });
+      });
+
+      if (opts.url !== false) writeUrl(i);
+      if (opts.announce !== false && live) {
+        clearTimeout(liveTimer);
+        liveTimer = window.setTimeout(() => {
+          live.textContent = i18n.live
+            .replace('{rho}', fmtRho(s.rho))
+            .replace('{regime}', i18n.regimes[regime])
+            .replace('{vif}', s.vif.toFixed(1))
+            .replace('{lambda}', String(s.lambda))
+            .replace('{ml}', s.mc.est.ml.spread.toFixed(2))
+            .replace('{ridge}', s.mc.est.ridge.spread.toFixed(2))
+            .replace('{ratio}', `${ratio.toFixed(1)}×`);
+        }, 450);
+      }
     }
 
     let frame = 0;
-    const schedule = () => {
-      if (frame) return;
+    range.addEventListener('input', () => {
+      if (frame) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         frame = 0;
         render(Number(range.value));
       });
-    };
+    });
+    presets.forEach((b) =>
+      b.addEventListener('click', () => {
+        render(Number(b.dataset.labPreset));
+      }),
+    );
+    metricButtons.forEach((b) =>
+      b.addEventListener('click', () => {
+        metric = b.dataset.labMetric === 'rmse' ? 'rmse' : 'spread';
+        metricButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        drawMc();
+      }),
+    );
+    const shareStatus = $<HTMLElement>('[data-lab-share-status]');
+    $<HTMLButtonElement>('[data-lab-share]')?.addEventListener('click', async () => {
+      writeUrl(current);
+      try {
+        await navigator.clipboard.writeText(location.href);
+        if (shareStatus) shareStatus.textContent = i18n.shared;
+      } catch {
+        if (shareStatus) shareStatus.textContent = i18n.shareFail;
+      }
+      setTimeout(() => shareStatus && (shareStatus.textContent = ''), 2600);
+    });
 
-    range.addEventListener('input', schedule);
-    for (const preset of document.querySelectorAll<HTMLButtonElement>('[data-lab-preset]')) {
-      preset.addEventListener('click', () => {
-        range.value = preset.dataset.labPreset ?? '0';
-        if (!reduced) range.focus({ preventScroll: true });
-        render(Number(range.value));
-      });
-    }
-
-    render(Number(range.value));
+    const fromUrl = readUrl();
+    if (fromUrl !== null && fromUrl !== current) render(fromUrl, { url: false, announce: false });
   }
 </script>
 
@@ -505,7 +829,7 @@ const regime = [
   .lab__head {
     display: grid;
     gap: var(--space-3);
-    max-inline-size: 54rem;
+    max-inline-size: 56rem;
     margin-block-end: var(--space-6);
   }
   .lab__title {
@@ -521,16 +845,26 @@ const regime = [
     letter-spacing: 0;
   }
   .lab__lead {
-    max-inline-size: 46rem;
+    max-inline-size: 48rem;
     font-family: var(--font-ui);
     font-size: var(--step-0);
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--color-ink-2);
+  }
+  .lab__disclaimer {
+    max-inline-size: 48rem;
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--color-brass);
+    background: color-mix(in srgb, var(--color-brass-soft) 45%, transparent);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink);
   }
 
   .lab__grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
     gap: clamp(var(--space-4), 2.5vw, var(--space-6));
     align-items: start;
   }
@@ -559,7 +893,7 @@ const regime = [
     -webkit-appearance: none;
     appearance: none;
     inline-size: 100%;
-    block-size: 2rem;
+    block-size: 2.75rem;
     background: transparent;
     cursor: grab;
   }
@@ -589,18 +923,17 @@ const regime = [
   }
   .lab__dial input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-    margin-block-start: -0.7rem;
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+    margin-block-start: -0.75rem;
     border-radius: 50%;
     border: 2px solid var(--color-surface-1);
     background: var(--color-brass);
     box-shadow: 0 2px 8px rgb(16 30 25 / 0.28);
-    transition: transform var(--dur-1) var(--ease-out);
   }
   .lab__dial input[type='range']::-moz-range-thumb {
-    inline-size: 1.35rem;
-    block-size: 1.35rem;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
     border-radius: 50%;
     border: 2px solid var(--color-surface-1);
     background: var(--color-brass);
@@ -616,378 +949,586 @@ const regime = [
     font-family: var(--font-mono);
     font-size: 0.6rem;
     color: var(--color-ink-3);
-    opacity: 0.85;
-  }
-  .lab__scale span {
-    transition: color var(--dur-1) var(--ease);
   }
   .lab__scale span.is-current {
-    color: var(--color-brass);
+    color: var(--color-ink);
     font-weight: 700;
   }
   .lab__rho {
-    font-family: var(--font-mono);
-    font-size: var(--step-1);
-    font-variant-numeric: tabular-nums;
-    color: var(--color-ink);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.1;
+  }
+  .lab__regime {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-brass);
+    letter-spacing: 0.02em;
   }
 
   .lab__readout {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2) var(--space-3);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
     padding-block: var(--space-3);
     border-block: var(--border-hairline);
   }
-  .lab__readout dt {
+  .lab__readout div {
+    display: grid;
+    gap: 0.1rem;
+  }
+  .lab__readout-wide {
+    grid-column: 1 / -1;
+  }
+  .lab__readout dt,
+  .lab__corr dt {
     font-family: var(--font-ui);
     font-size: var(--step--2);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
     color: var(--color-ink-3);
   }
-  :lang(ar) .lab__readout dt {
-    letter-spacing: 0;
-    text-transform: none;
-  }
-  .lab__readout dd {
+  .lab__readout dd,
+  .lab__corr dd {
     margin: 0;
     font-family: var(--font-mono);
-    font-size: var(--step-1);
-    font-variant-numeric: tabular-nums;
+    font-size: var(--step-0);
     color: var(--color-ink);
-  }
-  .lab__presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-  .lab__presets button {
-    padding: 0.4em 0.8em;
-    border: var(--border-hairline);
-    border-radius: var(--radius-pill);
-    background: transparent;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-2);
-    cursor: pointer;
-    transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
-  }
-  .lab__presets button:hover,
-  .lab__presets button:focus-visible {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-paper);
+    font-variant-numeric: tabular-nums;
   }
 
-  /* -------------------------------------------------------------------- panels */
+  .lab__presets {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .lab__preset-list {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .lab__preset {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.55rem 0.8rem;
+    min-block-size: 2.75rem;
+    text-align: start;
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: transparent;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  }
+  .lab__preset:hover {
+    border-color: var(--color-rule-strong);
+  }
+  .lab__preset[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+  }
+  .lab__preset:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .lab__preset-label {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+  }
+  .lab__preset-note {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .lab__explain p {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .lab__corr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin: var(--space-2) 0 0;
+  }
+  .lab__corr div {
+    display: grid;
+    gap: 0.1rem;
+  }
+  .lab__share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+  .lab__share-status {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+
+  /* --------------------------------------------------------------- figures */
   .lab__figures {
     display: grid;
-    gap: var(--space-3);
+    gap: clamp(var(--space-4), 2vw, var(--space-5));
   }
   .lab__pair {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(var(--space-4), 2vw, var(--space-5));
   }
   .lab__figure {
+    margin: 0;
     display: grid;
     gap: var(--space-3);
-    margin: 0;
-    padding: clamp(var(--space-3), 2vw, var(--space-4));
+    align-content: start;
+    padding: clamp(var(--space-4), 2vw, var(--space-5));
     background: var(--color-surface-1);
   }
   .lab__figure figcaption {
     display: grid;
-    gap: 2px;
+    gap: var(--space-1);
   }
   .lab__figlabel {
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    font-weight: 600;
-    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    line-height: 1.2;
   }
   .lab__fignote {
     font-family: var(--font-ui);
     font-size: var(--step--2);
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--color-ink-3);
   }
-
-  /* ----------------------------------------------------------- coefficient bars */
-  .coef {
-    display: grid;
-    gap: var(--space-2);
-  }
-  .coef__row {
-    display: grid;
-    grid-template-columns: 2.2rem minmax(0, 1fr) 3rem;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  .coef__name,
-  .coef__value {
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-    color: var(--color-ink-3);
-  }
-  .coef__value {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
-  }
-  .coef__track {
-    position: relative;
-    block-size: 2.15rem;
-  }
-  .coef__zero {
-    position: absolute;
-    inset-block: 0;
-    inline-size: 1px;
-    background: var(--color-rule-strong);
-  }
-  .coef__bar {
-    position: absolute;
-    block-size: 0.36rem;
-    border-radius: 2px;
-    transition: left var(--dur-2) var(--ease-out), width var(--dur-2) var(--ease-out);
-  }
-  .coef__bar.is-ml {
-    inset-block-start: 0.18rem;
-    background: var(--color-ink-3);
-  }
-  .coef__bar.is-ridge {
-    inset-block-start: 0.78rem;
-    background: var(--color-accent);
-  }
-  .coef__bar.is-cw {
-    inset-block-start: 1.38rem;
-    background: var(--color-brass);
-  }
-  .coef__truth {
-    position: absolute;
-    inset-block: -0.15rem;
-    inline-size: 2px;
-    margin-inline-start: -1px;
-    background: repeating-linear-gradient(
-      to bottom,
-      var(--color-ink) 0 3px,
-      transparent 3px 6px
-    );
-    transition: left var(--dur-2) var(--ease-out);
-  }
-  .coef__legend {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-1) var(--space-3);
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
-  }
-  .coef__key {
-    display: inline-block;
-    inline-size: 1.1rem;
-    block-size: 0.3rem;
-    border-radius: 2px;
-    margin-inline-end: 0.3rem;
-  }
-  .coef__key--ml {
-    background: var(--color-ink-3);
-  }
-  .coef__key--ridge {
-    background: var(--color-accent);
-  }
-  .coef__key--cw {
-    background: var(--color-brass);
-  }
-  .coef__key--truth {
-    background: repeating-linear-gradient(to right, var(--color-ink) 0 3px, transparent 3px 6px);
-  }
-
-  /* ------------------------------------------------------------------ small plots */
-  .cv__svg,
-  .spread__svg {
+  .lab__svg :global(svg) {
+    display: block;
     inline-size: 100%;
     block-size: auto;
-    overflow: visible;
   }
-  .cv__line,
-  .spread__line {
-    fill: none;
-    stroke-width: 1.6;
-    stroke-linejoin: round;
-    stroke-linecap: round;
+  .lab__svg :global(.labfig__grid) {
+    stroke: var(--color-rule);
+    stroke-width: 1;
   }
-  .cv__line {
-    stroke: var(--color-ink-3);
+  .lab__svg :global(.labfig__grid.is-zero) {
+    stroke: var(--color-rule-strong);
   }
-  .cv__dot {
+  .lab__svg :global(.labfig__tick),
+  .lab__svg :global(.labfig__axis),
+  .lab__svg :global(.labfig__name),
+  .lab__svg :global(.labfig__truthlabel) {
+    font-family: var(--font-mono);
+    font-size: 10px;
     fill: var(--color-ink-3);
   }
-  .cv__dot.is-chosen {
+  .lab__svg :global(.labfig__name) {
+    font-size: 12px;
+    fill: var(--color-ink);
+  }
+  .lab__svg :global(.labfig__tick.is-chosen) {
+    fill: var(--color-brass);
+    font-weight: 700;
+  }
+  .lab__svg :global(.labfig__truth) {
+    stroke: var(--color-ink);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+  .lab__svg :global(.labfig__whisker),
+  .lab__svg :global(.labfig__cap) {
+    stroke-width: 1.6;
+  }
+  .lab__svg :global(.is-ml) {
+    stroke: var(--color-ink-3);
+    fill: var(--color-ink-3);
+  }
+  .lab__svg :global(.is-ridge) {
+    stroke: var(--color-accent);
+    fill: var(--color-accent);
+  }
+  .lab__svg :global(.is-ns) {
+    stroke: var(--color-brass);
+    fill: var(--color-brass);
+  }
+  .lab__svg :global(.labfig__dot) {
+    stroke: var(--color-surface-1);
+    stroke-width: 1.5;
+  }
+  .lab__svg :global(.labfig__line) {
+    fill: none;
+    stroke-width: 2;
+  }
+  .lab__svg :global(.labfig__line.is-ml) {
+    stroke-dasharray: 5 3;
+  }
+  .lab__svg :global(.labfig__cv) {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 2;
+  }
+  .lab__svg :global(.labfig__cvdot) {
+    fill: var(--color-accent);
+  }
+  .lab__svg :global(.labfig__cvdot.is-chosen) {
     fill: var(--color-brass);
     stroke: var(--color-surface-1);
     stroke-width: 2;
   }
-  .cv__axis,
-  .spread__axis {
-    font-family: var(--font-mono);
-    font-size: 8px;
-    fill: var(--color-ink-3);
-  }
-  .spread__line.is-ml {
-    stroke: var(--color-ink-3);
-    stroke-dasharray: 4 3;
-  }
-  .spread__line.is-ridge {
-    stroke: var(--color-accent);
-  }
-  .spread__line.is-cw {
-    stroke: var(--color-brass);
-  }
-  .spread__marker {
+  .lab__svg :global(.labfig__marker) {
     stroke: var(--color-brass);
     stroke-width: 1;
     stroke-dasharray: 2 3;
-    opacity: 0.7;
+  }
+  .lab__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-2);
+  }
+  .lab__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .lab__key {
+    display: inline-block;
+    inline-size: 1.1rem;
+    block-size: 0.32rem;
+    border-radius: 2px;
+  }
+  .lab__key.is-ml {
+    background: var(--color-ink-3);
+  }
+  .lab__key.is-ridge {
+    background: var(--color-accent);
+  }
+  .lab__key.is-ns {
+    background: var(--color-brass);
+  }
+  .lab__key.is-truth {
+    background: repeating-linear-gradient(to right, var(--color-ink) 0 3px, transparent 3px 6px);
+  }
+  .lab__toggle {
+    display: inline-flex;
+    justify-self: start;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    gap: 3px;
+  }
+  .lab__toggle button {
+    min-block-size: 2.25rem;
+    padding: 0.3rem 0.85rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    cursor: pointer;
+  }
+  .lab__toggle button[aria-pressed='true'] {
+    background: var(--color-accent);
+    color: var(--color-paper);
+  }
+  .lab__toggle button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .lab__lambda-note :global([data-claim]) {
+    font-family: var(--font-mono);
   }
 
-  /* -------------------------------------------------------------------- readings */
+  /* -------------------------------------------------------------- readings */
   .lab__readings {
-    margin-block-start: clamp(var(--space-5), 4vw, var(--space-7));
     display: grid;
-    gap: var(--space-4);
-    max-inline-size: 62rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(var(--space-4), 2vw, var(--space-5));
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
   }
   .lab__reading {
-    display: none;
-    gap: var(--space-2);
-    padding-inline-start: var(--space-4);
-    border-inline-start: 2px solid var(--color-brass);
+    padding-block-start: var(--space-4);
+    border-block-start: 2px solid var(--color-rule);
+    transition: border-color var(--dur-2) var(--ease);
   }
   .lab__reading[data-active] {
-    display: grid;
+    border-block-start-color: var(--color-brass);
   }
   .lab__reading h3 {
     font-family: var(--font-display);
-    font-size: var(--step-2);
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    font-size: var(--step-1);
+    line-height: 1.25;
+    margin-block-end: var(--space-2);
   }
   .lab__reading p {
     font-family: var(--font-ui);
-    font-size: var(--step-0);
-    line-height: 1.65;
+    font-size: var(--step--1);
+    line-height: 1.7;
     color: var(--color-ink-2);
+  }
+  .lab__reading :global([data-claim]),
+  .lab__note :global([data-claim]) {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+    font-weight: 600;
+    unicode-bidi: isolate;
+    direction: ltr;
   }
   .lab__callout {
-    margin-block-start: var(--space-3);
-    padding: clamp(var(--space-4), 3vw, var(--space-5));
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-surface-2);
+    grid-column: 1 / -1;
+    max-inline-size: 52rem;
     font-family: var(--font-display);
-    font-size: var(--step-1);
-    line-height: 1.45;
-    color: var(--color-ink);
+    font-size: var(--step-2);
+    line-height: 1.3;
+    text-wrap: balance;
   }
 
-  /* ----------------------------------------------------------------- data table */
+  /* ---------------------------------------------------------------- tables */
   .lab__data {
-    margin-block-start: var(--space-5);
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-surface-1);
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
+    border-block-start: var(--border-hairline);
+    padding-block-start: var(--space-4);
   }
-  .lab__data summary {
-    padding: var(--space-3) var(--space-4);
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-2);
+  .lab__data > summary {
     cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    min-block-size: 2.75rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
   .lab__tablewrap {
     overflow-x: auto;
-    padding: 0 var(--space-4) var(--space-4);
+    margin-block: var(--space-4);
   }
-  .lab__data table {
+  .lab__tablewrap:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .lab__tablewrap table {
     inline-size: 100%;
+    min-inline-size: 36rem;
     border-collapse: collapse;
-    font-family: var(--font-mono);
+    font-family: var(--font-ui);
     font-size: var(--step--1);
-    font-variant-numeric: tabular-nums;
   }
-  .lab__data caption {
+  .lab__tablewrap caption {
     text-align: start;
     padding-block-end: var(--space-2);
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
     color: var(--color-ink-3);
+    font-size: var(--step--2);
   }
-  .lab__data th,
-  .lab__data td {
-    padding: var(--space-2) var(--space-3);
+  .lab__tablewrap th,
+  .lab__tablewrap td {
+    padding: 0.5rem 0.65rem;
     border-block-end: var(--border-hairline);
     text-align: start;
+    white-space: nowrap;
   }
-  .lab__data thead th {
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-    color: var(--color-ink-3);
-    font-weight: 500;
-  }
-
-  /* -------------------------------------------------------------------- method */
-  .lab__method {
-    display: grid;
-    gap: var(--space-3);
-    margin-block-start: clamp(var(--space-5), 4vw, var(--space-7));
-    padding-block-start: var(--space-5);
-    border-block-start: var(--border-hairline);
-    max-inline-size: 62rem;
-  }
-  .lab__math {
-    display: grid;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    border: var(--border-hairline);
-    border-radius: var(--radius-2);
-    background: var(--color-surface-1);
+  .lab__tablewrap td {
     font-family: var(--font-mono);
-    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+  }
+  .lab__tablewrap thead th {
+    font-weight: 600;
     color: var(--color-ink-2);
-    overflow-x: auto;
   }
   .lab__note {
+    max-inline-size: 52rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--color-ink-2);
+  }
+
+  /* ----------------------------------------------------------------- scope */
+  .lab__scope {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(var(--space-4), 3vw, var(--space-6));
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
+  }
+  .lab__scope-col {
+    padding: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  .lab__scope-col--not {
+    border-color: color-mix(in srgb, var(--color-brass) 55%, var(--color-rule));
+  }
+  .lab__scope h3 {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    margin-block-end: var(--space-3);
+  }
+  .lab__scope ul {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    list-style: disc;
     font-family: var(--font-ui);
     font-size: var(--step--1);
     line-height: 1.6;
-    color: var(--color-ink-3);
+    color: var(--color-ink-2);
   }
 
-  @media (max-width: 62rem) {
+  /* --------------------------------------------------------------- methods */
+  .lab__method {
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
+  }
+  .lab__methods {
+    border-block: var(--border-hairline);
+    padding-block: var(--space-4);
+  }
+  .lab__methods > summary {
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    min-block-size: 2.75rem;
+    display: flex;
+    align-items: center;
+  }
+  .lab__methods-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5) clamp(var(--space-5), 3vw, var(--space-7));
+    padding-block-start: var(--space-4);
+  }
+  .lab__methods-body section {
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+  }
+  .lab__methods-body h3 {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+  }
+  .lab__methods-body p {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.7;
+    color: var(--color-ink-2);
+  }
+  .lab__math {
+    display: grid;
+    gap: var(--space-1);
+    overflow-x: auto;
+  }
+  .lab__math code {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    line-height: 1.7;
+    white-space: nowrap;
+    color: var(--color-ink);
+  }
+  .lab__glossary {
+    grid-column: 1 / -1;
+  }
+  .lab__glossary dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-6);
+    margin: 0;
+  }
+  .lab__glossary dt {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+  }
+  .lab__glossary dd {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+
+  /* --------------------------------------------------------------- related */
+  .lab__related {
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
+    display: grid;
+    gap: var(--space-3);
+  }
+  .lab__related h3 {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+  }
+  .lab__related-list {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+  .lab__related-list li {
+    display: grid;
+    gap: 0.2rem;
+    padding-block: var(--space-3);
+    border-block-end: var(--border-hairline);
+  }
+  .lab__related-list a {
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+  .lab__related-flag {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: 0.04em;
+    color: var(--color-brass);
+  }
+  .lab__related-meta {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .lab__revision {
+    margin-block-start: clamp(var(--space-6), 4vw, var(--space-7));
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-2);
+    display: grid;
+    gap: var(--space-2);
+  }
+  .lab__revision p {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--color-ink-2);
+  }
+
+  @media (max-width: 64rem) {
     .lab__grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .lab__controls {
       position: static;
     }
-  }
-  @media (max-width: 46rem) {
-    .lab__pair {
-      grid-template-columns: 1fr;
-    }
-    .coef__row {
-      grid-template-columns: 1.8rem minmax(0, 1fr) 2.6rem;
+    .lab__readings {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .coef__bar,
-    .coef__truth,
-    .lab__scale span {
-      transition: none;
+  @media (max-width: 44rem) {
+    .lab__pair,
+    .lab__scope,
+    .lab__methods-body,
+    .lab__glossary dl {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 </style>

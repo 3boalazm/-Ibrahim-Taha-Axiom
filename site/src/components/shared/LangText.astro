@@ -1,8 +1,11 @@
 ---
 /**
- * Renders localized text. If only the other language exists, it is shown in its
- * own language (correct lang/dir) with a visible "available in English only"
- * note. Content is never machine-translated.
+ * Renders localized text. Order: approved text in the page language → for
+ * Arabic, an AI-assisted draft (marked with data-draft and, when `note` is set,
+ * a visible "draft — not reviewed by the researcher" label) → the other
+ * language in its own lang/dir with an "available in English only" note.
+ * Publication titles and abstracts never come through here; they are never
+ * translated.
  */
 import { pick } from '../../utils/content';
 import { t } from '../../i18n/ui';
@@ -13,18 +16,31 @@ interface Props {
   lang: Lang;
   as?: 'span' | 'p' | 'div';
   note?: boolean;
+  class?: string;
 }
-const { value, lang, as: Tag = 'span', note = false } = Astro.props;
+const { value, lang, as: Tag = 'span', note = false, class: cls } = Astro.props;
 const r = pick(value, lang);
+const ui = t(lang);
 ---
 
 {
   r && (
     <>
-      <Tag lang={r.fallback ? r.lang : undefined} dir={r.fallback ? (r.lang === 'ar' ? 'rtl' : 'ltr') : undefined}>
+      <Tag
+        class:list={[cls, { 'is-draft': r.draft }]}
+        lang={r.fallback ? r.lang : undefined}
+        dir={r.fallback ? (r.lang === 'ar' ? 'rtl' : 'ltr') : undefined}
+        data-draft={r.draft ? '' : undefined}
+        title={r.draft && Tag === 'span' ? `${ui.draftBadge} — ${ui.draftBody}` : undefined}
+      >
         {r.text}
       </Tag>
-      {r.fallback && note && <small class="fallback-note">{t(lang).translationFallback}</small>}
+      {r.fallback && note && <small class="fallback-note">{ui.translationFallback}</small>}
+      {r.draft && note && (
+        <small class="fallback-note">
+          <span class="draft-badge">{ui.draftBadge}</span> {ui.draftBody}
+        </small>
+      )}
     </>
   )
 }

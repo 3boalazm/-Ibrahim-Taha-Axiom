@@ -11,7 +11,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "qa": "node scripts/qa.mjs",
-    "lab:verify": "node scripts/lab-verify.mjs"
+    "lab:verify": "node scripts/lab-verify.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "node tests/e2e/keyboard.mjs",
+    "inventory": "node scripts/content-inventory.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",

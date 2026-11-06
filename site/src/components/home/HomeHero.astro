@@ -1,0 +1,328 @@
+---
+/**
+ * Home hero: identity, role, positioning, two calls to action, and a
+ * restrained statistical figure — the standard normal density. Pointer,
+ * touch or arrow keys move z; the shaded area is Φ(z), computed (not drawn
+ * by hand). Nothing moves on its own; there is no autoplay.
+ */
+import LangText from '../shared/LangText.astro';
+import { pick, profile } from '../../utils/content';
+import { localePath } from '../../utils/paths';
+import { FRAME, Z_MAX, Z_MIN, areaPath, cdf, densityPath, pdf, xOf, yOf } from '../../lib/normal.mjs';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  lead: string;
+}
+const { lang, lead } = Astro.props;
+const ar = lang === 'ar';
+const Z0 = 1.96;
+const phi0 = cdf(Z0);
+const summary = pick(profile.summary, lang);
+const ticks = [-3, -2, -1, 0, 1, 2, 3];
+const L = ar
+  ? {
+      eyebrow: 'الإحصاء التطبيقي · القياس الاقتصادي',
+      title: 'التوزيع الطبيعي المعياري',
+      caption: 'حرّك المؤشر فوق المنحنى أو استخدم مفاتيح الأسهم: المساحة المظلّلة هي \u2066Φ(z)\u2069، أي احتمال أن تقع القيمة تحت \u2066z\u2069.',
+      slider: 'قيمة z في التوزيع الطبيعي المعياري',
+      below: 'تحت z',
+      cta1: 'تصفّح المنشورات',
+      cta2: 'المجالات البحثية',
+    }
+  : {
+      eyebrow: 'Applied statistics · Econometrics',
+      title: 'Standard normal distribution',
+      caption: 'Move the pointer over the curve, or use the arrow keys: the shaded area is Φ(z), the probability of a value below z.',
+      slider: 'z value on the standard normal distribution',
+      below: 'below z',
+      cta1: 'Explore publications',
+      cta2: 'Research areas',
+    };
+const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(3)} (${(cdf(z) * 100).toFixed(1)}% ${L.below})`;
+---
+
+<section class="hhero" aria-labelledby="hero-title">
+  <div class="container hhero__grid">
+    <div class="hhero__copy">
+      <p class="hhero__eyebrow label">{L.eyebrow}</p>
+      <h1 id="hero-title" class="hhero__name">
+        <LangText value={profile.name} lang={lang} />
+      </h1>
+      {
+        (profile.role.en || profile.role.ar) && (
+          <p class="hhero__role">
+            <LangText value={profile.role} lang={lang} />
+          </p>
+        )
+      }
+      <p class="hhero__lead" lang={summary && summary.lang !== lang ? summary.lang : undefined}>
+        {summary ? summary.text : lead}
+      </p>
+      <div class="hhero__actions">
+        <a class="button button--solid button--lg" href={localePath(lang, '/publications/')}>
+          {L.cta1}
+          <span class="button__arrow icon-flip" aria-hidden="true">→</span>
+        </a>
+        <a class="button button--lg" href={localePath(lang, '/research/')}>
+          {L.cta2}
+        </a>
+      </div>
+    </div>
+
+    <figure class="hnormal" data-normal data-below={L.below}>
+      <figcaption class="hnormal__head">
+        <span class="hnormal__title">{L.title}</span>
+        <span class="hnormal__readout ltr" aria-hidden="true">
+          z = <b data-normal-z>{Z0.toFixed(2)}</b> · Φ(z) = <b data-normal-p>{phi0.toFixed(3)}</b>
+        </span>
+      </figcaption>
+      <div
+        class="hnormal__plot"
+        role="slider"
+        tabindex="0"
+        aria-label={L.slider}
+        aria-valuemin={Z_MIN}
+        aria-valuemax={Z_MAX}
+        aria-valuenow={Z0}
+        aria-valuetext={valueText(Z0)}
+        aria-describedby="hnormal-caption"
+        data-normal-plot
+      >
+        <svg viewBox={`0 0 ${FRAME.w} ${FRAME.h}`} aria-hidden="true" dir="ltr" direction="ltr">
+          <path class="hnormal__area" d={areaPath(Z0)} data-normal-area></path>
+          <path class="hnormal__curve" d={densityPath()}></path>
+          <line class="hnormal__axis" x1={FRAME.left} x2={FRAME.right} y1={FRAME.base} y2={FRAME.base}></line>
+          {
+            ticks.map((z) => (
+              <g>
+                <line class="hnormal__tick" x1={xOf(z)} x2={xOf(z)} y1={FRAME.base} y2={FRAME.base + 5} />
+                <text class="hnormal__ticklabel" x={xOf(z)} y={FRAME.base + 18} text-anchor="middle">
+                  {z === 0 ? '0' : z > 0 ? `${z}` : `−${-z}`}
+                </text>
+              </g>
+            ))
+          }
+          <line class="hnormal__marker" x1={xOf(Z0)} x2={xOf(Z0)} y1={FRAME.top - 6} y2={FRAME.base} data-normal-marker></line>
+          <circle class="hnormal__dot" cx={xOf(Z0)} cy={yOf(pdf(Z0))} r="4.5" data-normal-dot></circle>
+        </svg>
+      </div>
+      <p id="hnormal-caption" class="hnormal__caption">{L.caption}</p>
+    </figure>
+  </div>
+</section>
+
+<script>
+  import { areaPath, cdf, clampZ, pdf, xOf, yOf, zOf, FRAME, Z_MIN, Z_MAX } from '../../lib/normal.mjs';
+
+  document.querySelectorAll<HTMLElement>('[data-normal]').forEach((fig) => {
+    const plot = fig.querySelector<HTMLElement>('[data-normal-plot]')!;
+    const svg = plot.querySelector('svg')!;
+    const area = fig.querySelector<SVGPathElement>('[data-normal-area]')!;
+    const marker = fig.querySelector<SVGLineElement>('[data-normal-marker]')!;
+    const dot = fig.querySelector<SVGCircleElement>('[data-normal-dot]')!;
+    const zOut = fig.querySelector<HTMLElement>('[data-normal-z]')!;
+    const pOut = fig.querySelector<HTMLElement>('[data-normal-p]')!;
+    const below = fig.dataset.below ?? '';
+    let z = Number(plot.getAttribute('aria-valuenow'));
+    let frame = 0;
+
+    function draw() {
+      frame = 0;
+      const x = xOf(z);
+      area.setAttribute('d', areaPath(z));
+      marker.setAttribute('x1', String(x));
+      marker.setAttribute('x2', String(x));
+      dot.setAttribute('cx', String(x));
+      dot.setAttribute('cy', String(yOf(pdf(z))));
+      const p = cdf(z);
+      zOut.textContent = z.toFixed(2);
+      pOut.textContent = p.toFixed(3);
+      plot.setAttribute('aria-valuenow', z.toFixed(2));
+      plot.setAttribute('aria-valuetext', `z = ${z.toFixed(2)}, Φ(z) = ${p.toFixed(3)} (${(p * 100).toFixed(1)}% ${below})`);
+    }
+    const set = (v: number) => {
+      z = clampZ(v);
+      if (!frame) frame = requestAnimationFrame(draw);
+    };
+    const fromPointer = (e: PointerEvent) => {
+      const r = svg.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * FRAME.w;
+      set(zOf(x));
+    };
+    plot.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' || e.buttons) fromPointer(e);
+    });
+    plot.addEventListener('pointerdown', (e) => {
+      plot.setPointerCapture(e.pointerId);
+      fromPointer(e);
+    });
+    plot.addEventListener('keydown', (e) => {
+      const big = e.shiftKey ? 0.5 : 0.1;
+      const map: Record<string, number | null> = {
+        ArrowRight: z + big,
+        ArrowUp: z + big,
+        ArrowLeft: z - big,
+        ArrowDown: z - big,
+        PageUp: z + 1,
+        PageDown: z - 1,
+        Home: Z_MIN,
+        End: Z_MAX,
+      };
+      if (e.key in map) {
+        e.preventDefault();
+        set(map[e.key]!);
+      }
+    });
+  });
+</script>
+
+<style>
+  .hhero {
+    padding-block: clamp(var(--space-7), 7vw, var(--space-10)) clamp(var(--space-6), 5vw, var(--space-8));
+    border-block-end: var(--border-hairline);
+    background:
+      radial-gradient(60rem 30rem at 85% 0%, color-mix(in srgb, var(--color-accent-soft) 70%, transparent), transparent 70%),
+      var(--color-paper);
+  }
+  .hhero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(var(--space-6), 5vw, var(--space-9));
+    align-items: center;
+  }
+  .hhero__copy {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+  .hhero__eyebrow {
+    color: var(--color-brass);
+  }
+  /* The name stays in its original Latin form on the Arabic page (DQ-10):
+     give it the Latin display face rather than the Arabic face's fallback Latin. */
+  .hhero__name :global([lang='en']) {
+    font-family: var(--font-serif);
+    letter-spacing: -0.03em;
+  }
+  .hhero__name {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6vw, var(--step-6));
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: var(--tracking-display);
+    color: var(--color-ink);
+  }
+  .hhero__role {
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    font-style: italic;
+    color: var(--color-accent-strong);
+  }
+  .hhero__lead {
+    max-inline-size: 38rem;
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.7;
+    color: var(--color-ink-2);
+  }
+  .hhero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  .hnormal {
+    margin: 0;
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-surface-1);
+    box-shadow: var(--shadow-card);
+  }
+  .hnormal__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+  }
+  .hnormal__title {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  :global(:lang(ar)) .hnormal__title {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .hnormal__readout {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .hnormal__readout b {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .hnormal__plot {
+    border-radius: var(--radius-2);
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+  .hnormal__plot:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 4px;
+  }
+  .hnormal__plot svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+  .hnormal__area {
+    fill: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+  .hnormal__curve {
+    fill: none;
+    stroke: var(--color-ink);
+    stroke-width: 1.6;
+  }
+  .hnormal__axis,
+  .hnormal__tick {
+    stroke: var(--color-rule-strong);
+  }
+  .hnormal__ticklabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--color-ink-3);
+  }
+  .hnormal__marker {
+    stroke: var(--color-brass);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+  .hnormal__dot {
+    fill: var(--color-paper);
+    stroke: var(--color-brass);
+    stroke-width: 2;
+  }
+  .hnormal__caption {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.5;
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 56rem) {
+    .hhero__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

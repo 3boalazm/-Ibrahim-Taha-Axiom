@@ -219,7 +219,7 @@ const pictureFor = (item: Entry, i: number) =>
   @media (max-width: 56rem) {
     .entry,
     .entry:nth-child(even) {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .entry:nth-child(even) .entry__media {
       order: 0;

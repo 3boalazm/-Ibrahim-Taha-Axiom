@@ -1,6 +1,6 @@
-# Ibrahim Taha Axiom — Academic Platform Research Workspace
+# Ibrahim Taha Axiom — Academic Platform
 
-> **Phase 1: Research workspace.** This repository holds read-only reference snapshots of three open-source academic website templates and the analysis comparing them. It is the starting point for an academic and research platform for one researcher. **There is no product code yet.**
+> **Phase 4: live interactive academic site.** The bilingual (EN/AR) website for the researcher Ibrahim Mohamed Taha is live at **https://ibrahim-taha-axiom.vercel.app** and built from [`site/`](site/README.md). The repository also keeps the Phase 1 research workspace: read-only reference snapshots of three open-source academic templates and the analysis comparing them. Content counts are generated from the approved data with `cd site && npm run inventory`; never edit them by hand.
 
 ## ملخص بالعربية
 
@@ -57,8 +57,16 @@ ibrahim-taha-axiom/
 ├── docs/
 │   ├── decisions-pending.md           decision log, approved + open (Arabic)
 │   ├── deployment.md                  Vercel setup, environment variables, release procedure
-│   ├── public-content-policy.md       what the website may show + how to approve content
-│   └── website-launch-checklist.md    approvals before indexing + the one-step indexing switch
+│   ├── public-content-policy.md       what the website may show, the consent record, how to approve content
+│   ├── website-launch-checklist.md    indexing status + custom-domain steps
+│   ├── interaction-architecture.md    search, explorer, knowledge graph, journey, lab, contact (Phase 4)
+│   ├── lab-methodology.md             the shrinkage lab: design, estimators, results, revision history
+│   ├── data-quality-register.md       open data issues (years, author order, identity, classification)
+│   ├── translation-status.md          Arabic drafts vs reviewed text, terminology, review steps
+│   ├── qa-checklist.md                automated checks, what was run, the manual EN/AR × light/dark matrix
+│   ├── branch-protection.md           recommended required checks for main (not applied)
+│   └── screenshots/phase-4/           review screenshots (EN/AR, light/dark, 390/1280)
+├── .github/workflows/site-ci.yml      CI: build → QA → lab verification → tests → browser tests
 └── .env.example                       environment template (real values never committed)
 ```
 
@@ -72,7 +80,7 @@ ibrahim-taha-axiom/
 ## Workspace rules
 - **References are read-only.** Do not edit, build or `npm install` inside `references/`. To run a reference, copy it somewhere else first.
 - **No code merging.** References are study material. Any copied snippet must be recorded in a future `THIRD_PARTY_NOTICES.md` (see [licensing review](research/licensing-review.md)).
-- **No fabricated research data.** Researcher content will be supplied by the researcher (decision D-14).
+- **No fabricated research data.** Researcher content comes only from approved sources listed in `site/src/data/approved/public-content.manifest.json`; conflicts are recorded, not resolved by guesswork.
 - `references/**` is stored without line-ending conversion (`.gitattributes`), so files stay byte-identical to the original snapshots.
 
 Verify that the references are untouched (Git Bash / Linux / macOS):
@@ -87,4 +95,7 @@ for p in al-folio academic-pages astro-scholar; do (cd references/$p && sha256su
 - [x] Hosting: Vercel project `ibrahim-taha-axiom` with a temporary EN/AR placeholder (see [`docs/deployment.md`](docs/deployment.md))
 - [x] Phase 2: research data collected, reconciled and analysed (reports in `research/`; data in local `data-staging/`)
 - [x] Phase 3: bilingual website live at https://ibrahim-taha-axiom.vercel.app (EN `/`, AR `/ar/`). Researcher content is gated by [`docs/public-content-policy.md`](docs/public-content-policy.md); search indexing is ON (canonical: ibrahim-taha-axiom.vercel.app, custom domain pending; see [`docs/website-launch-checklist.md`](docs/website-launch-checklist.md))
-- [ ] Researcher review: answers to [`research/data-gaps-and-questions.md`](research/data-gaps-and-questions.md), then approval of profile and publications through the public-content manifest
+- [x] Researcher approval recorded (2026-11-06): the researcher agreed to publication and the project owner confirmed it ([`docs/public-content-policy.md`](docs/public-content-policy.md) §1)
+- [x] Phase 4: interactive academic experience: site search (Ctrl/⌘ K), publication explorer, knowledge graph from verified relationships, journey, corrected and verified shrinkage lab, contact composer, Arabic drafts with visible status, CI ([`docs/interaction-architecture.md`](docs/interaction-architecture.md))
+- [ ] Researcher review of the Arabic drafts ([`docs/translation-status.md`](docs/translation-status.md)) and answers to the open data questions ([`docs/data-quality-register.md`](docs/data-quality-register.md))
+- [ ] Custom domain (D-07a) and the remaining open decisions in [`docs/decisions-pending.md`](docs/decisions-pending.md)

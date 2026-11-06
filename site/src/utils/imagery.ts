@@ -87,7 +87,7 @@ export const PICTURES = {
     height: 1242,
     alt: {
       en: 'Portrait of Ibrahim Taha in a navy suit, arms folded, against a bone-plaster studio wall engraved with a sine wave and a normal density curve',
-      ar: 'صورة الدكتور إبراهيم طه ببذلة كحلية وذراعين متشابكتين، أمام حائط جصّي عاجي محفور عليه منحنى جيبي ومنحنى كثافة طبيعي',
+      ar: 'صورة إبراهيم طه ببذلة كحلية وذراعين متشابكتين، أمام حائط جصّي عاجي محفور عليه منحنى جيبي ومنحنى كثافة طبيعي',
     },
   },
   portraitWide: {

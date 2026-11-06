@@ -1,0 +1,27 @@
+[
+  {
+    "id": "ridge-estimation",
+    "title": { "en": "Ridge estimation", "ar": null },
+    "summary": { "en": "An L2 penalty on the coefficients that stabilises estimates when predictors are strongly correlated, at the cost of some bias.", "ar": null }
+  },
+  {
+    "id": "liu-type-estimation",
+    "title": { "en": "Liu-type estimation", "ar": null },
+    "summary": { "en": "A family of biased shrinkage estimators introduced by Liu, used as an alternative to ridge under multicollinearity.", "ar": null }
+  },
+  {
+    "id": "lasso-elastic-net",
+    "title": { "en": "LASSO and elastic net", "ar": null },
+    "summary": { "en": "L1 and combined L1/L2 penalties that shrink coefficients and can set some exactly to zero, for variable selection in high dimensions.", "ar": null }
+  },
+  {
+    "id": "pls-sem",
+    "title": { "en": "PLS-SEM", "ar": null },
+    "summary": { "en": "Partial least squares structural equation modelling, which estimates relationships between latent constructs.", "ar": null }
+  },
+  {
+    "id": "monte-carlo-simulation",
+    "title": { "en": "Monte Carlo simulation", "ar": null },
+    "summary": { "en": "Repeated simulated samples used to compare the bias and variability of estimators.", "ar": null }
+  }
+]

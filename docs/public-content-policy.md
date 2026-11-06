@@ -1,7 +1,31 @@
 # Public Content Policy — what the website may show
 
-> Applies to `site/` (the Astro website deployed on Vercel). Effective 2026-11-05.
+> Applies to `site/` (the Astro website deployed on Vercel). Effective 2026-11-05; consent record updated 2026-11-06.
 > Principle: **nothing about the researcher appears on the website unless it has been explicitly approved for publication.** A record being *verified* in the Phase 2 research data is **not** the same as being approved.
+
+## 0. Researcher consent record
+
+The machine-readable record is `researcherApproval` in `site/src/data/approved/public-content.manifest.json`. The tests fail if it is incomplete. This table mirrors it.
+
+| Field | Value |
+| --- | --- |
+| Researcher | Ibrahim Mohamed Taha, ORCID [0000-0002-6141-5387](https://orcid.org/0000-0002-6141-5387) |
+| Status | **Approved** |
+| Date | 2026-11-06 |
+| Basis | The researcher agreed to publication, and the project owner confirmed it in the project chat on 2026-11-06. **No signed document is held, and this record does not claim one.** |
+| Recorded by | Project owner (GitHub: 3boalazm) |
+| Supersedes | The 2026-11-05 records made by the project owner on the researcher's behalf (D-16). They are kept in `approvalHistory`, not deleted |
+
+**Scope.** The approval covers:
+- every profile field, publication, research area, project, course, talk, CV entry and platform-metrics snapshot listed in the manifest, on ibrahim-taha-axiom.vercel.app;
+- the public e-mail address and phone number as they appear in `profile.json`;
+- search-engine indexing (canonical URLs, sitemap, robots.txt) as set in `public-settings/launch.json`;
+- presentation of that approved data through the Phase 4 interactive features: search, publication explorer, knowledge graph, journey timeline and lab.
+
+**Not covered.**
+- The AI-assisted Arabic drafts (`src/data/translations/ar.json`). Until the researcher reviews them, they are shown only with a visible draft label ([translation-status.md](translation-status.md)).
+- The open data-quality questions ([data-quality-register.md](data-quality-register.md)). This approval does not decide them.
+- Any private data beyond the approved fields. Nothing from `data-staging/` is published.
 
 ## 1. The two-key gate
 
@@ -21,30 +45,32 @@ The gate lives in `site/src/utils/content.ts` (profile, research areas, projects
 | `approved/cv.json` | Structured CV + optional PDF path | `cv.approved: true` |
 | `public-settings/launch.json` | Site name, canonical origin, indexing switch | project owner (not researcher data) |
 
-**Current state (2026-11-05, updated):** the project owner gave a **blanket approval** of all reviewed Phase 2 data on behalf of the researcher. Published now:
-- the profile (name, role, summary and biography taken from the researcher's own earlier site; affiliations and education from ORCID, Google Scholar and publisher PDFs; academic identifiers; community links; ORCID keywords as interests);
-- all **17** publications from the reviewed export, 3 of them *selected*;
-- 4 research areas, with evidence-backed links to their publications;
-- 2 teaching entries (the verified Teaching Assistant role and the researcher's own training description);
-- a structured CV (no PDF).
+**Current state (2026-11-06).** These counts are derived from the data with `cd site && npm run inventory`; regenerate them rather than editing by hand. Published now:
+- **Profile.** Name, role, summary and biography come from the researcher's own earlier site. Affiliations and education come from ORCID, Google Scholar and publisher PDFs. It also includes academic identifiers, community links, ORCID keywords as interests, and the approved contact e-mail and phone.
+- **22 bibliography entries:** 10 journal articles, 4 books, 2 technical reports, 2 conference papers, 1 master's thesis, 1 preprint and 2 other works (the last three are `@misc`). 3 are *selected*. They are not all journal articles: the site labels each by type, the Publications explorer lists all 22 with a type filter, and the 4 books also have their own Books page.
+- **6 research areas, 3 projects, 5 courses, 2 talks, 5 methods and 1 dataset.** The talks are the 2018 and 2019 conference papers; no source says who presented them, so the site does not claim it.
+- **42 verified relationships** between them. Each relationship has written evidence, and a quoted title must match the data or the build fails.
+- **A structured CV** (no PDF).
+- **A platform-metrics snapshot** (OpenAlex and ResearchGate, retrieved 2026-11-05). Each platform is shown separately with its own source and definitions, and they are never combined or compared.
 
-Added later the same day, on the project owner's explicit request:
-- **contact e-mail and phone** (as published on the researcher's own earlier site), shown on the Contact page;
-- **2 talks**, the 2018 and 2019 conference papers. No source says who presented them, so the site does not claim it;
-- **3 projects** built from evidenced work: the penalized COM-Poisson papers with their Zenodo dataset and GitHub data repository, the Statistical Analysis – Egypt community, and the self-published statistical guides.
+Approval history (all kept in the manifest):
+- **2026-11-05:** the project owner's blanket approval on the researcher's behalf (profile, publications, areas, teaching, CV), then contact details, talks and projects (D-16).
+- **2026-11-06:** the researcher's own agreement, confirmed by the project owner (§0).
 
 Still excluded:
 - the preprint duplicate and the 3 held-back duplicate guide rows;
-- Arabic translations of researcher text. None exists, so Arabic pages show these sections in English (as a block with a note where needed).
+- anything in `data-staging/`.
 
-Where sources disagreed (2 publication years, 1 author order) the exported value follows the documented rule in `research/data-quality-report.md`.
+**Arabic.** Approved Arabic text exists only for a few fields: 2 research-area summaries and some profile, project and CV fields. Everything else in Arabic is an AI-assisted draft, labelled on the page as «ترجمة مبدئية — لم يراجعها الباحث بعد». Publication titles, abstracts, venues and names are never translated.
+
+**Open data questions.** Publication years, author order, identity details and classification questions stay open in [data-quality-register.md](data-quality-register.md), with their sources. The site shows the value chosen by the documented rule in `research/data-quality-report.md`, and the alternatives stay on record.
 
 ## 2. Never publish
 
 - Records whose Phase 2 status is `candidate`, `conflicted`, `incomplete`, `restricted` or `rejected`, unless the researcher has resolved the issue and approved the record.
 - Personal e-mail addresses or phone numbers, **unless** they are explicitly approved as the profile's `contact` field. `npm run qa` allows only the approved contact values and fails on any other e-mail or phone in the build output. The researcher's contact e-mail and phone were approved by the project owner on 2026-11-05.
 - Unpublished manuscripts, restricted or paywalled PDFs, or publisher PDFs without a compatible licence. Link to the DOI instead. A `pdf` link may point only to a legitimate open-access copy whose licence allows linking (or to a file the researcher owns the rights to, placed in `site/public/files/`).
-- Invented or inferred content: biography, qualifications, affiliations, awards, research interests, teaching history, abstracts, translations, DOIs or citation metrics.
+- Invented or inferred content: biography, qualifications, affiliations, awards, research interests, teaching history, abstracts, translations, DOIs or citation metrics. The single, bounded exception is the labelled Arabic drafts (§4).
 - Inferred research lines (from Phase 2 `projects.candidates.json`) presented as facts. They become research areas only after the researcher confirms and names them.
 - Anything from `data-staging/`. The site never reads that folder, and it is gitignored.
 
@@ -68,6 +94,7 @@ Add `{ "from": "publication:<key>", "to": "area:<id>", "evidence": "<why this li
 - English is the default; Arabic is under `/ar/` with full RTL.
 - Publication titles, abstracts, author names, journal names and DOIs stay in their **original language**. They are never translated.
 - Only **confirmed** translations go into the `ar` / `en` fields. Machine translation is not allowed in approved data.
+- **Arabic drafts (Phase 4, owner's request).** AI-assisted Modern Standard Arabic drafts of the site's descriptive text live separately in `src/data/translations/ar.json`, never in approved data. Each entry has `status: "draft"` until the researcher reviews it. On the site, every draft carries a visible «ترجمة مبدئية — لم يراجعها الباحث بعد» label, and the footer shows the translation status. Drafts never cover publication titles, abstracts, journal names, people's names or identifiers. Approved Arabic always wins over a draft. Setting `translations.ar.showDrafts` to `false` in the manifest hides every draft at once. Status and review steps: [translation-status.md](translation-status.md).
 - When a field exists in one language only, the other-language page shows it in its original language with a visible "available in … only" note.
 
 ## 5. Imagery

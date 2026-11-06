@@ -1,59 +1,82 @@
 # site/ — Ibrahim Taha Axiom website (Astro, deployed on Vercel)
 
-Bilingual academic website: English at `/`, Arabic (RTL) at `/ar/`. Static output, no client framework, about 2 KB of inline JS per page.
+Bilingual academic website: English at `/`, Arabic (RTL) at `/ar/`. Static output, no client framework. Interactive features are small inline scripts that enhance server-rendered HTML; each loads only on the pages that use it (see [`../docs/interaction-architecture.md`](../docs/interaction-architecture.md)).
 
 ```bash
 npm ci
-npm run dev      # http://localhost:4321/
-npm run build    # static output in dist/
-npm run qa       # post-build checks (links, metadata, robots, privacy, contrast)
-npm run preview  # serve dist/
+npm run dev        # http://localhost:4321/
+npm run build      # static output in dist/
+npm run qa         # post-build checks (links, metadata, robots, privacy, contrast, sitemap)
+npm run lab:verify # recompute the lab from its seed and check every quoted number
+npm test           # node:test suites in tests/ (run after the build)
+npm run test:e2e   # browser checks; needs CHROME_PATH and `npm i --no-save puppeteer-core@25`
+npm run inventory  # content counts derived from the approved data
+npm run preview    # serve dist/
 ```
+
+CI runs build → qa → lab:verify → test → test:e2e on every pull request touching `site/` (`../.github/workflows/site-ci.yml`).
 
 ## Content gate (read this first)
 
-The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. As of 2026-11-05 the profile (including direct contact details), 17 publications, 4 research areas, 3 projects, 2 talks, teaching and CV are approved. Books is empty and hidden from navigation. Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
+The site shows **only** what is approved. A researcher-specific item appears only if it is in `src/data/approved/` **and** listed in `src/data/approved/public-content.manifest.json`. The researcher agreed to publication and the project owner confirmed it on 2026-11-06 (recorded in the manifest's `researcherApproval`). Approved now:
+- the profile, with direct contact details;
+- 22 bibliography entries (10 journal articles, 4 books, 2 technical reports, 2 conference papers, 1 master's thesis, 1 preprint, 2 other works; all 22 are in the Publications explorer, and the books also have a Books page);
+- 6 research areas, 3 projects, 5 courses, 2 talks, 5 methods and 1 dataset;
+- the CV, and a dated metrics snapshot;
+- 42 evidence-backed relationships.
+
+Run `npm run inventory` for the current figures rather than trusting this paragraph. Arabic: 81 AI-assisted drafts, none reviewed yet, each shown with a visible draft label ([`../docs/translation-status.md`](../docs/translation-status.md)). Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
 
 ## Structure
 
 ```
 src/
 ├── components/
-│   ├── layout/        BaseLayout pieces: SiteHeader, SiteFooter, Seo (meta, hreflang, JSON-LD, robots)
+│   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots)
+│   ├── home/          HomeHero (normal-density figure), IdentityPanel, MetricCards, ResearchDiscovery, LabTeaser
+│   ├── search/        SearchDialog (Ctrl/⌘ K, combobox + listbox)
+│   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
+│   ├── research/      KnowledgeGraph (verified relationships), EntryList
+│   ├── about/         Journey (dated milestones)
+│   ├── contact/       ContactComposer (mailto, nothing sent from the site)
+│   ├── lab/           ShrinkageLab
 │   ├── navigation/    LanguageSwitcher, ThemeToggle, Breadcrumbs
 │   ├── profile/       ProfileSummary (approved profile fields only)
-│   ├── publications/  PublicationLibrary (search, type filter, year groups), PublicationItem, CiteBlock, AuthorList
-│   ├── research/      EntryList (research areas / projects + evidence-backed related publications)
-│   ├── shared/        PageHeader, EmptyState, LangText (language fallback), Wordmark
-│   └── views/         HomeView, SectionRoute (all section pages), PublicationView (detail)
+│   ├── shared/        PageHeader, SectionNav, EmptyState, LangText (language fallback + draft label), DraftNote, Wordmark
+│   └── views/         HomeView, SectionRoute (all section pages), PublicationView (detail), LabView
 ├── content/{en,ar}/   Page copy per section (typed content collection; describes the site, never the researcher)
 ├── data/
-│   ├── approved/        Public-content manifest + approved data (BibTeX, profile, areas, projects, courses, talks, CV)
+│   ├── approved/        Public-content manifest (approval, relationships) + approved data (BibTeX, profile, areas, projects, courses, talks, methods, datasets, CV, metrics)
+│   ├── translations/    ar.json: Arabic drafts (status per entry)
+│   ├── review/          open-issues.json: unresolved data questions (DQ-01…)
 │   └── public-settings/ launch.json (site name, canonical origin, indexing switch)
 ├── i18n/ui.ts         Interface strings (EN/AR)
+├── lab/               The lab's statistics (build time only)
 ├── layouts/           BaseLayout.astro
-├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, 404, robots.txt
+├── lib/               Framework-free logic shared by build, browser and tests: text, search, explorer, normal
+├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, /search-index/[lang].json, 404, robots.txt
 ├── styles/            tokens.css (design tokens) + global.css
-└── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), paths.ts
-scripts/qa.mjs         Post-build QA
+└── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), relations.ts, graph.ts, search-index.ts, format.ts, paths.ts
+scripts/               qa.mjs, lab-verify.mjs, content-inventory.mjs
+tests/                 node:test suites (+ e2e/keyboard.mjs, browser)
 ```
 
 ## Publications
 - Parsed at build time from `src/data/approved/publications.bib` with **@retorquere/bibtex-parser** (a real parser; sentence-casing disabled so titles stay exactly as written).
-- Features: grouping by year, filter by type, search (title, authors, venue, keywords, year, DOI), selected styling, DOI links, abstract expansion, citation copy (APA-style text, BibTeX) and download (.bib, .ris), and a detail page per entry with Google Scholar `citation_*` meta and schema.org JSON-LD.
+- Features: the explorer (search across title, authors, year, venue, DOI and keywords with Arabic normalisation; type, year-range, selected, co-author and research-area filters; four sorts; list/compact/cards views; shareable URL state), DOI links, abstract expansion, citation copy and BibTeX/RIS export per entry.
 - Internal website fields (`selected`, `abbr`, `abstract`, `pdf`, `supp`, …) never appear in copied or downloaded BibTeX.
-- Works with an empty dataset (current state).
+- Works with an empty dataset (pages show an empty state rather than failing).
 
 ## The lab (`/lab/`)
-The only interactive part of the site, and deliberately a *controlled experiment* rather than an animation. A dial raises the correlation between four predictors; the rows, errors and true coefficients never change, so everything that moves is caused by collinearity or by the estimator.
+An **illustrative controlled experiment**, not the researcher's published COM-Poisson method. A dial raises the correlation between four predictors, and three estimators (maximum likelihood, ridge with λ by cross-validation, and a norm-scaled ridge) are refitted on data rebuilt from the same random draws. Full design and results: [`../docs/lab-methodology.md`](../docs/lab-methodology.md).
 
-- `src/lab/model.ts` — the statistics: seeded data generation, NB2 penalised IRLS, penalised information-matrix standard errors, k-fold CV, correlation-weighted ridge.
-- `src/lab/metrics.ts` — build-time Monte-Carlo: 20 replicates × 9 collinearity levels, to measure each estimator's sampling spread. Precomputed because it is a property of the estimator, not of one sample.
-- `src/lab/snapshots.ts` — every state the page can show (15 levels), computed at build and shipped as a ~6 KB JSON island. **No statistics code reaches the browser**; the client only formats numbers and draws bars.
-- `src/components/lab/ShrinkageLab.astro` — markup, copy (EN/AR) and the ~5 KB script.
-- `npm run lab:verify` — asserts the claims the page makes: ML spread ≥ 8× ridge at the top level, ridge *not* better at ρ = 0, VIF crossing 5 and 10 where the copy says. Run it after touching any constant.
+- `src/lab/model.ts`: seeded data generation, the NB2 working model, penalised Fisher scoring, approximate standard errors, 5-fold CV on Poisson deviance.
+- `src/lab/metrics.ts`: build-time Monte Carlo, 100 replicates at each of the 15 correlation levels (spread = 2·RMS of the slope SDs, RMSE).
+- `src/lab/snapshots.ts`: every state the page can show, computed at build and shipped as a JSON payload of about 15 KB. **No statistics code reaches the browser.** `CLAIMS` holds every number the prose quotes, computed from the rounded payload.
+- `src/components/lab/ShrinkageLab.astro`: markup, EN/AR copy and the client script (state lookup, charts and the table, drawn from payload values).
+- `npm run lab:verify` recomputes everything from the seed. It checks convergence, spread = 2·RMS(sd), and every quoted number in both languages (25 claims), and it ensures retired wording appears only in the revision note.
 
-Rules: the lab may never invent a number. If the copy changes, the test changes with it; if the model changes, rebuild and re-run `lab:verify`.
+Rules: the lab may never invent a number, and the maths is never changed for visual effect. If the copy changes, `CLAIMS` and the verifier change with it. If the model changes, rebuild and re-run `lab:verify`.
 
 ## Design system
 `src/styles/tokens.css` is the whole system: colour (warm bone paper and deep pine-dark themes), typography (Fraunces for display, IBM Plex Sans for interface, IBM Plex Sans Arabic / Noto Kufi Arabic and Noto Naskh Arabic for Arabic), a fluid type scale, spacing, radii, shadows and motion. Components only consume tokens, and `npm run qa` re-checks every text/background pair for WCAG contrast in both themes — change a hex and run it again.

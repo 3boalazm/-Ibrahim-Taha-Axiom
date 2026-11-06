@@ -1,0 +1,30 @@
+---
+/**
+ * Visible marker for Arabic text that is an AI-assisted draft the researcher
+ * has not reviewed yet (see docs/translation-status.md). It never claims a
+ * review happened. `inline` renders a compact badge for use next to a block.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  inline?: boolean;
+  class?: string;
+}
+const { lang, inline = false, class: cls } = Astro.props;
+const ui = t(lang);
+---
+
+{
+  inline ? (
+    <span class:list={['draft-badge', cls]} title={ui.draftBody} data-draft>
+      {ui.draftBadge}
+    </span>
+  ) : (
+    <p class:list={['draft-note', cls]} role="note" data-draft>
+      <span class="draft-badge">{ui.draftBadge}</span>
+      <span>{ui.draftBody}</span>
+    </p>
+  )
+}

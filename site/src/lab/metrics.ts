@@ -1,68 +1,67 @@
 /**
- * Build-time precomputation for the shrinkage lab.
+ * Build-time Monte Carlo for the shrinkage lab.
  *
- * The Monte-Carlo panel is the argument the lab makes: how much does each
- * estimator's estimate *move* when the sample is redrawn at a given level of
- * collinearity? That is a property of the estimator, not of one dataset, so it
- * is measured here, once, at build time — 20 replicates × 9 collinearity levels
- * × 3 estimators — and shipped as static numbers. The visitor's slider then
- * costs only three fits.
+ * The question the lab asks is a property of an estimator, not of one dataset:
+ * how much would the estimate move if the study were run again? So, at EVERY
+ * collinearity level the dial can show, the three estimators are refitted to
+ * MC_REPS redrawn samples and summarised:
  *
- * Everything is seeded: the same figures appear on every build and in both
- * languages.
+ *   mean_j, sd_j        mean and standard deviation (n − 1) of β̂_j across replicates
+ *   rmse_j              √ mean (β̂_j − β_j)², i.e. accuracy against the truth
+ *   spread              2 × √(mean_j sd_j²)  — "± 2 SD", averaged over the 4 slopes
+ *   rmseAll             √(mean_j rmse_j²)
+ *
+ * Design: replicate r redraws z2..z4 and e (x1 is held fixed, see model.ts).
+ * The ridge λ is the cross-validated λ of the displayed dataset at that ρ and
+ * is held fixed across replicates; the norm-scaled λ is recomputed in every
+ * replicate from that replicate's ridge fit.
+ *
+ * Everything is seeded: identical numbers on every build and in both languages.
  */
-import { datasetAt, fit, cv, LAMBDAS, TRUE_BETA } from './model';
+import { TRUE_BETA, datasetAt, fit, nsLambda, type EstimatorId } from './model';
 
-export interface SpreadPoint {
-  rho: number;
-  vif: number;
-  sd: { ml: number; ridge: number; cw: number };
+export const MC_REPS = 100;
+
+export interface McStats {
+  mean: number[];
+  sd: number[];
+  rmse: number[];
+  spread: number;
+  rmseAll: number;
 }
 
-const RHOS = [0, 0.3, 0.6, 0.8, 0.9, 0.95, 0.98, 0.99, 0.995];
-const REPS = 20;
-
-/** λ* for each ρ on the grid, so the client can look it up instead of re-running CV. */
-export interface LambdaPoint {
+export interface McPoint {
   rho: number;
   lambda: number;
+  vifMean: number;
+  est: Record<EstimatorId, McStats>;
 }
 
-function cvLambda(rho: number) {
-  const ds = datasetAt(rho);
-  const dev = cv(ds, LAMBDAS);
-  let best = 0;
-  for (let i = 1; i < dev.length; i += 1) if (dev[i] < dev[best]) best = i;
-  return LAMBDAS[best];
+function summarise(runs: number[][]): McStats {
+  const R = runs.length;
+  const mean = [0, 1, 2, 3].map((j) => runs.reduce((s, v) => s + v[j], 0) / R);
+  const sd = [0, 1, 2, 3].map((j) => Math.sqrt(runs.reduce((s, v) => s + (v[j] - mean[j]) ** 2, 0) / (R - 1)));
+  const rmse = [0, 1, 2, 3].map((j) => Math.sqrt(runs.reduce((s, v) => s + (v[j] - TRUE_BETA[j + 1]) ** 2, 0) / R));
+  const rms = (v: number[]) => Math.sqrt(v.reduce((s, x) => s + x * x, 0) / v.length);
+  return { mean, sd, rmse, spread: 2 * rms(sd), rmseAll: rms(rmse) };
 }
 
-function spread(rho: number): SpreadPoint {
-  const runs: Record<'ml' | 'ridge' | 'cw', number[][]> = { ml: [], ridge: [], cw: [] };
-  const lambda = cvLambda(rho);
+/** Monte Carlo summary at one collinearity level, given the cross-validated λ. */
+export function monteCarlo(rho: number, lambda: number, reps = MC_REPS): McPoint {
+  const runs: Record<EstimatorId, number[][]> = { ml: [], ridge: [], ns: [] };
   let vifSum = 0;
-  for (let r = 0; r < REPS; r += 1) {
-    const ds = datasetAt(rho, r + 1);
+  for (let r = 1; r <= reps; r += 1) {
+    const ds = datasetAt(rho, r);
     vifSum += Math.max(...ds.vif);
-    const ml = fit(ds.x, ds.y, 0).slice(1);
     const ridge = fit(ds.x, ds.y, lambda).slice(1);
-    const sumSq = ridge.reduce((s, v) => s + v * v, 0);
-    const cw = fit(ds.x, ds.y, Math.min(400, lambda * (1 / Math.max(1e-3, sumSq)))).slice(1);
-    runs.ml.push(ml);
+    runs.ml.push(fit(ds.x, ds.y, 0).slice(1));
     runs.ridge.push(ridge);
-    runs.cw.push(cw);
+    runs.ns.push(fit(ds.x, ds.y, nsLambda(lambda, ridge)).slice(1));
   }
-  const sdOf = (m: number[][]) =>
-    2 *
-    (Math.sqrt(
-      m[0].reduce((acc, _, j) => {
-        const mu = m.reduce((s, v) => s + v[j], 0) / m.length;
-        return acc + m.reduce((s, v) => s + (v[j] - mu) ** 2, 0) / m.length;
-      }, 0) / m[0].length,
-    ));
-  return { rho, vif: vifSum / REPS, sd: { ml: sdOf(runs.ml), ridge: sdOf(runs.ridge), cw: sdOf(runs.cw) } };
+  return {
+    rho,
+    lambda,
+    vifMean: vifSum / reps,
+    est: { ml: summarise(runs.ml), ridge: summarise(runs.ridge), ns: summarise(runs.ns) },
+  };
 }
-
-export const SPREAD: SpreadPoint[] = RHOS.map(spread);
-export const LAMBDAS_BY_RHO: LambdaPoint[] = RHOS.map((rho) => ({ rho, lambda: cvLambda(rho) }));
-export const RHO_GRID = RHOS;
-export const TRUE = TRUE_BETA;

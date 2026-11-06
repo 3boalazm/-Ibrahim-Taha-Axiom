@@ -14,21 +14,29 @@ import projectsRaw from '../data/approved/projects.json';
 import coursesRaw from '../data/approved/courses.json';
 import talksRaw from '../data/approved/talks.json';
 import cvRaw from '../data/approved/cv.json';
+import methodsRaw from '../data/approved/methods.json';
+import datasetsRaw from '../data/approved/datasets.json';
+import arDraftsRaw from '../data/translations/ar.json';
+import openIssuesRaw from '../data/review/open-issues.json';
 import {
   CourseSchema,
   CvSchema,
+  DatasetSchema,
   EntryListSchema,
   LaunchSchema,
   ManifestSchema,
+  MethodSchema,
+  OpenIssuesSchema,
   ProfileSchema,
   TalkSchema,
+  TranslationFileSchema,
   type Lang,
   type LocalizedText,
   type Profile,
 } from './schema';
 import { z } from 'astro/zod';
 
-function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
+export function validate<T>(schema: z.ZodType<T>, data: unknown, file: string): T {
   const r = schema.safeParse(data);
   if (!r.success) {
     throw new Error(`[content gate] ${file} is invalid:\n${r.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n')}`);
@@ -84,11 +92,53 @@ const cvAll = validate(CvSchema, cvRaw, 'approved/cv.json');
 export const cv = manifest.cv.approved ? cvAll : null;
 export const hasCvContent = !!cv && (cv.pdf !== null || cv.sections.length > 0);
 
-/** Pick the text for a language; fall back to the other language and say so. */
-export function pick(v: LocalizedText | undefined | null, lang: Lang): { text: string; lang: Lang; fallback: boolean } | null {
+export const methods = approvedOnly(validate(z.array(MethodSchema), methodsRaw, 'approved/methods.json'), manifest.methods.approvedIds, 'methods');
+export const datasets = approvedOnly(validate(z.array(DatasetSchema), datasetsRaw, 'approved/datasets.json'), manifest.datasets.approvedIds, 'datasets');
+
+// ------------------------------------------------------- Arabic drafts
+/**
+ * AI-assisted Arabic drafts (src/data/translations/ar.json), keyed by the exact
+ * English text they translate. If the English changes, the draft no longer
+ * matches and the English fallback returns, so a stale draft is never shown.
+ */
+export const arDrafts = validate(TranslationFileSchema, arDraftsRaw, 'translations/ar.json');
+{
+  const seen = new Set<string>();
+  const dupes = arDrafts.entries.filter((e) => (seen.has(e.en) ? true : (seen.add(e.en), false)));
+  if (dupes.length) throw new Error(`[content gate] translations/ar.json repeats English source texts: ${dupes.map((d) => d.ref).join(', ')}`);
+}
+export const showArDrafts = manifest.translations.ar.showDrafts;
+const draftMap = new Map(arDrafts.entries.map((e) => [e.en, e]));
+
+/** The Arabic draft for an exact English string, when drafts are shown. */
+export function arDraft(en: string | null | undefined): { text: string; draft: boolean } | null {
+  if (!en || !showArDrafts) return null;
+  const d = draftMap.get(en);
+  return d ? { text: d.ar, draft: d.status !== 'reviewed' } : null;
+}
+
+export type Picked = { text: string; lang: Lang; fallback: boolean; draft: boolean };
+
+/**
+ * Pick the text for a language. Order: approved text in that language → (for
+ * Arabic) a labelled draft → the other language, flagged as a fallback.
+ */
+export function pick(v: LocalizedText | undefined | null, lang: Lang): Picked | null {
   if (!v) return null;
   const other: Lang = lang === 'en' ? 'ar' : 'en';
-  if (v[lang]) return { text: v[lang] as string, lang, fallback: false };
-  if (v[other]) return { text: v[other] as string, lang: other, fallback: true };
+  if (v[lang]) return { text: v[lang] as string, lang, fallback: false, draft: false };
+  if (lang === 'ar') {
+    const d = arDraft(v.en);
+    if (d) return { text: d.text, lang: 'ar', fallback: false, draft: d.draft };
+  }
+  if (v[other]) return { text: v[other] as string, lang: other, fallback: true, draft: false };
   return null;
 }
+
+/** True when the value can be shown in Arabic (approved or as a labelled draft). */
+export function hasArabic(v: LocalizedText | undefined | null): boolean {
+  return !!v && (!!v.ar || !!arDraft(v.en));
+}
+
+// --------------------------------------------------- data-quality register
+export const openIssues = validate(OpenIssuesSchema, openIssuesRaw, 'review/open-issues.json');

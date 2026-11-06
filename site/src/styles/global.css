@@ -45,6 +45,35 @@ select {
   font: inherit;
   color: inherit;
 }
+/* Form controls inherit the body font, and Arabic faces have a wide average glyph:
+   without this, a text field's default intrinsic width (size=20) overflows a 360px screen. */
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+select {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+fieldset {
+  min-inline-size: 0;
+}
+/* Titles kept in their original Latin form on Arabic pages (publication titles, project
+   names) use the Latin display face, not the Arabic face's fallback Latin glyphs.
+   Zero specificity: any component that sets its own family still wins. */
+:where(:root:lang(ar)) :where(h1, h2, h3, h4) :where([lang='en']) {
+  font-family: var(--font-serif);
+}
+/* Chromium resolves an empty dir="auto" field to LTR, which clips the start of an Arabic
+   placeholder. Keep the page direction until the user types; dir="auto" applies after. */
+:root:lang(ar) :is(input, textarea)[dir='auto']:placeholder-shown {
+  direction: rtl;
+}
+/* Lists marked role="list" are layout lists (cards, chips, indexes): no markers. */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+  margin-block: 0;
+  padding-inline-start: 0;
+}
 ::selection {
   background: var(--color-selection);
 }
@@ -395,6 +424,16 @@ main {
 .disclosure > summary::-webkit-details-marker {
   display: none;
 }
+.disclosure--marked > summary::before {
+  content: '+';
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.1em;
+  font-family: var(--font-mono);
+}
+.disclosure--marked[open] > summary::before {
+  content: '−';
+}
 
 /* Long-form text */
 .prose {
@@ -444,11 +483,6 @@ main {
     transform: translateY(18px);
   }
 }
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -478,4 +512,81 @@ button.chip[aria-pressed='true'] {
   background: var(--color-ink);
   border-color: var(--color-ink);
   color: var(--color-paper);
+}
+
+/* ------------------------------------------------- translation status */
+/* Arabic drafts are always labelled; the label never claims a review. */
+.draft-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05em 0.6em;
+  border: 1px solid color-mix(in srgb, var(--color-brass) 60%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-brass-soft) 70%, transparent);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  font-size: var(--step--2);
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.draft-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-block: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  line-height: 1.6;
+  color: var(--color-ink-2);
+}
+span.is-draft {
+  text-decoration: underline dotted color-mix(in srgb, var(--color-brass) 70%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+/* --------------------------------------------- in-page section navigation */
+html:has(.section-nav) {
+  scroll-padding-block-start: calc(var(--header-height) + 3.25rem + var(--space-4));
+}
+
+/* a quiet button-like toggle group (views, map/list) */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 3px;
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+}
+.segmented button {
+  min-block-size: 2.25rem;
+  padding: 0.3rem 0.85rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-ink-2);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+.segmented button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}
+.segmented button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Arabic has no true italic: never let the browser slant Arabic glyphs to fake one.
+   Italic styling still applies to Latin runs marked lang="en" (journal names, titles). */
+:root:lang(ar) {
+  font-synthesis-style: none;
+}
+:root:lang(ar) [lang='en'] {
+  font-synthesis-style: auto;
 }

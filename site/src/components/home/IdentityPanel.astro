@@ -1,0 +1,341 @@
+---
+/**
+ * Academic identity with progressive disclosure: affiliations, education,
+ * interests, identifiers and contact. Without JavaScript every group is a
+ * headed section; with it they become WAI-ARIA tabs (arrow keys, Home/End).
+ * Approved profile fields only.
+ */
+import LangText from '../shared/LangText.astro';
+import Picture from '../media/Picture.astro';
+import { PICTURES } from '../../utils/imagery';
+import { profile } from '../../utils/content';
+import { localePath } from '../../utils/paths';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const ar = lang === 'ar';
+const groups = [
+  { id: 'affiliations', label: ar ? 'الانتماء' : 'Affiliations', show: profile.affiliations.length > 0 },
+  { id: 'education', label: ar ? 'التعليم' : 'Education', show: profile.education.length > 0 },
+  { id: 'interests', label: ar ? 'الاهتمامات' : 'Interests', show: profile.interests.length > 0 },
+  { id: 'identifiers', label: ui.identifiers, show: profile.identifiers.length > 0 },
+  { id: 'contact', label: ar ? 'التواصل' : 'Contact', show: !!profile.contact.email },
+].filter((g) => g.show);
+---
+
+{
+  groups.length > 0 && (
+    <section class="idp container" aria-labelledby="idp-title" data-idp>
+      <figure class="idp__portrait">
+        <Picture picture={PICTURES.portrait} lang={lang} ratio="4 / 5" objectPosition="50% 20%" sizes="(min-width: 56rem) 16rem, 12rem" class="idp__shot" />
+      </figure>
+      <div class="idp__main">
+      <div class="idp__head">
+        <p class="kicker">{ar ? 'الهوية الأكاديمية' : 'Academic identity'}</p>
+        <h2 id="idp-title" class="idp__title">
+          {ar ? 'من هو، وأين يعمل، وكيف تصل إليه' : 'Who, where, and how to reach him'}
+        </h2>
+      </div>
+      <div class="idp__tabs" data-idp-tabs>
+        {groups.map((g, i) => (
+          <button type="button" id={`idp-t-${g.id}`} data-idp-tab={g.id} aria-controls={`idp-p-${g.id}`} tabindex={i === 0 ? 0 : -1}>
+            {g.label}
+          </button>
+        ))}
+      </div>
+      <div class="idp__panels">
+        {groups.map((g) => (
+          <section class="idp__panel" id={`idp-p-${g.id}`} data-idp-panel={g.id} aria-labelledby={`idp-h-${g.id}`}>
+            <h3 class="idp__ph" id={`idp-h-${g.id}`}>
+              {g.label}
+            </h3>
+            {g.id === 'affiliations' && (
+              <ul class="idp__list" role="list">
+                {profile.affiliations.map((a) => (
+                  <li>
+                    {a.role && (
+                      <p class="idp__strong">
+                        <LangText value={a.role} lang={lang} />
+                      </p>
+                    )}
+                    {a.department && (
+                      <p>
+                        <LangText value={a.department} lang={lang} />
+                      </p>
+                    )}
+                    <p class="idp__muted">
+                      <LangText value={a.organization} lang={lang} />
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {g.id === 'education' && (
+              <ul class="idp__list" role="list">
+                {profile.education.map((e) => (
+                  <li>
+                    <p class="idp__strong">
+                      <LangText value={e.degree} lang={lang} />
+                    </p>
+                    <p class="idp__muted">
+                      <LangText value={e.institution} lang={lang} />
+                      {e.year && <span class="ltr"> · {e.year}</span>}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {g.id === 'interests' && (
+              <ul class="idp__chips" role="list">
+                {profile.interests.map((i) => (
+                  <li class="chip">
+                    <LangText value={i} lang={lang} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {g.id === 'identifiers' && (
+              <ul class="idp__ids" role="list">
+                {profile.identifiers.map((i) => (
+                  <li>
+                    <a href={i.url} rel="me noopener">
+                      {i.type}
+                    </a>
+                    <span class="ltr idp__id">{i.value}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {g.id === 'contact' && (
+              <div class="idp__contact">
+                <p>
+                  <span class="label">{ui.email}</span>{' '}
+                  <a class="ltr" href={`mailto:${profile.contact.email}`}>
+                    {profile.contact.email}
+                  </a>
+                </p>
+                {profile.contact.phone && (
+                  <p>
+                    <span class="label">{ui.phone}</span>{' '}
+                    <a class="ltr" href={`tel:${profile.contact.phone.replace(/[\s-]/g, '')}`}>
+                      {profile.contact.phone}
+                    </a>
+                  </p>
+                )}
+                <a class="button" href={localePath(lang, '/contact/')}>
+                  {ar ? 'اكتب رسالة' : 'Write a message'}
+                </a>
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-idp]').forEach((root) => {
+    const tablist = root.querySelector<HTMLElement>('[data-idp-tabs]');
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-idp-tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-idp-panel]')];
+    if (!tablist || tabs.length < 2) return;
+    tablist.setAttribute('role', 'tablist');
+    tablist.setAttribute('aria-labelledby', 'idp-title');
+    tabs.forEach((t) => t.setAttribute('role', 'tab'));
+    panels.forEach((p) => {
+      p.setAttribute('role', 'tabpanel');
+      p.setAttribute('tabindex', '0');
+      p.setAttribute('aria-labelledby', `idp-t-${p.dataset.idpPanel}`);
+    });
+    root.classList.add('is-tabbed');
+    const select = (i: number, focus = false) => {
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === i));
+        t.tabIndex = k === i ? 0 : -1;
+      });
+      panels.forEach((p, k) => (p.hidden = k !== i));
+      if (focus) tabs[i].focus();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('keydown', (e) => {
+        const rtl = document.documentElement.dir === 'rtl';
+        const next = rtl ? 'ArrowLeft' : 'ArrowRight';
+        const prev = rtl ? 'ArrowRight' : 'ArrowLeft';
+        let k = -1;
+        if (e.key === next) k = (i + 1) % tabs.length;
+        else if (e.key === prev) k = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') k = 0;
+        else if (e.key === 'End') k = tabs.length - 1;
+        if (k >= 0) {
+          e.preventDefault();
+          select(k, true);
+        }
+      });
+    });
+    select(0);
+  });
+</script>
+
+<style>
+  .idp {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding-block: clamp(var(--space-6), 5vw, var(--space-8));
+  }
+  .idp__main {
+    display: grid;
+    gap: var(--space-4);
+    min-inline-size: 0;
+  }
+  .idp__portrait {
+    margin: 0;
+    inline-size: min(12rem, 45vw);
+  }
+  .idp__portrait :global(.idp__shot) {
+    border-radius: var(--radius-3);
+    overflow: hidden;
+  }
+  @media (min-width: 56rem) {
+    .idp {
+      grid-template-columns: 16rem minmax(0, 1fr);
+      column-gap: var(--space-7);
+      align-items: start;
+    }
+    .idp__portrait {
+      inline-size: auto;
+      position: sticky;
+      inset-block-start: calc(var(--header-height) + var(--space-4));
+    }
+  }
+  .idp__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .idp__tabs {
+    display: none;
+  }
+  .idp.is-tabbed .idp__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    border-block-end: var(--border-hairline);
+  }
+  .idp__tabs button {
+    min-block-size: 2.75rem;
+    padding: 0.4rem 0.9rem;
+    border: 0;
+    border-block-end: 2px solid transparent;
+    margin-block-end: -1px;
+    background: transparent;
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+  .idp__tabs button[aria-selected='true'] {
+    border-block-end-color: var(--color-accent);
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .idp__tabs button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .idp__panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--space-4);
+  }
+  .idp.is-tabbed .idp__panels {
+    display: block;
+  }
+  .idp__panel {
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  .idp__panel:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .idp__ph {
+    margin-block-end: var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+  }
+  .idp.is-tabbed .idp__ph {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .idp__list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+  .idp__list p {
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.5;
+  }
+  .idp__strong {
+    font-family: var(--font-serif) !important;
+    font-weight: 500;
+  }
+  .idp__muted {
+    color: var(--color-ink-2);
+    font-size: var(--step--1) !important;
+  }
+  .idp__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+  }
+  .idp__ids {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+    gap: var(--space-2) var(--space-5);
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .idp__ids li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+    border-block-end: var(--border-hairline);
+  }
+  .idp__id {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .idp__contact {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+    font-family: var(--font-ui);
+  }
+</style>

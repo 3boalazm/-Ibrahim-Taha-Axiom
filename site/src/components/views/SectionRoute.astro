@@ -8,16 +8,21 @@ import PageHeader from '../shared/PageHeader.astro';
 import EmptyState from '../shared/EmptyState.astro';
 import LangText from '../shared/LangText.astro';
 import ProfileSummary from '../profile/ProfileSummary.astro';
-import PublicationLibrary from '../publications/PublicationLibrary.astro';
+import PublicationExplorer from '../publications/PublicationExplorer.astro';
 import EntryList from '../research/EntryList.astro';
+import KnowledgeGraph from '../research/KnowledgeGraph.astro';
+import Journey from '../about/Journey.astro';
+import ContactComposer from '../contact/ContactComposer.astro';
+import DraftNote from '../shared/DraftNote.astro';
 import Picture from '../media/Picture.astro';
 import { PICTURES } from '../../utils/imagery';
 import { SECTION_PATHS, pageCopy, sectionCount, sectionNumber, type PageKey } from '../../config/site';
-import { courses, cv, manifest, profile, projects, researchAreas, talks } from '../../utils/content';
+import { arDraft, courses, cv, hasArabic, manifest, profile, projects, researchAreas, talks } from '../../utils/content';
+import { formatPeriod, periodAttrs } from '../../utils/format';
 import { books, getPublication, publications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
-import type { Lang } from '../../utils/schema';
+import type { Lang, LocalizedText } from '../../utils/schema';
 
 interface Props {
   lang: Lang;
@@ -35,7 +40,7 @@ const projectLabel = ar ? 'مشروع' : 'Project';
 // When a section's approved content exists only in English, the Arabic page shows it as
 // one coherent English (LTR) block under a single note, instead of many mixed-direction
 // fragments. Nothing is machine-translated.
-const noAr = (v?: { ar: string | null } | null) => !v || !v.ar;
+const noAr = (v?: { en: string | null; ar: string | null } | null) => !hasArabic(v);
 const englishOnly =
   ar &&
   count > 0 &&
@@ -50,6 +55,27 @@ const talkPapers = (id: string) =>
     .map((r) => getPublication(r.from.slice('publication:'.length)))
     .filter((p) => p !== undefined);
 const cui = t(cl);
+// Arabic pages that show unreviewed drafts say so once, near the top (never claiming review).
+type MaybeText = LocalizedText | null | undefined;
+const draftIn = (vs: MaybeText[]) => ar && vs.some((v) => !!v && !v.ar && !!arDraft(v.en));
+const pageDrafts =
+  {
+    about: () =>
+      draftIn([
+        profile.role,
+        profile.summary,
+        profile.biography,
+        ...profile.interests,
+        ...profile.education.flatMap((e) => [e.degree, e.institution]),
+        ...profile.affiliations.flatMap((a) => [a.organization, a.department, a.role]),
+      ]),
+    research: () => draftIn(researchAreas.flatMap((a) => [a.title, a.summary])),
+    projects: () => draftIn(projects.flatMap((x) => [x.title, x.summary])),
+    teaching: () => draftIn(courses.flatMap((c) => [c.title, c.summary, c.level, c.institution])),
+    talks: () => draftIn(talks.flatMap((tk) => [tk.title, tk.event, tk.summary, tk.location])),
+    cv: () => draftIn(cv?.sections.flatMap((x) => [x.heading, ...x.items.map((i) => i.text)]) ?? []),
+    contact: () => draftIn(profile.community.map((c) => c.label)),
+  }[page as string]?.() ?? false;
 const blockAttrs = englishOnly ? { lang: 'en', dir: 'ltr' } : {};
 
 /* Header picture per section (all abstract still lifes, no people). */
@@ -125,30 +151,49 @@ const kicker = {
 
   <div class="container section-body">
     {englishOnly && <p class="lang-note" role="note">{ui.sectionFallback}</p>}
+    {pageDrafts && !englishOnly && <DraftNote lang={lang} />}
     {
       page === 'about' &&
         (count > 0 ? (
-          <div {...blockAttrs}>
-            <ProfileSummary lang={cl} />
-          </div>
+          <>
+            <div {...blockAttrs}>
+              <ProfileSummary lang={cl} />
+            </div>
+            <Journey lang={lang} />
+          </>
         ) : (
           <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
         ))
     }
-    {page === 'research' && (count > 0 ? <EntryList items={researchAreas} lang={lang} kind="area" badge={areaLabel} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {
+      page === 'research' &&
+        (count > 0 ? (
+          <>
+            <KnowledgeGraph lang={lang} />
+            <h2 class="section-subhead">{ar ? 'المجالات البحثية بالتفصيل' : 'Research areas in detail'}</h2>
+            <EntryList items={researchAreas} lang={lang} kind="area" badge={areaLabel} />
+          </>
+        ) : (
+          <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />
+        ))
+    }
     {page === 'projects' && (count > 0 ? <EntryList items={projects} lang={lang} kind="project" badge={projectLabel} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
-    {page === 'publications' && (count > 0 ? <PublicationLibrary pubs={publications} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
-    {page === 'books' && (count > 0 ? <PublicationLibrary pubs={books} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'publications' && (count > 0 ? <PublicationExplorer pubs={publications} lang={lang} /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
+    {page === 'books' && (count > 0 ? <PublicationExplorer pubs={books} lang={lang} id="books-explorer" /> : <EmptyState lang={lang} title={copy.emptyTitle} body={copy.emptyBody} />)}
 
     {
       page === 'teaching' &&
         (count > 0 ? (
           <ol class="cards" role="list" {...blockAttrs}>
             {courses.map((c, i) => (
-              <li class="cards__item">
+              <li class="cards__item" id={c.id}>
                 <div class="cards__side">
                   <span class="cards__index ltr">{String(i + 1).padStart(2, '0')}</span>
-                  {c.term && <span class="cards__term ltr">{c.term}</span>}
+                  {c.term && (
+                    <span class="cards__term" {...periodAttrs(cl)}>
+                      {formatPeriod(c.term, cl)}
+                    </span>
+                  )}
                 </div>
                 <div class="cards__body">
                   <h2>
@@ -184,7 +229,7 @@ const kicker = {
         (count > 0 ? (
           <ol class="timeline" role="list">
             {talks.map((tk) => (
-              <li class="timeline__item">
+              <li class="timeline__item" id={tk.id}>
                 <div class="timeline__date ltr">{tk.date}</div>
                 <div class="timeline__body">
                   <h2>
@@ -229,7 +274,11 @@ const kicker = {
                 <ul role="list">
                   {s.items.map((i) => (
                     <li>
-                      {i.period && <span class="cv__period ltr">{i.period}</span>}
+                      {i.period && (
+                        <span class="cv__period" {...periodAttrs(cl)}>
+                          {formatPeriod(i.period, cl)}
+                        </span>
+                      )}
                       <span class="cv__text">
                         <LangText value={i.text} lang={cl} />
                       </span>
@@ -254,10 +303,11 @@ const kicker = {
                 <h2>{ar ? 'ما نوع المحادثة التي تريدها؟' : 'What kind of conversation is this?'}</h2>
                 <p class="contact__hint">
                   {ar
-                    ? 'اختر نوع الطلب وسيُفتح بريدك برسالة مُهيّأة إلى العنوان الصحيح.'
-                    : 'Pick the type of enquiry and your mail app opens with a subject already set.'}
+                    ? 'اختر نوع الطلب واكتب رسالتك؛ ستُفتح في تطبيق البريد لديك لترسلها بنفسك. لا يُرسل هذا الموقع شيئًا نيابةً عنك.'
+                    : 'Pick the kind of enquiry and write your message; it opens in your own mail app for you to send. This site never sends anything on your behalf.'}
                 </p>
-                <ul class="contact__options" role="list">
+                <ContactComposer lang={lang} email={profile.contact.email} />
+                <ul class="contact__options contact__options--nojs" role="list">
                   {inquiries.map((q) => (
                     <li>
                       <a class="contact__option" href={mailTo(q.subject)} rel="noopener">
@@ -640,10 +690,10 @@ const kicker = {
   @media (max-width: 60rem) {
     .contact,
     .cv {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .cards__item {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3);
     }
     .cards__side {
@@ -654,15 +704,25 @@ const kicker = {
   }
   @media (max-width: 40rem) {
     .contact__options {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .timeline__item {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-2);
     }
     .cv__section li {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-1);
     }
+  }
+  :global(html[data-js]) .contact__options--nojs {
+    display: none;
+  }
+  .section-subhead {
+    margin-block: var(--space-8) var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
   }
 </style>

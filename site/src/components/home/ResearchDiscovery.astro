@@ -1,0 +1,357 @@
+---
+/**
+ * Research discovery: one card per approved research area (abstract image,
+ * summary that expands, publication previews and project links — all from
+ * verified manifest relationships), a knowledge-graph teaser and projects.
+ */
+import { arNoun } from '../../lib/text.mjs';
+import LangText from '../shared/LangText.astro';
+import Picture from '../media/Picture.astro';
+import { methods, pick, projects, researchAreas } from '../../utils/content';
+import { areaPicture } from '../../utils/imagery';
+import { getPublication, publications } from '../../utils/publications';
+import { publicationsOfArea, publicationsOfProject, relations } from '../../utils/relations';
+import { localePath } from '../../utils/paths';
+import { formatPeriod } from '../../utils/format';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const ar = lang === 'ar';
+const research = localePath(lang, '/research/');
+const cards = researchAreas.map((a) => {
+  const pubs = publicationsOfArea(a.id)
+    .flatMap((k) => getPublication(k) ?? [])
+    .sort((x, y) => (y.year ?? 0) - (x.year ?? 0));
+  return { a, pubs, picture: areaPicture(a.id) };
+});
+const linkedPubs = new Set(relations.filter((r) => r.from.kind === 'publication').map((r) => r.from.id)).size;
+const counts = [
+  { n: researchAreas.length, label: ar ? arNoun(researchAreas.length, { one: 'مجال', two: 'مجالان', few: 'مجالات', many: 'مجالًا' }) : researchAreas.length === 1 ? 'area' : 'areas' },
+  { n: methods.length, label: ar ? arNoun(methods.length, { one: 'أسلوب', two: 'أسلوبان', few: 'أساليب', many: 'أسلوبًا' }) : methods.length === 1 ? 'method' : 'methods' },
+  { n: linkedPubs, label: ar ? arNoun(linkedPubs, { one: 'منشور مرتبط', two: 'منشوران مرتبطان', few: 'منشورات مرتبطة', many: 'منشورًا مرتبطًا' }) : linkedPubs === 1 ? 'linked publication' : 'linked publications' },
+  { n: projects.length, label: ar ? arNoun(projects.length, { one: 'مشروع', two: 'مشروعان', few: 'مشروعات', many: 'مشروعًا' }) : projects.length === 1 ? 'project' : 'projects' },
+  { n: relations.length, label: ar ? arNoun(relations.length, { one: 'علاقة موثّقة', two: 'علاقتان موثّقتان', few: 'علاقات موثّقة', many: 'علاقةً موثّقةً' }) : relations.length === 1 ? 'verified link' : 'verified links' },
+];
+---
+
+<section class="disc container" aria-labelledby="disc-title">
+  <div class="disc__head">
+    <div>
+      <p class="kicker">{ar ? 'البحث' : 'Research'}</p>
+      <h2 id="disc-title" class="disc__title">{ar ? 'ستة مجالات، وكل رابطٍ بدليله' : 'Six areas, every link with its evidence'}</h2>
+    </div>
+    <a class="button" href={research}>
+      {ar ? 'كل المجالات' : 'All research areas'}
+      <span class="button__arrow icon-flip" aria-hidden="true">→</span>
+    </a>
+  </div>
+
+  <ul class="disc__grid" role="list">
+    {
+      cards.map(({ a, pubs, picture }) => {
+        const summary = pick(a.summary, lang);
+        return (
+          <li class="dcard">
+            {picture && (
+              <div class="dcard__media">
+                <Picture picture={picture} lang={lang} ratio="16 / 9" sizes="(max-width: 48rem) 100vw, 33vw" />
+              </div>
+            )}
+            <div class="dcard__body">
+              <h3 class="dcard__title">
+                <a href={`${research}#${a.id}`}>
+                  <LangText value={a.title} lang={lang} />
+                </a>
+              </h3>
+              <p class="dcard__meta">{pubs.length ? ui.results(pubs.length) : ar ? 'لا منشورات مرتبطة بعد' : 'No linked publications yet'}</p>
+              {summary && (
+                <details class="disclosure disclosure--marked dcard__more">
+                  <summary>{ar ? 'نبذة' : 'Summary'}</summary>
+                  <p>
+                    <LangText value={a.summary} lang={lang} />
+                  </p>
+                </details>
+              )}
+              {pubs.length > 0 && (
+                <ul class="dcard__pubs" role="list">
+                  {pubs.slice(0, 2).map((p) => (
+                    <li>
+                      <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
+                        {p.title}
+                      </a>
+                      <span class="ltr dcard__year">{p.year}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <a class="dcard__explore" href={`${research}?focus=area:${a.id}#knowledge-graph`}>
+                {ar ? 'اعرضه في خريطة الترابط' : 'See it in the knowledge graph'}
+              </a>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+
+  <div class="disc__row">
+    <a class="gteaser" href={`${research}#knowledge-graph`}>
+      <span class="gteaser__kicker">{ar ? 'خريطة الترابط' : 'Knowledge graph'}</span>
+      <span class="gteaser__title">{ar ? 'كيف تتصل المجالات بالمنشورات والمشروعات' : 'How areas, publications and projects connect'}</span>
+      <span class="gteaser__counts">
+        {
+          counts.map((c) => (
+            <span>
+              <b class="ltr">{c.n}</b> {c.label}
+            </span>
+          ))
+        }
+      </span>
+      <svg class="gteaser__art" viewBox="0 0 220 90" aria-hidden="true">
+        {[14, 38, 62].map((y) => <circle cx="20" cy={y + 6} r="5" />)}
+        {[8, 23, 38, 53, 68, 83].map((y) => <rect x="102" y={y - 3} width="16" height="6" rx="2" />)}
+        {[22, 50, 74].map((y) => <circle cx="200" cy={y} r="5" />)}
+        <path d="M25 20C60 20 65 5 102 5M25 20C60 20 65 35 102 35M25 44C60 44 65 50 102 50M25 68C60 68 65 80 102 80M118 20C150 20 160 22 195 22M118 50C150 50 160 50 195 50M118 65C150 65 160 74 195 74" />
+      </svg>
+    </a>
+    {
+      projects.length > 0 && (
+        <div class="disc__projects">
+          <h3 class="label">{ar ? 'المشروعات' : 'Projects'}</h3>
+          <ul role="list">
+            {projects.map((p) => (
+              <li>
+                <a href={`${localePath(lang, '/projects/')}#${p.id}`}>
+                  <LangText value={p.title} lang={lang} />
+                </a>
+                <span class="disc__pmeta">
+                  {p.period && <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(p.period, lang)}</span>}
+                  {publicationsOfProject(p.id).length > 0 && <span> · {ui.results(publicationsOfProject(p.id).length)}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+  {publications.length === 0 && <p>{ui.awaitingReview}</p>}
+</section>
+
+<style>
+  .disc {
+    display: grid;
+    gap: var(--space-5);
+    padding-block: clamp(var(--space-6), 5vw, var(--space-8));
+  }
+  .disc__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .disc__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .disc__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+  .dcard {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-surface-1);
+  }
+  .dcard__media :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+  .dcard__body {
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+    padding: var(--space-4);
+  }
+  .dcard__title {
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .dcard__title a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .dcard__title a:hover {
+    text-decoration: underline;
+  }
+  .dcard__meta {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-brass);
+  }
+  .dcard__more summary {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    cursor: pointer;
+    min-block-size: 2.25rem;
+    display: flex;
+    align-items: center;
+  }
+  .dcard__more p {
+    font-family: var(--font-body);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .dcard__pubs {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+  }
+  .dcard__pubs li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+  .dcard__pubs a {
+    font-family: var(--font-serif);
+    font-size: var(--step--1);
+    line-height: 1.4;
+    color: var(--color-ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .dcard__year {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .dcard__explore {
+    margin-block-start: var(--space-1);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+  }
+  .disc__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .gteaser {
+    position: relative;
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+    text-decoration: none;
+    overflow: hidden;
+  }
+  .gteaser:hover {
+    border-color: var(--color-accent);
+  }
+  .gteaser:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  .gteaser__kicker {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-accent-strong);
+  }
+  .gteaser__title {
+    max-inline-size: 22rem;
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+    line-height: 1.3;
+  }
+  .gteaser__counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-2);
+  }
+  .gteaser__counts b {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    font-weight: 400;
+    color: var(--color-ink);
+  }
+  .gteaser__art {
+    position: absolute;
+    inset-inline-end: var(--space-4);
+    inset-block-start: var(--space-4);
+    inline-size: 9rem;
+    opacity: 0.55;
+  }
+  :global([dir='rtl']) .gteaser__art {
+    transform: scaleX(-1);
+  }
+  .gteaser__art circle {
+    fill: var(--color-accent);
+  }
+  .gteaser__art rect {
+    fill: var(--color-ink-3);
+  }
+  .gteaser__art path {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1;
+  }
+  .disc__projects {
+    padding: var(--space-5);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+  }
+  .disc__projects ul {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+  }
+  .disc__projects a {
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    color: var(--color-ink);
+  }
+  .disc__pmeta {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 56rem) {
+    .disc__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .gteaser__art {
+      display: none;
+    }
+  }
+</style>

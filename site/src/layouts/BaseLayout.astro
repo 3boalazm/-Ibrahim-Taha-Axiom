@@ -15,7 +15,10 @@ import '@fontsource-variable/noto-naskh-arabic/index.css';
 import '../styles/global.css';
 import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
+import SearchDialog from '../components/search/SearchDialog.astro';
 import Seo from '../components/layout/Seo.astro';
+// Validates every manifest relationship (both ends exist, quotes found verbatim) on each build.
+import '../utils/relations';
 import { dirOf } from '../utils/paths';
 import { t } from '../i18n/ui';
 import type { Lang } from '../utils/schema';
@@ -44,6 +47,8 @@ const ui = t(lang);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
       (() => {
+        // Marks that scripts run, so JS-only controls (e.g. the search button) can show.
+        document.documentElement.dataset.js = '';
         try {
           const s = localStorage.getItem('axiom-theme');
           if (s === 'light' || s === 'dark') document.documentElement.dataset.theme = s;
@@ -67,5 +72,6 @@ const ui = t(lang);
       <slot />
     </main>
     <SiteFooter lang={lang} path={navPath} />
+    <SearchDialog lang={lang} />
   </body>
 </html>
