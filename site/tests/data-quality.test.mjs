@@ -121,7 +121,8 @@ test('built site: structured data and pages carry no superseded identifiers', ()
   assert.ok(person.sameAs.includes('https://www.researchgate.net/profile/Ibrahim-Taha-5'));
   for (const r of routes()) {
     const p = page(r);
-    for (const stale of ['58577960300', 'Ibrahim_Taha11', 'E. H. A.']) assert.ok(!p.includes(stale), `${r} still shows ${stale}`);
+    // 'Scopus (2 ids)' was a footer label left over from before DQ-05.
+    for (const stale of ['58577960300', 'Ibrahim_Taha11', 'E. H. A.', 'Scopus (2 ids)']) assert.ok(!p.includes(stale), `${r} still shows ${stale}`);
   }
 });
 
