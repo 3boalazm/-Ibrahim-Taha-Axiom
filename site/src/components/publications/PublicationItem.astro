@@ -54,8 +54,10 @@ const projectsPath = localePath(lang, '/projects/');
 
       <p class="pub__venue">
         {pub.venue && <cite lang={pub.venueLang ?? undefined} dir="auto">{pub.venue}</cite>}
-        {pub.volume && <span class="ltr">{pub.volume}{pub.number ? `(${pub.number})` : ''}</span>}
-        {pub.pages && <span class="ltr">{pub.pages}</span>}
+        {/* the separator (::before) sits on an outer span that follows the page direction;
+             only the numbers are isolated LTR, so in Arabic the dot stays between the parts */}
+        {pub.volume && <span><span class="ltr">{pub.volume}{pub.number ? `(${pub.number})` : ''}</span></span>}
+        {pub.pages && <span><span class="ltr">{pub.pages}</span></span>}
       </p>
 
       {

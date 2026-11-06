@@ -131,9 +131,9 @@ const latest = years[years.length - 1];
                     <p class="journey__ms-kind">
                       {ui.journeyKinds[m.kind]}
                       {m.period && m.period !== String(y) && (
-                        <span class="journey__period" dir={ar ? 'auto' : 'ltr'}>
+                        <span class="journey__period">
                           {' '}
-                          · {formatPeriod(m.period, lang)}
+                          · <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(m.period, lang)}</span>
                         </span>
                       )}
                     </p>
@@ -180,7 +180,7 @@ const latest = years[years.length - 1];
                 <li class={`journey__ms kind-${m.kind}`}>
                   <p class="journey__ms-kind">
                     {ui.journeyKinds[m.kind]}
-                    {m.period && <span dir={ar ? 'auto' : 'ltr'}> · {formatPeriod(m.period, lang)}</span>}
+                    {m.period && <span> · <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(m.period, lang)}</span></span>}
                   </p>
                   <p class="journey__ms-text">
                     {m.href ? (

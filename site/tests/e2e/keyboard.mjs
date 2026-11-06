@@ -124,9 +124,24 @@ try {
   await sleep(100);
   ok((await visible()) === 22 && query() === '?view=cards', 'clearing filters keeps the chosen view');
 
+  // ------------------------------------------------------------- section nav
+  // The current item is the section being read, also after a jump: on the lab page
+  // the interactive figures sit between the first and second headings.
+  await go('/lab/');
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+  await sleep(300);
+  await page.evaluate(() => window.scrollTo(0, document.querySelector('.lab__figures').getBoundingClientRect().top + scrollY - 150));
+  await sleep(300);
+  const sectionNow = await page.$eval('[data-section-nav]', (n) => n.querySelector('[aria-current="location"]')?.dataset.sectionLink ?? null);
+  ok(sectionNow === 'lab-heading', `section nav marks the section being read after a jump (${sectionNow})`);
+
   // ------------------------------------------------------------- graph
   await go('/research/');
   await page.focus('.graph__node[tabindex="0"]');
+  ok(await page.evaluate(() => document.querySelector('.graph').hasAttribute('data-active') && document.querySelectorAll('.graph__edge.is-lit').length > 0), 'focusing a graph node lights its links, as hover does (before any selection)');
   await page.keyboard.press('ArrowDown');
   const a = await page.evaluate(() => document.activeElement?.dataset.ref);
   await page.keyboard.press('ArrowRight');
@@ -160,6 +175,31 @@ try {
   await page.type('#composer-message', 'short');
   await page.click('.composer button[type=submit]');
   ok(await page.$eval('#composer-message', (e) => e.getAttribute('aria-invalid') === 'true'), 'a too-short message is flagged, nothing is sent');
+
+
+  // ------------------------------------------------------------- RTL separators
+  // A separator inside an LTR isolate lands on the far side in Arabic ("· 2019جامعة
+  // القاهرة"): separators must follow the page direction, only the numbers are isolated.
+  const strayDots = [];
+  for (const path of ['/ar/', '/ar/about/', '/ar/publications/', '/ar/publications/abonazel2023beta/']) {
+    await go(path);
+    strayDots.push(
+      ...(await page.evaluate((path) => {
+        document.querySelectorAll('details').forEach((d) => (d.open = true));
+        const bad = [];
+        for (const el of document.querySelectorAll('body *')) {
+          if (!el.parentElement || getComputedStyle(el).direction !== 'ltr' || getComputedStyle(el.parentElement).direction !== 'rtl') continue;
+          const before = getComputedStyle(el, '::before').content;
+          const first = [...el.childNodes].find((n) => (n.nodeType === 3 && n.textContent.trim()) || n.nodeType === 1);
+          if ((first?.nodeType === 3 && /^\s*[·•|]/.test(first.textContent)) || /^"\s*[·•|]/.test(before)) {
+            bad.push(`${path} ${el.tagName.toLowerCase()}.${el.className}: ${el.textContent.trim().slice(0, 24)}`);
+          }
+        }
+        return bad;
+      }, path)),
+    );
+  }
+  ok(strayDots.length === 0, `Arabic pages keep separators outside LTR isolates${strayDots.length ? ` (${strayDots.length}): ${strayDots.slice(0, 3).join(' | ')}` : ''}`);
 
   ok(jsErrors.length === 0, `no JavaScript errors${jsErrors.length ? `: ${jsErrors.join(' | ')}` : ''}`);
 } finally {

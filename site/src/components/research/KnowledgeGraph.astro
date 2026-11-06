@@ -397,8 +397,7 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
       }
       if (target && target !== from) {
         setTabStop(target);
-        target.focus();
-        if (!selected) light(target.dataset.ref!);
+        target.focus(); // the focus listener lights its links
       }
     }
 
@@ -414,6 +413,8 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
           light(null);
         }
       });
+      // focus lights a node's links exactly as hover does (Tab, arrows or ?focus=)
+      b.addEventListener('focus', () => !selected && light(b.dataset.ref!));
       b.addEventListener('pointerenter', () => !selected && light(b.dataset.ref!));
       b.addEventListener('pointerleave', () => !selected && light(null));
       b.addEventListener('blur', () => {

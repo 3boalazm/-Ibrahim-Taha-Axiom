@@ -37,27 +37,32 @@ const ui = t(lang);
 
 <script>
   const nav = document.querySelector<HTMLElement>('[data-section-nav]');
-  if (nav && 'IntersectionObserver' in window) {
+  if (nav) {
     const links = [...nav.querySelectorAll<HTMLAnchorElement>('[data-section-link]')];
     const targets = links.map((a) => document.getElementById(a.dataset.sectionLink ?? '')).filter((el): el is HTMLElement => !!el);
-    const visible = new Map<string, number>();
+    let frame = 0;
+    // The current section is the last one whose anchor has passed the reading line
+    // (45% down the viewport). Unlike "which anchor is inside a band", this stays
+    // right across long stretches between anchors (the lab's figures) and after
+    // jumps, which an IntersectionObserver never reports (an anchor that moves from
+    // above the band to below it never intersects it). Reads at most a handful of
+    // rects, once per frame, only while scrolling.
     const mark = () => {
-      // the first section (in document order) that is on screen wins
-      const current = targets.find((el) => (visible.get(el.id) ?? 0) > 0);
-      if (!current) return;
+      frame = 0;
+      const line = window.innerHeight * 0.45;
+      let current: HTMLElement | undefined;
+      for (const el of targets) if (el.getBoundingClientRect().top <= line) current = el;
       links.forEach((a) => {
-        if (a.dataset.sectionLink === current.id) a.setAttribute('aria-current', 'location');
+        if (current && a.dataset.sectionLink === current.id) a.setAttribute('aria-current', 'location');
         else a.removeAttribute('aria-current');
       });
     };
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => visible.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
-        mark();
-      },
-      { rootMargin: '-20% 0px -55% 0px', threshold: [0, 0.01] },
-    );
-    targets.forEach((el) => io.observe(el));
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(mark);
+    };
+    addEventListener('scroll', schedule, { passive: true });
+    addEventListener('resize', schedule, { passive: true });
+    schedule();
   }
 </script>
 
