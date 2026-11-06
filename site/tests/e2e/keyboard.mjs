@@ -17,6 +17,7 @@ import { DIST, requireBuild } from '../helpers.mjs';
 const required = process.env.E2E_REQUIRED === '1';
 const skip = (why) => {
   console.log(`e2e skipped: ${why}`);
+  if (required && process.env.GITHUB_ACTIONS === 'true') console.log(`::error title=e2e keyboard::skipped although E2E_REQUIRED=1: ${why}`);
   process.exit(required ? 1 : 0);
 };
 requireBuild();
@@ -46,8 +47,16 @@ await page.setViewport({ width: 1280, height: 900 });
 const jsErrors = [];
 page.on('pageerror', (e) => jsErrors.push(`${page.url()}: ${e.message}`));
 let failed = 0;
+// On GitHub Actions a failure is also written as an annotation, so it shows on the
+// pull request (and through the API) without opening the raw log.
+const annotate = (msg) => {
+  if (process.env.GITHUB_ACTIONS === 'true') console.log(`::error title=e2e keyboard::${String(msg).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+};
 const ok = (cond, msg) => {
-  if (!cond) failed++;
+  if (!cond) {
+    failed++;
+    annotate(msg);
+  }
   console.log(`${cond ? '✓' : '✗'} ${msg}`);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -202,6 +211,10 @@ try {
   ok(strayDots.length === 0, `Arabic pages keep separators outside LTR isolates${strayDots.length ? ` (${strayDots.length}): ${strayDots.slice(0, 3).join(' | ')}` : ''}`);
 
   ok(jsErrors.length === 0, `no JavaScript errors${jsErrors.length ? `: ${jsErrors.join(' | ')}` : ''}`);
+} catch (e) {
+  failed++;
+  console.log(`✗ the run stopped: ${e?.stack ?? e}`);
+  annotate(`the run stopped: ${e?.message ?? e}`);
 } finally {
   await browser.close();
   server.close();

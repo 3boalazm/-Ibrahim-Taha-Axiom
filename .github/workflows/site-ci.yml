@@ -59,8 +59,12 @@ jobs:
           E2E_REQUIRED: '1'
         run: |
           npm i --no-save puppeteer-core@25
-          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium)"
-          echo "Using Chrome at ${CHROME_PATH}"
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            # runner image without a system Chrome: use Chrome for Testing instead
+            CHROME_PATH="$(npx --yes @puppeteer/browsers install chrome@stable --path "$RUNNER_TEMP/chrome" | tail -n 1 | awk '{print $2}')"
+          fi
+          echo "::notice title=Browser tests::Chrome at ${CHROME_PATH:-(not found)}: $("${CHROME_PATH:-false}" --version 2>/dev/null || echo 'no version')"
           CHROME_PATH="$CHROME_PATH" npm run test:e2e
 
       - name: Content inventory
