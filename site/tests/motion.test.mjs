@@ -101,9 +101,27 @@ test('the head script gates motion on JS + no reduced-motion, with a watchdog', 
   }
 });
 
-test('page titles and the name never start invisible (transform-only keyframes)', () => {
+test('above-the-fold copy never starts invisible (transform-only keyframes on the hero copy)', () => {
   const css = shippedCss();
   const settle = css.match(/@keyframes motion-settle\{[^}]*\}\}?/);
   assert.ok(settle, 'motion-settle exists');
   assert.doesNotMatch(settle[0], /opacity/);
+  // keyframes that start hidden (opacity 0 in their first frame)
+  const fades = new Set(
+    [...css.matchAll(/@keyframes ([\w-]+)\{((?:[^{}]*\{[^}]*\})*)\}/g)]
+      .filter((m) => /(?:from|0%)\{[^}]*opacity:\s*0(?:[;}]|$)/.test(m[2]))
+      .map((m) => m[1]),
+  );
+  assert.ok(fades.has('motion-rise-sm'), 'the fade-in keyframes are detected');
+  // The cascade matters, not the intent: an `animation` shorthand on .hhero__copy > *
+  // once overrode an `animation-name: motion-settle` on the name and the lead, and the
+  // measured LCP moved by ~0.6 s. Every rule on the hero copy must name a non-fading
+  // keyframe (the browser check in tests/e2e/motion.mjs verifies the computed result).
+  const heroRules = [...css.matchAll(/([^{}]*\.hhero__(?:copy|name|lead)[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(heroRules.length > 0, 'hero copy rules found');
+  for (const [, sel, body] of heroRules) {
+    for (const [, name] of body.matchAll(/animation(?:-name)?:\s*([\w-]+)/g)) {
+      assert.ok(!fades.has(name), `${sel.trim()} must not use the fade-in keyframes ${name}`);
+    }
+  }
 });

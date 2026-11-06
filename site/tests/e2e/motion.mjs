@@ -106,6 +106,30 @@ try {
   await go(page, '/');
   ok(await page.evaluate(() => document.documentElement.hasAttribute('data-motion') && window.__axiomMotion === true), 'motion layer boots: html[data-motion] and the motion module are live');
 
+  // reading first: the above-the-fold headings and the hero lead (the LCP elements)
+  // are opaque on the very first frame. The animation timeline is frozen at 0 through
+  // CDP, so this is deterministic: the entrances exist, and none of them fades these in.
+  {
+    const first = await open();
+    const cdp = await first.createCDPSession();
+    await cdp.send('Animation.enable');
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 });
+    for (const [path, sel] of [['/', '.hhero__name'], ['/', '.hhero__lead'], ['/ar/', '.hhero__name'], ['/ar/', '.hhero__lead'], ['/publications/', '.page-header h1'], ['/ar/research/', '.page-header h1']]) {
+      if (first.url() !== B + path) await first.goto(B + path, { waitUntil: 'load' });
+      const r = await first.$eval(sel, (el) => {
+        let min = 1;
+        let anims = 0;
+        for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+          min = Math.min(min, Number(getComputedStyle(n).opacity));
+          anims += n.getAnimations().length;
+        }
+        return { min, anims };
+      });
+      ok(r.min === 1 && r.anims > 0, `first frame: ${path} ${sel} is opaque while its entrance runs (opacity ${r.min}, ${r.anims} animation(s))`);
+    }
+    await first.close();
+  }
+
   // hero: ARIA jumps to the target, the drawing glides there and ends exact
   await page.focus('[data-normal-plot]');
   await page.keyboard.press('End');

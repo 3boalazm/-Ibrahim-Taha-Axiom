@@ -365,13 +365,11 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
      simply there. Order: axis → ticks → curve → the area accumulates from the
      left tail up to z (Φ(z) as an integral) → the marker settles. The readout is
      visible from the first frame. Interaction works at any point of the sequence. */
+  /* The copy is above the fold and holds the LCP element (the lead in English,
+     the name in Arabic), so it is never hidden: a transform-only settle, no fade.
+     A fade here delayed the measured LCP by ~0.6 s (see docs/motion-system.md). */
   :global(html[data-motion]) .hhero__copy > * {
-    animation: motion-rise-sm var(--motion-slow) var(--ease-emphasized) backwards;
-  }
-  /* the name and the lead never start invisible (reading first): transform only */
-  :global(html[data-motion]) .hhero__name,
-  :global(html[data-motion]) .hhero__lead {
-    animation-name: motion-settle;
+    animation: motion-settle var(--motion-slow) var(--ease-emphasized) backwards;
   }
   :global(html[data-motion]) .hhero__copy > :nth-child(2) {
     animation-delay: calc(1 * var(--stagger-step));
