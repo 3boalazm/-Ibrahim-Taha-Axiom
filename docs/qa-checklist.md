@@ -47,6 +47,7 @@ Run in the development sandbox (Node 22, headless Chromium 153) on the final tre
 | axe-core 4.14.0 (WCAG 2.2 AA rules) | **Before** (8 page types × EN/AR × light/dark, 1280 px, 32 runs): 5 rules violated, listed below. **After:** 0 violations in those 32 runs; 0 in 52 runs at 1280 px (13 page types incl. 404 × EN/AR × light/dark) and 0 in 52 runs at 390 px with reduced motion. Run after animations finish |
 | Lighthouse 12.8.2 | Table below |
 | Visual review | The screenshots and motion strips in [`screenshots/phase-5/`](screenshots/phase-5/README.md) were reviewed by eye |
+| CI (GitHub Actions, Node 26, Google Chrome 156) | Green on the final commits of the pull request. The branch's first CI run failed inside the keyboard suite. The raw log was not reachable from the sandbox, and GitHub did not allow a re-run from it, so which check failed is not known. The same code passed on the next run, and 16 local runs (6 with the CPU saturated) passed. The keyboard suite now waits for the state it asserts instead of fixed pauses, and failing checks are reported as annotations on the pull request |
 
 axe before the fixes:
 
