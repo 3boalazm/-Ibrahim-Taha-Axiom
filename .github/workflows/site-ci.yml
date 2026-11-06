@@ -1,0 +1,68 @@
+name: Site CI
+
+# Builds and checks the Astro site on every pull request and every push to main
+# that touches the site (or this workflow). Nothing is deployed from here: Vercel
+# deploys main through its Git integration.
+on:
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    name: Build, QA, lab, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: QA (links, headings, SEO, contrast, forbidden files)
+        run: npm run qa
+
+      - name: Lab verification (recompute every published number)
+        run: npm run lab:verify
+
+      - name: Unit and build tests
+        run: npm test
+
+      - name: Browser tests (keyboard, URL state, RTL)
+        env:
+          E2E_REQUIRED: '1'
+        run: |
+          npm i --no-save puppeteer-core@25
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium)"
+          echo "Using Chrome at ${CHROME_PATH}"
+          CHROME_PATH="$CHROME_PATH" npm run test:e2e
+
+      - name: Content inventory
+        if: always()
+        run: npm run inventory >> "$GITHUB_STEP_SUMMARY"
