@@ -181,7 +181,7 @@ try {
   ok((await page.$$eval('[data-x-item]:not([hidden])', (l) => l.length)) === 22 && (await page.evaluate(() => location.search)) === '', 'explorer: a click during the animation is not lost (filter toggled back, URL cleared)');
   await page.click('[data-x-type="book"]');
   await sleep(20);
-  ok((await page.$eval('[data-x-count]', (e) => e.textContent)).includes('4'), 'explorer: the result count is the exact new value immediately');
+  ok(/(^|\D)6(\D|$)/.test(await page.$eval('[data-x-count]', (e) => e.textContent)), 'explorer: the result count is the exact new value immediately (6 books)');
 
   // lab: readouts and tables are exact on the next frame while the chart moves
   await go(page, '/lab/');
@@ -251,7 +251,7 @@ try {
   await sleep(200);
   ok((await page.evaluate(() => window.__vt)) !== 'ran', 'reduced motion: no page transition');
   await page.click('[data-x-type="book"]');
-  ok((await runningAnimations(page)) === 0 && (await page.$$eval('[data-x-item]:not([hidden])', (l) => l.length)) === 4, 'reduced motion: explorer filters instantly, without animation');
+  ok((await runningAnimations(page)) === 0 && (await page.$$eval('[data-x-item]:not([hidden])', (l) => l.length)) === 6, 'reduced motion: explorer filters instantly, without animation');
   await go(page, '/lab/');
   const last = (await page.$$eval('[data-lab-preset]', (l) => l.map((b) => b.dataset.labPreset))).pop();
   await page.click(`[data-lab-preset="${last}"]`);

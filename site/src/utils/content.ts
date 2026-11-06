@@ -65,6 +65,7 @@ const NULL_TEXT: LocalizedText = { en: null, ar: null };
 /** Only manifest-approved profile fields survive; everything else is blanked. */
 export const profile: Profile = {
   name: approvedFields.has('name') ? fullProfile.name : NULL_TEXT,
+  officialName: approvedFields.has('officialName') ? fullProfile.officialName : NULL_TEXT,
   role: approvedFields.has('role') ? fullProfile.role : NULL_TEXT,
   summary: approvedFields.has('summary') ? fullProfile.summary : NULL_TEXT,
   biography: approvedFields.has('biography') ? fullProfile.biography : NULL_TEXT,

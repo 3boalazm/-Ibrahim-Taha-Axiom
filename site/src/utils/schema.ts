@@ -36,6 +36,7 @@ export const LaunchSchema = z
 
 export const PROFILE_FIELDS = [
   'name',
+  'officialName',
   'role',
   'summary',
   'biography',
@@ -114,6 +115,8 @@ export type Manifest = z.infer<typeof ManifestSchema>;
 
 export const ProfileSchema = z.object({
   name: Localized,
+  /** The official full name, when it differs from the display name (DQ-10: the Arabic full name). */
+  officialName: Localized.default({ en: null, ar: null }),
   role: Localized,
   summary: Localized,
   biography: Localized,
@@ -122,6 +125,8 @@ export const ProfileSchema = z.object({
       organization: RequiredLocalized,
       department: Localized.optional(),
       role: Localized.optional(),
+      /** A short qualifier such as branch and teaching location (DQ-07). */
+      note: Localized.optional(),
       from: z.string().optional(),
       to: z.string().nullable().optional(),
       url: httpUrl.optional(),
@@ -234,21 +239,44 @@ export const TranslationFileSchema = z.object({
 export type TranslationFile = z.infer<typeof TranslationFileSchema>;
 
 /** Data-quality register: unresolved questions, recorded with sources, never silently resolved. */
+/** The named owner's answer to a data-quality question, with where it came from. */
+const IssueResponse = z.object({
+  date: isoDate,
+  by: z.string().min(1),
+  /** The answer as given. */
+  answer: z.string().min(1),
+  /** 'decided' settles the question; 'undetermined' records an answer that does not. */
+  outcome: z.enum(['decided', 'undetermined']),
+  /** What changed in the data or on the site because of the decision. */
+  applied: z.string().min(1).optional(),
+  source: z.string().min(1),
+});
+
 export const OpenIssuesSchema = z.object({
   schemaVersion: z.literal(1),
   updated: isoDate,
   issues: z.array(
-    z.object({
-      id: z.string().regex(/^DQ-\d{2}$/),
-      category: z.enum(['year', 'author-order', 'identity', 'classification', 'metadata', 'relationship', 'documentation']),
-      status: z.enum(['open', 'resolved']),
-      subjects: z.array(z.string().min(1)),
-      question: z.string().min(1),
-      current: z.string().min(1),
-      alternatives: z.array(z.string()).default([]),
-      sources: z.array(z.string().min(1)).min(1),
-      owner: z.string().min(1),
-    }),
+    z
+      .object({
+        id: z.string().regex(/^DQ-\d{2}$/),
+        category: z.enum(['year', 'author-order', 'identity', 'classification', 'metadata', 'relationship', 'documentation']),
+        status: z.enum(['open', 'resolved']),
+        subjects: z.array(z.string().min(1)),
+        question: z.string().min(1),
+        current: z.string().min(1),
+        alternatives: z.array(z.string()).default([]),
+        sources: z.array(z.string().min(1)).min(1),
+        owner: z.string().min(1),
+        response: IssueResponse.optional(),
+      })
+      // Nothing is resolved silently: 'resolved' needs a recorded decision saying what was
+      // applied, and a recorded decision cannot be left marked open.
+      .refine((i) => (i.status === 'resolved') === (i.response?.outcome === 'decided'), {
+        message: "status 'resolved' requires response.outcome 'decided', and a decided response requires status 'resolved'",
+      })
+      .refine((i) => i.response?.outcome !== 'decided' || !!i.response.applied, {
+        message: "a decided response must say what was applied (response.applied)",
+      }),
   ),
 });
 export type OpenIssues = z.infer<typeof OpenIssuesSchema>;

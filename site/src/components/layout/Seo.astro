@@ -43,11 +43,14 @@ const graph: Record<string, unknown>[] = [
   ...jsonLd,
 ];
 const personName = profile.name.en ?? profile.name.ar;
+// The approved Arabic display name and the official full Arabic name (DQ-10).
+const alternateNames = [...new Set([profile.name.ar, profile.officialName.ar].filter((n): n is string => !!n && n !== personName))];
 if (path === '/' && personName) {
   graph.push({
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: personName,
+    ...(alternateNames.length ? { alternateName: alternateNames } : {}),
     url: new URL('/', site).href,
     sameAs: profile.identifiers.map((i) => i.url),
   });

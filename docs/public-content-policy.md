@@ -24,7 +24,7 @@ The machine-readable record is `researcherApproval` in `site/src/data/approved/p
 
 **Not covered.**
 - The AI-assisted Arabic drafts (`src/data/translations/ar.json`). Until the researcher reviews them, they are shown only with a visible draft label ([translation-status.md](translation-status.md)).
-- The open data-quality questions ([data-quality-register.md](data-quality-register.md)). This approval does not decide them.
+- The data-quality questions ([data-quality-register.md](data-quality-register.md)). This approval does not decide them. The researcher decided 15 of the 16 in his own Data Quality Review on 2026-11-06 (decision D-19); DQ-13 stays open.
 - Any private data beyond the approved fields. Nothing from `data-staging/` is published.
 
 ## 1. The two-key gate
@@ -47,7 +47,7 @@ The gate lives in `site/src/utils/content.ts` (profile, research areas, projects
 
 **Current state (2026-11-06).** These counts are derived from the data with `cd site && npm run inventory`; regenerate them rather than editing by hand. Published now:
 - **Profile.** Name, role, summary and biography come from the researcher's own earlier site. Affiliations and education come from ORCID, Google Scholar and publisher PDFs. It also includes academic identifiers, community links, ORCID keywords as interests, and the approved contact e-mail and phone.
-- **22 bibliography entries:** 10 journal articles, 4 books, 2 technical reports, 2 conference papers, 1 master's thesis, 1 preprint and 2 other works (the last three are `@misc`). 3 are *selected*. They are not all journal articles: the site labels each by type, the Publications explorer lists all 22 with a type filter, and the 4 books also have their own Books page.
+- **22 bibliography entries:** 10 journal articles, 6 books, 2 technical reports, 2 conference papers, 1 master's thesis and 1 preprint (`@misc`). The two comprehensive guides became books by the researcher's decision (DQ-12). 3 are *selected*. They are not all journal articles: the site labels each by type, the Publications explorer lists all 22 with a type filter, and the 6 books also have their own Books page.
 - **6 research areas, 3 projects, 5 courses, 2 talks, 5 methods and 1 dataset.** The talks are the 2018 and 2019 conference papers; no source says who presented them, so the site does not claim it.
 - **42 verified relationships** between them. Each relationship has written evidence, and a quoted title must match the data or the build fails.
 - **A structured CV** (no PDF).
@@ -61,9 +61,9 @@ Still excluded:
 - the preprint duplicate and the 3 held-back duplicate guide rows;
 - anything in `data-staging/`.
 
-**Arabic.** Approved Arabic text exists only for a few fields: 2 research-area summaries and some profile, project and CV fields. Everything else in Arabic is an AI-assisted draft, labelled on the page as «ترجمة مبدئية — لم يراجعها الباحث بعد». Publication titles, abstracts, venues and names are never translated.
+**Arabic.** Approved Arabic text exists only for a few fields: 2 research-area summaries and some profile, project and CV fields. Everything else in Arabic is an AI-assisted draft, labelled on the page as «ترجمة مبدئية — لم يراجعها الباحث بعد». Publication titles, abstracts, venues and names are never translated. The researcher's Arabic name is not a translation: the display form «ابراهيم محمد طه» and the official full name «ابراهيم محمد ابراهيم محمود طه» are his own spelling, approved in the Data Quality Review (DQ-10).
 
-**Open data questions.** Publication years, author order, identity details and classification questions stay open in [data-quality-register.md](data-quality-register.md), with their sources. The site shows the value chosen by the documented rule in `research/data-quality-report.md`, and the alternatives stay on record.
+**Data-quality questions.** Questions about publication years, author order, identity details, classification and relationships are kept in [data-quality-register.md](data-quality-register.md) with their sources. The register is generated from `site/src/data/review/open-issues.json`. An issue is closed only by a recorded decision of its owner (who, when, the answer as given, and what changed), and the build rejects a resolved issue without one. On 2026-11-06 the researcher answered all 16 questions: 15 are decided and applied, and DQ-13 (the 2018 and 2019 conference papers) stays open because the answer was «لست متأكدًا» (not sure). For an open question the site shows the value chosen by the documented rule in `research/data-quality-report.md`, and the alternatives stay on record.
 
 ## 2. Never publish
 

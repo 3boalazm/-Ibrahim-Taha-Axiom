@@ -5,7 +5,7 @@
     {
       "id": "DQ-01",
       "category": "year",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:abonazel2023beta"
       ],
@@ -18,12 +18,20 @@
         "research/data-quality-report.md (Year conflicts)",
         "research/data-gaps-and-questions.md (question 6)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "2023, the year of the printed issue.",
+        "outcome": "decided",
+        "applied": "No change needed: the entry already carries 2023 (volume 52, issue 9). The 2021 online-first date stays on record here only.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-02",
       "category": "year",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:seliem2024note"
       ],
@@ -36,12 +44,20 @@
         "research/data-quality-report.md (Year conflicts)",
         "research/data-gaps-and-questions.md (question 6)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "2024, the year it was first issued.",
+        "outcome": "decided",
+        "applied": "No change needed: the entry already carries 2024. The 2025 volume year shown by ORCID and Google Scholar stays on record here only.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-03",
       "category": "year",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:abonazel2022two"
       ],
@@ -53,12 +69,20 @@
       "sources": [
         "site/src/data/approved/publications.bib (entry abonazel2022two)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "2022, volume 7.",
+        "outcome": "decided",
+        "applied": "No change needed: the entry already carries 2022, volume 7. The DOI is an identifier and stays as registered.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-04",
       "category": "author-order",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:elnady2022tam"
       ],
@@ -71,12 +95,20 @@
         "research/data-quality-report.md (Author-order conflict)",
         "research/data-gaps-and-questions.md (question 7)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "Elnady, Taha, Abdella.",
+        "outcome": "decided",
+        "applied": "No change needed: the entry already lists the authors in this order (the DOI deposit order).",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-05",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "profile:identifiers"
       ],
@@ -87,12 +119,20 @@
         "research/author-identity-review.md (item 1)",
         "research/data-gaps-and-questions.md (question 4)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "Only Scopus Author ID 57226774796 is correct.",
+        "outcome": "decided",
+        "applied": "Scopus ID 58577960300 removed from the profile identifiers, and so from the structured data (sameAs). ORCID still lists both IDs; correcting ORCID and Scopus is for the researcher.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-06",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "profile:identifiers",
         "project:statistical-guides",
@@ -106,12 +146,20 @@
         "site/src/data/approved/projects.json",
         "site/src/data/approved/research-metrics.json"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "The same profile; the canonical address is Ibrahim-Taha-5.",
+        "outcome": "decided",
+        "applied": "The ResearchGate identifier and the statistical-guides project link now use researchgate.net/profile/Ibrahim-Taha-5, the address the metrics snapshot already used. Ibrahim_Taha11 is no longer linked.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-07",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "profile:affiliations"
       ],
@@ -124,12 +172,20 @@
         "research/author-identity-review.md (item 2)",
         "research/data-quality-report.md (readiness table)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "Other wording: appointed to the Tanta branch; teaching at the main campus in Maadi (in the researcher’s words: «التعيين فرع طنطا», «التدريس في المقر الرئيسي في المعادي»).",
+        "outcome": "decided",
+        "applied": "The Sadat Academy affiliation carries a note with this wording, in English and in the researcher’s Arabic, on the home and profile pages. The first sentence of the biography says the same; its Arabic draft was updated to match and is still labelled a draft.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-08",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "external:semantic-scholar"
       ],
@@ -139,12 +195,20 @@
       "sources": [
         "research/author-identity-review.md (item 3)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "No action for now.",
+        "outcome": "decided",
+        "applied": "No change: Semantic Scholar figures stay unused on the site. The misattribution remains at Semantic Scholar unless the researcher claims the profile.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-09",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "project:com-poisson-penalized-estimation",
         "external:github"
@@ -156,12 +220,20 @@
         "research/author-identity-review.md (item 4)",
         "research/data-gaps-and-questions.md (question 5)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "GitHub account IbrahimTaha2018 is the researcher’s. SVM_New is an old experimental repository: do not show it for now. Licence of the data repository: CC BY 4.0, matching Zenodo.",
+        "outcome": "decided",
+        "applied": "The GitHub link stays and SVM_New stays unlisted. The project’s GitHub link is labelled \"Data repository (GitHub, CC BY 4.0)\" (Arabic draft updated). The repository itself still has no licence file; adding one is for the researcher.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-10",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "profile:name"
       ],
@@ -172,12 +244,20 @@
         "research/author-identity-review.md (item 5)",
         "research/data-gaps-and-questions.md (missing data table)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher); display form chosen by the project owner (project chat, 2026-11-06)",
+        "answer": "Official Arabic name: ابراهيم محمد ابراهيم محمود طه.",
+        "outcome": "decided",
+        "applied": "profile.name.ar is ابراهيم محمد طه, the short form the project owner chose for headings, spelled as the researcher writes it. The new approved field profile.officialName.ar holds the full official name and is shown on the profile page. Both are alternateName in the home page’s structured data. Arabic pages no longer fall back to the Latin name.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-11",
       "category": "identity",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:rady2019biased",
         "publication:rady2019shrinkage",
@@ -189,12 +269,20 @@
       "sources": [
         "site/src/data/approved/publications.bib (entries rady2019biased, rady2019shrinkage, rady2018ridge)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher); identity confirmed by the project owner (project chat, 2026-11-06)",
+        "answer": "Not sure whether the two forms are one person; cite as \"Rady, E. A.\". Asked whether to apply this to the record reading \"Rady, E. H. A.\", the project owner answered with the co-author’s full name, الحسيني عبد البر ابراهيم راضي, identifying one person.",
+        "outcome": "decided",
+        "applied": "rady2019biased now reads \"Rady, E. A.\" like the other two entries, so the explorer’s co-author filter lists one co-author for all three papers.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-12",
       "category": "classification",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:taha2026panels",
         "publication:taha2026logistic",
@@ -212,7 +300,15 @@
         "research/data-gaps-and-questions.md (question 10)",
         "research/data-quality-report.md (readiness table)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "taha2026panels, taha2026logistic, taha2026sample, taha2026regression, taha2025comprehensive and taha2025comprehensivea: Book. taha2026fit and taha2026normality: TechReport. \"Sample Size Calculation\" and \"A Comprehensive Guide to Ridge Regression\": each is the entry already listed above.",
+        "outcome": "decided",
+        "applied": "taha2025comprehensive and taha2025comprehensivea changed from @misc to @book (publisher ResearchGate, like the other guides), giving 6 books and 2 technical reports. The short-titled Google Scholar records pub-0020 (\"Sample Size Calculation\") and pub-0021 (\"A Comprehensive Guide to Ridge Regression Theory, Methods, and Applications\") are treated as duplicates of taha2026sample and taha2025comprehensive and stay out of the bibliography (research/publication-reconciliation.csv).",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-13",
@@ -228,12 +324,19 @@
       "sources": [
         "research/data-gaps-and-questions.md (question 9)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "Not sure, for all four questions (2018 and 2019: published in proceedings? presented by the researcher?).",
+        "outcome": "undetermined",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-14",
       "category": "relationship",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "manifest:methods",
         "publication:taha2026regression",
@@ -245,12 +348,20 @@
       "sources": [
         "site/src/data/approved/public-content.manifest.json (relationships)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher); target area chosen by the project owner (project chat, 2026-11-06)",
+        "answer": "All method labels are acceptable. taha2026regression → penalized-count-regression: replace. taha2026uncertainty → bayesian-estimation: replace.",
+        "outcome": "decided",
+        "applied": "Both links now point to statistical-reporting-and-software, the target the project owner chose: penalized-count-regression goes from 7 to 6 publications, bayesian-estimation from 2 to 1, statistical-reporting-and-software from 3 to 5. Method labels unchanged.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-15",
       "category": "metadata",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:elnady2022tam"
       ],
@@ -260,12 +371,20 @@
       "sources": [
         "site/src/data/approved/publications.bib (entry elnady2022tam)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "Keep the record as deposited.",
+        "outcome": "decided",
+        "applied": "No change: the venue keeps its deposited letter forms and langid. Search still matches both letter forms.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     },
     {
       "id": "DQ-16",
       "category": "metadata",
-      "status": "open",
+      "status": "resolved",
       "subjects": [
         "publication:rady2019biased"
       ],
@@ -275,7 +394,15 @@
       "sources": [
         "research/data-gaps-and-questions.md (question 8)"
       ],
-      "owner": "researcher"
+      "owner": "researcher",
+      "response": {
+        "date": "2026-11-06",
+        "by": "Ibrahim Taha (researcher)",
+        "answer": "None at present.",
+        "outcome": "decided",
+        "applied": "No change: the entry stays listed without DOI, URL or file until one exists.",
+        "source": "Data Quality Review, final responses (completed 2026-11-06 18:22, 16 of 16 answered), relayed by the project owner in the project chat"
+      }
     }
   ]
 }

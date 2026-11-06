@@ -4,9 +4,11 @@
 
 **Status: 81 Arabic drafts, 0 reviewed.** The drafts are AI-assisted Modern Standard Arabic. They were written for this site with standard statistical terminology, and **none has been reviewed by the researcher**. Approved Arabic, meaning text the researcher supplied or approved in the data files, always takes precedence over a draft.
 
+Two drafts were edited on 2026-11-06 to follow data changes the researcher decided: the first sentence of the biography (Tanta branch and Maadi campus, DQ-07) and the label of the GitHub data-repository link (CC BY 4.0, DQ-09). Both are still unreviewed drafts.
+
 | Content | Approved Arabic fields | Drafts awaiting review | Reviewed drafts |
 | --- | --- | --- | --- |
-| profile | 1 | 26 | 0 |
+| profile | 4 | 26 | 0 |
 | research-areas | 2 | 10 | 0 |
 | projects | 1 | 10 | 0 |
 | courses | 0 | 11 | 0 |
@@ -24,7 +26,7 @@
 
 ## What is never translated
 
-Publication titles, abstracts, journal and publisher names, people's names, DOIs, URLs, ORCID/Scopus/OpenAlex identifiers and BibTeX keys stay in their original form. Identifiers are rendered as isolated left-to-right runs. The researcher's name stays in its Latin form until an approved Arabic spelling exists (DQ-10 in [data-quality-register.md](data-quality-register.md)).
+Publication titles, abstracts, journal and publisher names, people's names, DOIs, URLs, ORCID/Scopus/OpenAlex identifiers and BibTeX keys stay in their original form. Identifiers are rendered as isolated left-to-right runs. The researcher's Arabic name is approved, not translated: the Arabic headings show «ابراهيم محمد طه», and the profile page also gives the official full name «ابراهيم محمد ابراهيم محمود طه» (DQ-10 in [data-quality-register.md](data-quality-register.md)). Co-authors' names stay in their original form.
 
 ## Terminology used in the drafts
 

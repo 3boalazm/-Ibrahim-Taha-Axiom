@@ -122,7 +122,7 @@ try {
 
   // ------------------------------------------------------------- explorer
   await go('/publications/?type=book&sort=oldest');
-  ok((await visible()) === 4, 'URL state ?type=book shows the four books');
+  ok((await visible()) === 6, 'URL state ?type=book shows the six books (DQ-12)');
   ok(await page.$eval('[data-x-type="book"]', (b) => b.getAttribute('aria-pressed') === 'true'), 'the type control reflects the URL');
   await go('/publications/');
   await page.click('[data-x-year="2019"]');
