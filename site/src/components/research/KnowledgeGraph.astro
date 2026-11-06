@@ -428,9 +428,9 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
     /**
      * Entry (once): when the map first scrolls into view, nodes appear column by
      * column and the edges are drawn from their source; dashed method links fade.
-     * The hidden state (.is-awaiting) is set here, by the script that removes it,
-     * and only when the map is not on screen yet — a deep link (?focus=) that lands
-     * on the graph shows it at once.
+     * A map already on screen at load is drawn right away; one further down is
+     * held (.is-awaiting — set here, by the script that removes it) until it is
+     * scrolled to. A deep link to one node (?focus=) shows the map at once.
      */
     const canvas = root.querySelector<HTMLElement>('.graph__canvas');
     function entry() {
@@ -458,8 +458,13 @@ const nodeButton = (n: GraphNode, first: boolean) => ({
     }
     function armEntry() {
       if (!canvas || !motionAllowed() || typeof IntersectionObserver !== 'function') return;
+      // a deep link to one node (?focus=) shows the map at once
+      if (new URLSearchParams(location.search).has('focus')) return;
       const r = canvas.getBoundingClientRect();
-      if (r.width > 0 && r.top < innerHeight && r.bottom > 0) return;
+      if (r.width > 0 && r.top < innerHeight && r.bottom > 0) {
+        entry(); // already on screen: this is its entrance
+        return;
+      }
       root!.classList.add('is-awaiting');
       const io = new IntersectionObserver(
         (entries) => {

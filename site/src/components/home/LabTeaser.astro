@@ -63,7 +63,7 @@ const L = ar
         <span class="button__arrow icon-flip" aria-hidden="true">→</span>
       </a>
     </div>
-    <figure class="lteaser__fig">
+    <figure class="lteaser__fig" data-reveal="fade">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="lteaser-cap" dir="ltr" direction="ltr">
         {yTicks.map((v) => <line class="lteaser__grid-line" x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} />)}
         {
@@ -73,8 +73,8 @@ const L = ar
             </text>
           ))
         }
-        <path class="lteaser__ml" d={line('ml')} />
-        <path class="lteaser__ridge" d={line('ridge')} />
+        <path class="lteaser__ml chart-wipe" d={line('ml')} style="--i: 3" />
+        <path class="lteaser__ridge chart-wipe" d={line('ridge')} style="--i: 9" />
         <text class="lteaser__tick" x={x(0)} y={H - 10} text-anchor="start">
           ρ = {S[0].rho}
         </text>

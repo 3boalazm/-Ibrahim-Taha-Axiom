@@ -61,6 +61,16 @@
     transform: scaleY(0);
   }
 }
+/* chart-reveal for lines: revealed along the x axis (the reading direction of a
+   chart), which keeps any dash pattern intact — pathLength would rescale dashes */
+@keyframes motion-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
 @keyframes motion-grow-x {
   from {
     transform: scaleX(0);
@@ -130,6 +140,37 @@ html[data-motion] [data-reveal='fade'].is-revealed {
   animation-name: motion-fade-in;
 }
 
+/* settle-group: <ol data-settle> — for main content near the top of a page.
+   Transform only, CSS only: the items are readable from the first frame, with or
+   without JavaScript; they just settle into place one step apart. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-settle] > * {
+    animation: motion-settle var(--motion-slow) var(--ease-emphasized) backwards;
+    animation-delay: calc(var(--i, 0) * var(--stagger-step));
+  }
+  [data-settle] > :nth-child(2) {
+    --i: 1;
+  }
+  [data-settle] > :nth-child(3) {
+    --i: 2;
+  }
+  [data-settle] > :nth-child(4) {
+    --i: 3;
+  }
+  [data-settle] > :nth-child(5) {
+    --i: 4;
+  }
+  [data-settle] > :nth-child(6) {
+    --i: 5;
+  }
+  [data-settle] > :nth-child(7) {
+    --i: 6;
+  }
+  [data-settle] > :nth-child(n + 8) {
+    --i: 7;
+  }
+}
+
 /* Page titles: transform only, so the heading is readable from the first frame. */
 @media (prefers-reduced-motion: no-preference) {
   .reveal {
@@ -144,12 +185,17 @@ html[data-motion] [data-reveal='fade'].is-revealed {
 }
 
 /* ------------------------------------------------------------ line-draw / chart-reveal
-   <path class="line-draw" pathLength="1">  inside a revealed group: drawn once
+   <path class="line-draw" pathLength="1">  inside a revealed group: drawn once (solid strokes)
+   <path class="chart-wipe">                a data line revealed along x (any stroke, dashes kept)
    <rect class="chart-bar">                 inside a revealed group: grows from 0
    No separate hidden state: the group itself is transparent until revealed, and
    fill-mode `backwards` holds the undrawn frame through the stagger delay. */
 html[data-motion] .is-revealed .line-draw {
   animation: motion-draw var(--motion-draw) var(--ease-draw) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-step));
+}
+html[data-motion] .is-revealed .chart-wipe {
+  animation: motion-wipe var(--motion-draw) var(--ease-draw) backwards;
   animation-delay: calc(var(--i, 0) * var(--stagger-step));
 }
 html[data-motion] .is-revealed .chart-bar {

@@ -40,7 +40,7 @@ const counts = [
 ---
 
 <section class="disc container" aria-labelledby="disc-title">
-  <div class="disc__head">
+  <div class="disc__head" data-reveal>
     <div>
       <p class="kicker">{ar ? 'البحث' : 'Research'}</p>
       <h2 id="disc-title" class="disc__title">{ar ? 'ستة مجالات، وكل رابطٍ بدليله' : 'Six areas, every link with its evidence'}</h2>
@@ -51,7 +51,7 @@ const counts = [
     </a>
   </div>
 
-  <ul class="disc__grid" role="list">
+  <ul class="disc__grid" role="list" data-stagger>
     {
       cards.map(({ a, pubs, picture }) => {
         const summary = pick(a.summary, lang);

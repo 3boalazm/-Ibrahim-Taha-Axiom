@@ -715,6 +715,19 @@ const labels = {
     border: var(--border-hairline);
     border-radius: var(--radius-3);
     background: var(--color-surface-1);
+    transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
+  }
+  /* hover-lift on real pointers; keyboard focus inside a card gets the same emphasis */
+  @media (hover: hover) and (pointer: fine) {
+    .explorer__list[data-view='cards'] :global(.pub:hover) {
+      transform: translate3d(0, var(--lift), 0);
+      box-shadow: var(--shadow-lift);
+      border-color: var(--color-rule-strong);
+    }
+  }
+  .explorer__list[data-view='cards'] :global(.pub:focus-within) {
+    border-color: var(--color-accent);
   }
   .explorer__list[data-view='cards'] :global(.pub__grid) {
     grid-template-columns: minmax(0, 1fr);

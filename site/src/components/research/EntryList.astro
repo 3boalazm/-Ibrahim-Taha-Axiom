@@ -29,7 +29,7 @@ const pictureFor = (item: Entry, i: number) =>
   kind === 'area' ? areaPicture(item.id) : [areaPicture('bayesian-estimation'), areaPicture('study'), areaPicture('penalized-count-regression')][i % 3];
 ---
 
-<ol class="entries" role="list">
+<ol class="entries" role="list" data-settle>
   {
     items.map((item, i) => {
       const pic = pictureFor(item, i);
