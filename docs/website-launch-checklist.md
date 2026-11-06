@@ -1,6 +1,6 @@
 # Website Launch Checklist
 
-> Status on 2026-11-05: **launched, search indexing ON** (approved by the project owner) on the Vercel production domain **https://ibrahim-taha-axiom.vercel.app**. Every page carries `index, follow` with canonical URLs on that domain, `robots.txt` allows crawling and points to `/sitemap-index.xml` (54 URLs with EN/AR hreflang). A custom domain (D-07a) is still pending: see §5.
+> Status on 2026-11-05: **launched, search indexing ON** (approved by the project owner) on the Vercel production domain **https://ibrahim-taha-axiom.vercel.app**. Every page carries `index, follow` with canonical URLs on that domain, `robots.txt` allows crawling and points to `/sitemap-index.xml` (66 URLs with EN/AR hreflang as of 2026-11-06; 54 at launch). A custom domain (D-07a) is still pending: see §5.
 
 ## 1. Approvals required before indexing
 
@@ -39,7 +39,7 @@ The build refuses `allowIndexing: true` without a `canonicalOrigin`, so the doma
 
 ## 2b. Standing content rules for the visual layer
 
-- Images stay **abstract and impersonal** (`docs/public-content-policy.md` §5). No portrait of the researcher is published until a supplied photograph is approved.
+- Images stay **abstract and impersonal** (`docs/public-content-policy.md` §5). The one exception is the researcher's own portrait, supplied by the project owner and published under the rules recorded in that policy.
 - The figures band on the home page must keep matching the approved data counts: publications, research areas, projects come from the data files; "450+ statistical reports" comes from the researcher's own biography text. If a count changes, the band changes with it — never edit a figure by hand.
 - English and Arabic share one design; Arabic runs RTL from `dir="rtl"` with no mirrored CSS, and Arabic typography uses Noto Kufi Arabic for display and IBM Plex Sans Arabic for interface text.
 

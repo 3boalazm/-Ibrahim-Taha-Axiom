@@ -131,9 +131,9 @@ const latest = years[years.length - 1];
                     <p class="journey__ms-kind">
                       {ui.journeyKinds[m.kind]}
                       {m.period && m.period !== String(y) && (
-                        <span class="journey__period" dir={ar ? 'auto' : 'ltr'}>
+                        <span class="journey__period">
                           {' '}
-                          · {formatPeriod(m.period, lang)}
+                          · <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(m.period, lang)}</span>
                         </span>
                       )}
                     </p>
@@ -180,7 +180,7 @@ const latest = years[years.length - 1];
                 <li class={`journey__ms kind-${m.kind}`}>
                   <p class="journey__ms-kind">
                     {ui.journeyKinds[m.kind]}
-                    {m.period && <span dir={ar ? 'auto' : 'ltr'}> · {formatPeriod(m.period, lang)}</span>}
+                    {m.period && <span> · <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(m.period, lang)}</span></span>}
                   </p>
                   <p class="journey__ms-text">
                     {m.href ? (
@@ -205,6 +205,50 @@ const latest = years[years.length - 1];
 </section>
 
 <script>
+  import { motionAllowed } from '../../lib/motion.mjs';
+
+  /**
+   * Motion (docs/motion-system.md): when the timeline first enters view its line is
+   * drawn from the top and the years rise in sequence (capped at 8 steps). The
+   * hidden state (.motion-armed) is set here, by the script that clears it, and only
+   * when the list is still off screen. While reading, the dated year crossing the
+   * middle of the viewport is marked .is-current (visual orientation only; no ARIA,
+   * no invented dates — the undated group is never highlighted).
+   */
+  document.querySelectorAll<HTMLElement>('.journey').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('.journey__years');
+    const years = [...root.querySelectorAll<HTMLElement>('.journey__year')];
+    years.forEach((y, i) => y.style.setProperty('--i', String(Math.min(i, 8))));
+    if (list && motionAllowed() && typeof IntersectionObserver === 'function') {
+      const r = list.getBoundingClientRect();
+      if (!(r.top < innerHeight && r.bottom > 0)) {
+        root.classList.add('motion-armed');
+        const io = new IntersectionObserver(
+          (entries) => {
+            if (!entries.some((e) => e.isIntersecting)) return;
+            io.disconnect();
+            root.classList.add('is-revealed');
+          },
+          { rootMargin: '0px 0px -10% 0px' },
+        );
+        io.observe(list);
+      }
+    }
+    const dated = years.filter((y) => !y.classList.contains('journey__year--undated'));
+    if (dated.length && typeof IntersectionObserver === 'function') {
+      const inBand = new Set<Element>();
+      const band = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => (e.isIntersecting ? inBand.add(e.target) : inBand.delete(e.target)));
+          const current = dated.find((y) => inBand.has(y));
+          dated.forEach((y) => y.classList.toggle('is-current', y === current));
+        },
+        { rootMargin: '-42% 0px -48% 0px' },
+      );
+      dated.forEach((y) => band.observe(y));
+    }
+  });
+
   document.querySelectorAll<HTMLButtonElement>('[data-journey-toggle]').forEach((btn) => {
     const root = btn.closest('.journey');
     const items = () => [...(root?.querySelectorAll<HTMLDetailsElement>('[data-journey-item]') ?? [])];
@@ -267,6 +311,45 @@ const latest = years[years.length - 1];
     inset-block: 0.5rem;
     inset-inline-start: 2.6rem;
     border-inline-start: 1px solid var(--color-rule);
+    transform-origin: 50% 0;
+  }
+  /* entry: line drawn from the top, years rise in sequence (classes set by the script) */
+  .journey.motion-armed:not(.is-revealed) .journey__years::before {
+    transform: scaleY(0);
+  }
+  .journey.motion-armed.is-revealed .journey__years::before {
+    transition: transform calc(var(--motion-draw) * 1.3) var(--ease-draw);
+  }
+  .journey.motion-armed:not(.is-revealed) .journey__year {
+    opacity: 0;
+  }
+  .journey.motion-armed.is-revealed .journey__year {
+    animation: motion-rise-sm var(--motion-slow) var(--ease-emphasized) backwards;
+    animation-delay: calc(120ms + var(--i, 0) * var(--stagger-step));
+  }
+  /* the year being read: accent numeral and a short rule under it (the numeral is
+     always LTR, so the rule grows from its left edge in both languages) */
+  .journey__y {
+    transition: color var(--motion-base) var(--ease-standard);
+  }
+  .journey__y::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0 auto;
+    inset-block-end: -0.3rem;
+    inline-size: 2.4em; /* about four numerals at the year's own size */
+    block-size: 2px;
+    border-radius: 2px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform var(--motion-base) var(--ease-emphasized);
+  }
+  .journey__year.is-current .journey__y {
+    color: var(--color-accent-strong);
+  }
+  .journey__year.is-current .journey__y::after {
+    transform: scaleX(1);
   }
   .journey__year details {
     position: relative;

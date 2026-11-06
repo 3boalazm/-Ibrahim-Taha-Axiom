@@ -72,7 +72,7 @@ const usesDrafts =
   {
     selectedPublications.length > 0 && (
       <section class="home-works container" aria-labelledby="selected-heading">
-        <div class="home-works__head">
+        <div class="home-works__head" data-reveal>
           <div>
             <p class="kicker">{ar ? 'مختارات' : 'Selected'}</p>
             <h2 id="selected-heading" class="home-works__title">
@@ -83,7 +83,7 @@ const usesDrafts =
             {ar ? 'كل المنشورات' : 'All publications'} <span class="ltr">({publications.length})</span>
           </a>
         </div>
-        <div class="home-works__list">
+        <div class="home-works__list" data-stagger>
           {selectedPublications.slice(0, 3).map((p) => (
             <PublicationItem pub={p} lang={lang} />
           ))}
@@ -97,7 +97,7 @@ const usesDrafts =
 
   <nav class="home-index container" aria-labelledby="index-heading">
     <h2 id="index-heading" class="label">{ui.contents}</h2>
-    <ol class="home-index__list" role="list">
+    <ol class="home-index__list" role="list" data-stagger>
       {
         sections.map((s) => (
           <li>
@@ -113,7 +113,7 @@ const usesDrafts =
   </nav>
 
   <div class="container">
-  <section class="home-cta" aria-labelledby="cta-heading">
+  <section class="home-cta" aria-labelledby="cta-heading" data-reveal>
     <div class="home-cta__copy">
       <p class="kicker">{ar ? 'تعاون' : 'Collaboration'}</p>
       <h2 id="cta-heading" class="home-cta__title">
@@ -192,7 +192,7 @@ const usesDrafts =
     grid-area: num;
     font-family: var(--font-mono);
     font-size: var(--step--2);
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
     padding-block-start: 0.3rem;
   }
   .home-index__name {

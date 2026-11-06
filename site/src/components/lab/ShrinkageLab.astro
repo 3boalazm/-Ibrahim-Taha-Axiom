@@ -651,6 +651,7 @@ const startRegime = regimeOf(start.rho);
 
 <script>
   import { coefSvg, cvSvg, fmtRho, mcSvg, type DrawState } from '../../lab/draw';
+  import { flip } from '../../lib/motion.mjs';
 
   type Key = 'ml' | 'ridge' | 'ns';
   type Est = { beta: number[]; se: number[]; lambda: number };
@@ -748,9 +749,14 @@ const startRegime = regimeOf(start.rho);
       presets.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.labPreset) === i)));
       readings.forEach((r) => r.toggleAttribute('data-active', r.dataset.labRegime === regime));
 
-      if (coefBox) coefBox.innerHTML = coefSvg(s, cfg.truth, domain, { truth: i18n.truth, zero: '0' });
-      if (cvBox) cvBox.innerHTML = cvSvg(s, lambdas, { axis: i18n.cvAxis });
-      drawMc();
+      // Geometry moves from the previous state to this one (≤ --motion-base, instant
+      // under reduced motion). Every readout above and both tables below are already
+      // the exact values of the selected state; nothing numeric is interpolated.
+      flip(root!, () => {
+        if (coefBox) coefBox.innerHTML = coefSvg(s, cfg.truth, domain, { truth: i18n.truth, zero: '0' });
+        if (cvBox) cvBox.innerHTML = cvSvg(s, lambdas, { axis: i18n.cvAxis });
+        drawMc();
+      });
 
       root!.querySelectorAll<HTMLTableRowElement>('[data-lab-table="sample"] tr').forEach((tr, j) => {
         const cells = tr.querySelectorAll('td');
@@ -802,7 +808,7 @@ const startRegime = regimeOf(start.rho);
       b.addEventListener('click', () => {
         metric = b.dataset.labMetric === 'rmse' ? 'rmse' : 'spread';
         metricButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        drawMc();
+        flip(mcBox, drawMc);
       }),
     );
     const shareStatus = $<HTMLElement>('[data-lab-share-status]');
@@ -966,7 +972,7 @@ const startRegime = regimeOf(start.rho);
   .lab__regime {
     font-family: var(--font-ui);
     font-size: var(--step--1);
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
     letter-spacing: 0.02em;
   }
 
@@ -1490,7 +1496,7 @@ const startRegime = regimeOf(start.rho);
     font-family: var(--font-ui);
     font-size: var(--step--2);
     letter-spacing: 0.04em;
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
   }
   .lab__related-meta {
     font-family: var(--font-ui);

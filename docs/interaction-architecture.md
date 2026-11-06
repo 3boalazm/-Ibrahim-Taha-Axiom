@@ -1,4 +1,4 @@
-# Interaction architecture (Phase 4)
+# Interaction architecture (Phase 4, motion in Phase 5)
 
 The site is static-first Astro: every page is complete HTML at build time, and each interactive feature is a small inline script that enhances HTML already on the page. There is no framework runtime and no client-side routing. No interactive feature calls a server. All data comes from `site/src/data/approved/` through the same build-time utilities the pages use, so an interactive view can never show something a static page would not.
 
@@ -10,6 +10,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 | `search.mjs` | search dialog | Weighted field scoring, category grouping, session history |
 | `explorer.mjs` | publication explorer | URL state, filters, sorts, facets |
 | `normal.mjs` | home hero | Φ (A&S 7.1.26), density and area paths |
+| `motion.mjs` | every page (boot), hero, graph, journey, explorer, lab | Motion gating, easing, `tween`, `swapText`, `drawStrokes`, keyed `flip`, reveal-once ([motion-system.md](motion-system.md)) |
 
 ## Site search (header button, Ctrl/⌘ K, `/`)
 
@@ -33,6 +34,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 - **Sorts:** newest, oldest, A–Z, selected first. **Views:** list, compact, cards.
 - **Shareable URLs:** `?q=&type=&from=&to=&sel=1&author=&area=&sort=&view=`. Invalid values fall back to defaults, and history uses `replaceState`, so filtering does not flood the back button.
 - **Without JavaScript:** every publication is in the HTML, newest first, with full details, citation copy, and BibTeX/RIS export (generated from the parsed bib at build time).
+- **Motion:** discrete changes (type, year bar, selects, sort, view, chips, clear) move the results with a keyed FLIP, and the list stays clickable throughout. Typing re-filters without motion. The result count changes once to its exact value, and the year bars grow from their baseline on first view.
 
 ## Knowledge graph (`/research/`)
 
@@ -43,13 +45,21 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
   - projects, talks and the dataset on the end side.
 - **Rendering:** nodes are HTML buttons over an SVG edge layer, and the columns mirror in Arabic. 41 edges are drawn. The project → dataset link joins two end-column nodes, so it appears in the panel and the list rather than as a line.
 - **Keyboard:** the graph is one Tab stop (roving tabindex). Arrow keys move within and between columns, Enter or Space selects, and Escape clears.
+  - Hovering or focusing a node lights its edges as a preview, instantly.
   - Selecting a node lights its edges and opens a panel with the evidence and links.
   - `?focus=area:…` preselects a node; the home page's area cards use this.
 - **Alternatives:** a full list view with the same connections is the default on narrow screens and always available through the Map/List switch. It is also the no-JS content.
+- **Motion:** the map draws once when it first enters view, column by column. A deep link (`?focus=`) skips the entrance. Selecting a node redraws its edges outward from it. Nodes never move on their own.
 
 ## Journey (`/about/`)
 
-Milestones are built only from dated approved records: education, roles, publications, talks and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن».
+Milestones are built only from dated approved records: education, roles, publications, talks and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن». In Arabic the " · " separator follows the page direction and only the numbers are isolated, so a range reads «التعليم · 2012–2015».
+
+Motion: the timeline line draws when it first enters view and the years rise in sequence. While reading, the dated year at the middle of the viewport is highlighted (visual only; the undated group never is). Year groups open and close smoothly where the browser supports it.
+
+## Section navigation ("On this page")
+
+The current item is the last section whose anchor has passed the reading line (45 % of the viewport). It is computed once per frame while scrolling, so it stays right after a jump and across long sections such as the lab's figures. The bar itself is a plain list of in-page links, and without JavaScript nothing is marked.
 
 ## Contact composer (`/contact/`)
 
@@ -63,7 +73,9 @@ There are four paths: collaboration, consulting, supervision and lectures/worksh
 
 The home page is made of these sections:
 
-- **Hero:** name, role and positioning, with CTAs to publications and research areas. The figure is a real standard normal density: pointer, touch or arrow keys move z, and Φ(z) is computed, not drawn. Nothing animates on its own.
+- **Hero:** name, role and positioning, with CTAs to publications and research areas. The figure is a real standard normal density: pointer, touch or arrow keys move z, and Φ(z) is computed, not drawn.
+  - On first view the figure draws itself once: axis, ticks, curve, then the area accumulates up to z and the marker settles. The readout is exact from the first frame.
+  - After that nothing moves unless the reader moves z; the marker then glides, and every frame is exact.
 - **Identity panel:** the approved portrait, then tabs (ARIA tabs, added by JS only) for affiliations, education, interests, academic profiles and contact.
 - **Research discovery:** area cards with publication previews from verified links, a graph teaser and projects.
 - **Selected publications.**
@@ -73,7 +85,14 @@ The home page is made of these sections:
 
 ## Motion and accessibility rules
 
-- Motion is limited to state changes (hover, selection, disclosure). There is no autoplay, parallax, scroll hijacking or perpetual animation, and `prefers-reduced-motion` removes transitions.
+- Motion follows [motion-system.md](motion-system.md):
+  - entrances play once, and state changes animate briefly;
+  - nothing loops or autoplays; there is no parallax, scroll hijacking or cursor effect;
+  - `prefers-reduced-motion` makes every change instant.
+  - No content or state depends on an animation: without JavaScript or with reduced motion, everything is visible in its final state.
 - Every interactive control works by keyboard, and each feature has a no-JS fallback.
-- Every page has exactly one `h1`. Identifiers (DOIs, URLs, ORCID) are isolated left-to-right runs in Arabic, and SVG figures use `direction: ltr` so mathematical axes are not mirrored.
-- JavaScript budget: each feature's script is only loaded on pages that use it. The search dialog script is the only one on every page; it is about 6 KB, and its index is lazy-loaded.
+- Every page has exactly one `h1`.
+- In Arabic, identifiers (DOIs, URLs, ORCID) and numbers are isolated left-to-right runs, while separators such as " · " stay outside the isolate in the page direction. SVG figures use `direction: ltr`, so mathematical axes are not mirrored.
+- JavaScript budget:
+  - **Every page:** the search dialog script (about 6 KB, 2.5 KB gzip; its index is lazy-loaded) and the motion boot with the shared motion module (about 5 KB, 2.3 KB gzip, cached across pages and reused by the feature scripts). The motion module is new in Phase 5.
+  - **Feature scripts:** each loads only on the pages that use it.

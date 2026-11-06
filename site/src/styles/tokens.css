@@ -25,8 +25,10 @@
   --color-focus: #8e4a14;
   --color-selection: #dce6dd;
 
-  /* decorative only — never used behind body text */
+  /* brass: strokes, rings and large marks. Small brass text uses --color-brass-ink,
+     which keeps the hue and clears 4.5:1 on paper, surface-1 and surface-2. */
   --color-brass: #a9843f;
+  --color-brass-ink: #7e632f;
   --color-brass-soft: #e8d9b8;
   --color-scrim: rgb(16 30 25 / 0.55);
   --color-glass: rgb(252 250 246 / 0.72);
@@ -35,6 +37,7 @@
   /* inverted panels (footer): deep ink in light mode, surface in dark mode */
   --color-invert-bg: #10241b;
   --color-invert-fg: #f7f4ee;
+  --color-invert-brass: #e8d9b8;
 
   /* content-type hues (small markers and hairline accents) */
   --type-publication: #1e4b3a;
@@ -104,12 +107,32 @@
   --shadow-lift: 0 30px 70px -32px rgb(16 30 25 / 0.42);
   --shadow-float: 0 10px 30px -14px rgb(16 30 25 / 0.28);
 
-  /* ---- motion ---- */
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-1: 140ms;
-  --dur-2: 260ms;
-  --dur-3: 520ms;
+  /* ---- motion (docs/motion-system.md) ----
+     Quiet mathematical motion: short, decelerating, never looping. Every duration
+     collapses to 0 under prefers-reduced-motion (see the media query below). */
+  --motion-instant: 90ms; /* press feedback, toggles */
+  --motion-fast: 160ms; /* hover, focus, small state changes */
+  --motion-base: 240ms; /* UI transitions: filters, results, panels, z marker */
+  --motion-slow: 420ms; /* entrances: reveal-once, stagger groups */
+  --motion-draw: 900ms; /* line-draw: curves, axes, graph edges, timeline */
+  --motion-page: 220ms; /* cross-document page transition */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* state changes */
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1); /* entrances: fast start, long settle */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15); /* leaving: accelerate out */
+  --ease-draw: cubic-bezier(0.65, 0, 0.35, 1); /* ink: even start and finish */
+  --stagger-step: 45ms; /* delay between siblings */
+  --stagger-cap: 8; /* siblings after the 8th share the last delay */
+  --rise-sm: 6px; /* entrance distance: small items, page content */
+  --rise-md: 14px; /* entrance distance: section blocks */
+  --lift: -2px; /* hover-lift */
+  --press-scale: 0.97; /* button press */
+
+  /* legacy aliases (pre-Phase 5 components); keep them on the shared scale */
+  --ease: var(--ease-standard);
+  --ease-out: var(--ease-emphasized);
+  --dur-1: var(--motion-fast);
+  --dur-2: var(--motion-base);
+  --dur-3: var(--motion-slow);
 
   color-scheme: light;
 }
@@ -142,6 +165,7 @@
   --color-focus: #e9a96b;
   --color-selection: #24463a;
   --color-brass: #d8b578;
+  --color-brass-ink: #d8b578;
   --color-brass-soft: #3a2f1d;
   --color-scrim: rgb(6 12 9 / 0.66);
   --color-glass: rgb(20 29 25 / 0.66);
@@ -149,6 +173,7 @@
   --color-glass-strong: rgb(14 21 18 / 0.88);
   --color-invert-bg: #141d19;
   --color-invert-fg: #efefe7;
+  --color-invert-brass: #d8b578;
   --type-publication: #9ed0b4;
   --type-project: #a8c79b;
   --type-teaching: #e0ae6f;
@@ -177,6 +202,7 @@
     --color-focus: #e9a96b;
     --color-selection: #24463a;
     --color-brass: #d8b578;
+    --color-brass-ink: #d8b578;
     --color-brass-soft: #3a2f1d;
     --color-scrim: rgb(6 12 9 / 0.66);
     --color-glass: rgb(20 29 25 / 0.66);
@@ -184,8 +210,7 @@
     --color-glass-strong: rgb(14 21 18 / 0.88);
     --color-invert-bg: #141d19;
     --color-invert-fg: #efefe7;
-  --color-invert-bg: #141d19;
-  --color-invert-fg: #efefe7;
+    --color-invert-brass: #d8b578;
     --type-publication: #9ed0b4;
     --type-project: #a8c79b;
     --type-teaching: #e0ae6f;
@@ -196,5 +221,23 @@
     --shadow-lift: 0 30px 70px -30px rgb(0 0 0 / 0.85);
     --shadow-float: 0 10px 30px -12px rgb(0 0 0 / 0.7);
     color-scheme: dark;
+  }
+}
+
+/* Reduced motion: every motion token collapses to zero, so token-based transitions
+   become instant; global.css additionally cuts any hard-coded duration. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 0ms;
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+    --motion-draw: 0ms;
+    --motion-page: 0ms;
+    --stagger-step: 0ms;
+    --rise-sm: 0px;
+    --rise-md: 0px;
+    --lift: 0px;
+    --press-scale: 1;
   }
 }

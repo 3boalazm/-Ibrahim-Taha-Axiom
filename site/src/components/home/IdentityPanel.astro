@@ -30,7 +30,7 @@ const groups = [
 
 {
   groups.length > 0 && (
-    <section class="idp container" aria-labelledby="idp-title" data-idp>
+    <section class="idp container" aria-labelledby="idp-title" data-idp data-reveal>
       <figure class="idp__portrait">
         <Picture picture={PICTURES.portrait} lang={lang} ratio="4 / 5" objectPosition="50% 20%" sizes="(min-width: 56rem) 16rem, 12rem" class="idp__shot" />
       </figure>
@@ -84,7 +84,7 @@ const groups = [
                     </p>
                     <p class="idp__muted">
                       <LangText value={e.institution} lang={lang} />
-                      {e.year && <span class="ltr"> · {e.year}</span>}
+                      {e.year && <span> · <span class="ltr">{e.year}</span></span>}
                     </p>
                   </li>
                 ))}

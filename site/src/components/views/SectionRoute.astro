@@ -184,7 +184,7 @@ const kicker = {
     {
       page === 'teaching' &&
         (count > 0 ? (
-          <ol class="cards" role="list" {...blockAttrs}>
+          <ol class="cards" role="list" data-settle {...blockAttrs}>
             {courses.map((c, i) => (
               <li class="cards__item" id={c.id}>
                 <div class="cards__side">
@@ -227,7 +227,7 @@ const kicker = {
     {
       page === 'talks' &&
         (count > 0 ? (
-          <ol class="timeline" role="list">
+          <ol class="timeline" role="list" data-settle>
             {talks.map((tk) => (
               <li class="timeline__item" id={tk.id}>
                 <div class="timeline__date ltr">{tk.date}</div>
@@ -418,11 +418,14 @@ const kicker = {
     border-radius: var(--radius-3);
     background: var(--color-surface-1);
     box-shadow: var(--shadow-card);
-    transition: box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
+    transition: box-shadow var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
   }
-  .cards__item:hover {
-    box-shadow: var(--shadow-lift);
-    transform: translateY(-2px);
+  /* hover-lift (motion.css): only where a real pointer hovers */
+  @media (hover: hover) and (pointer: fine) {
+    .cards__item:hover {
+      box-shadow: var(--shadow-lift);
+      transform: translate3d(0, var(--lift), 0);
+    }
   }
   .cards__side {
     display: grid;
@@ -433,7 +436,7 @@ const kicker = {
     font-family: var(--font-mono);
     font-size: var(--step--1);
     letter-spacing: 0.12em;
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
   }
   .cards__term {
     font-family: var(--font-ui);
@@ -601,7 +604,7 @@ const kicker = {
     border-color: var(--color-accent);
     background: var(--color-accent-soft);
     color: var(--color-ink);
-    transform: translateY(-2px);
+    transform: translate3d(0, var(--lift), 0);
   }
   .contact__option-label {
     font-family: var(--font-ui);
@@ -619,7 +622,7 @@ const kicker = {
     inset-block-start: var(--space-3);
     inset-inline-end: var(--space-3);
     font-size: var(--step--1);
-    color: var(--color-brass);
+    color: var(--color-brass-ink);
   }
   .contact__direct {
     display: flex;

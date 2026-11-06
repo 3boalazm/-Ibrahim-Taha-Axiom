@@ -152,12 +152,24 @@ const headline =
     justify-content: space-between;
     gap: var(--space-5);
     padding-block: clamp(var(--space-7), 6vw, var(--space-9)) var(--space-7);
-    border-block-end: 1px solid color-mix(in srgb, var(--color-paper) 16%, transparent);
+    border-block-end: 1px solid color-mix(in srgb, var(--color-invert-fg) 16%, transparent);
   }
   .site-footer__actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
+  }
+  /* The inverted panel inverts its solid button too: a paper pill on deep ink in
+     both themes (the global solid button is ink, which vanished here in light mode). */
+  .site-footer .button--solid {
+    --btn-bg: var(--color-invert-fg);
+    --btn-fg: var(--color-invert-bg);
+    --btn-line: var(--color-invert-fg);
+  }
+  .site-footer .button--solid:hover {
+    --btn-bg: var(--color-invert-brass);
+    --btn-line: var(--color-invert-brass);
+    color: var(--color-invert-bg);
   }
   .site-footer__copy,
   .site-footer__counts {
@@ -195,7 +207,7 @@ const headline =
     text-underline-offset: 0.2em;
   }
   .site-footer__grid .label {
-    color: color-mix(in srgb, var(--color-paper) 62%, transparent);
+    color: color-mix(in srgb, var(--color-invert-fg) 62%, transparent);
     margin-block-end: var(--space-3);
   }
   .site-footer__grid ul {
@@ -231,12 +243,13 @@ const headline =
   .site-footer :global(.wordmark:hover .wordmark__name) {
     color: var(--color-invert-fg);
   }
-  .site-footer :global(.wordmark__mark) {
-    color: var(--color-brass-soft);
+  .site-footer :global(.wordmark__mark),
+  .site-footer :global(.wordmark__axiom) {
+    color: var(--color-invert-brass);
   }
   .site-footer__translation .label {
     margin-inline-end: 0.5em;
-    color: var(--color-brass-soft);
+    color: var(--color-invert-brass);
   }
   .site-footer__translation {
     padding-block: var(--space-3);
@@ -251,7 +264,7 @@ const headline =
     gap: var(--space-3) var(--space-5);
     justify-content: space-between;
     padding-block: var(--space-4) var(--space-5);
-    border-block-start: 1px solid color-mix(in srgb, var(--color-paper) 16%, transparent);
+    border-block-start: 1px solid color-mix(in srgb, var(--color-invert-fg) 16%, transparent);
     font-size: var(--step--2);
     opacity: 0.72;
   }

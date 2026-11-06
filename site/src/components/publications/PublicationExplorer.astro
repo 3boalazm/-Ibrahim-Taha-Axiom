@@ -209,25 +209,22 @@ const labels = {
               aria-pressed="false"
               aria-label={ui.timelineBar(y, yearCount(y))}
               disabled={yearCount(y) === 0}
-              style={`--h: ${yearCount(y) / maxCount}`}
+              data-n={yearCount(y) || ''}
+              style={`--h: ${yearCount(y) / maxCount}; --i: ${yearRange.indexOf(y)}`}
             >
               <span class="explorer__bar-fill" aria-hidden="true" />
-              <span class="explorer__bar-n ltr" aria-hidden="true" data-x-year-count>
-                {yearCount(y) || ''}
-              </span>
               <span class="explorer__bar-y ltr" aria-hidden="true">
-                {String(y).slice(2)}
+                {y}
               </span>
             </button>
           ))
         }
       </div>
-      <div class="explorer__axis ltr" aria-hidden="true" dir="ltr"><span>{minYear}</span><span>{maxYear}</span></div>
     </figure>
 
     <div class="explorer__status">
       <p class="explorer__count" aria-live="polite" data-x-count>{ui.results(pubs.length)}</p>
-      <div class="explorer__active" data-x-active aria-label={ui.activeFilters}></div>
+      <div class="explorer__active" role="group" data-x-active aria-label={ui.activeFilters}></div>
       <div class="explorer__tools">
         <button type="button" class="button explorer__clear" data-x-clear hidden>{ui.clearFilters}</button>
         <button type="button" class="button" data-x-share>{ui.shareView}</button>
@@ -255,6 +252,7 @@ const labels = {
 
 <script>
   import { DEFAULT_STATE, filterItems, parseState, serializeState, sortItems, typeCounts, yearHistogram } from '../../lib/explorer.mjs';
+  import { EASE, css, flip, motionAllowed, swapText, token } from '../../lib/motion.mjs';
 
   type Item = { key: string; year: number | null; type: string; selected: boolean; title: string; authors: string[]; areas: string[]; words: string[] };
   type State = typeof DEFAULT_STATE extends infer T ? { -readonly [K in keyof T]: T[K] } : never;
@@ -315,20 +313,36 @@ const labels = {
       b.append(text, x);
       b.addEventListener('click', () => {
         onRemove();
-        apply();
-        (root.querySelector<HTMLElement>('.explorer__chip') ?? q)?.focus();
+        apply(true, { animate: true, after: () => (root.querySelector<HTMLElement>('.explorer__chip') ?? q)?.focus() });
       });
       return b;
     }
 
-    function apply(writeUrl = true) {
+    /**
+     * Motion (docs/motion-system.md): discrete changes (type, year, selects, sort,
+     * view, chips, clear) animate the result list with a keyed FLIP — results that
+     * stay glide to their new place, new ones rise in, removed ones leave at once.
+     * The list stays clickable throughout (a same-document View Transition would
+     * swallow clicks while it runs). Typing re-filters without motion (too frequent).
+     * State, URL and DOM are updated synchronously either way.
+     */
+    function apply(writeUrl = true, opts: { animate?: boolean; after?: () => void } = {}) {
+      const run = () => {
+        render(writeUrl);
+        opts.after?.();
+      };
+      if (opts.animate) flip(list, run, { selector: '[data-x-item]', key: (el: HTMLElement) => el.dataset.xItem!, scale: false, enter: 'rise' });
+      else run();
+    }
+
+    function render(writeUrl: boolean) {
       syncControls();
       const matched = sortItems(filterItems(items, state), state.sort) as Item[];
       const keys = new Set(matched.map((m) => m.key));
       for (const it of matched) list.append(nodes.get(it.key)!);
       nodes.forEach((li, key) => (li.hidden = !keys.has(key)));
       list.dataset.view = state.view;
-      count.textContent = L.results[matched.length] ?? String(matched.length);
+      swapText(count, L.results[matched.length] ?? String(matched.length));
       empty.hidden = matched.length > 0;
 
       const hist = yearHistogram(items, state, minYear, maxYear);
@@ -341,12 +355,12 @@ const labels = {
         b.setAttribute('aria-label', L.bar[`${y}:${h.count}`] ?? `${y}: ${h.count}`);
         b.setAttribute('aria-pressed', String(state.from === y && state.to === y));
         b.classList.toggle('is-in-range', (state.from === null || y >= state.from) && (state.to === null || y <= state.to) && (state.from !== null || state.to !== null));
-        const n = b.querySelector('[data-x-year-count]');
-        if (n) n.textContent = h.count ? String(h.count) : '';
+        b.dataset.n = h.count ? String(h.count) : '';
       });
       const tc = typeCounts(items, state);
       root.querySelectorAll<HTMLElement>('[data-x-type-count]').forEach((el) => (el.textContent = String(tc[el.dataset.xTypeCount!] ?? 0)));
 
+      const before = new Set([...active.children].map((c) => c.textContent));
       active.replaceChildren();
       if (state.q.trim()) active.append(chip(`${L.query}: ${state.q.trim()}`, () => (state.q = '')));
       state.types.forEach((ty) => active.append(chip(L.types[ty] ?? ty, () => (state.types = state.types.filter((x) => x !== ty)))));
@@ -355,6 +369,10 @@ const labels = {
       if (state.sel) active.append(chip(L.selected, () => (state.sel = false)));
       if (state.author) active.append(chip(`${L.author}: ${L.authors[state.author] ?? state.author}`, () => (state.author = '')));
       if (state.area) active.append(chip(`${L.area}: ${L.areas[state.area] ?? state.area}`, () => (state.area = '')));
+      if (motionAllowed())
+        [...active.children]
+          .filter((c) => !before.has(c.textContent))
+          .forEach((c) => c.animate([{ opacity: 0, transform: 'scale(0.92)' }, { opacity: 1, transform: 'none' }], { duration: token('--motion-fast'), easing: css(EASE.emphasized) }));
       const filtered = active.childElementCount > 0;
       clears.forEach((c) => (c.hidden = !filtered && c.closest('[data-x-empty]') === null));
 
@@ -375,38 +393,38 @@ const labels = {
     from?.addEventListener('change', () => {
       state.from = num(from.value);
       if (state.from !== null && state.to !== null && state.from > state.to) state.to = state.from;
-      apply();
+      apply(true, { animate: true });
     });
     to?.addEventListener('change', () => {
       state.to = num(to.value);
       if (state.from !== null && state.to !== null && state.to < state.from) state.from = state.to;
-      apply();
+      apply(true, { animate: true });
     });
-    author?.addEventListener('change', () => ((state.author = author.value), apply()));
-    area?.addEventListener('change', () => ((state.area = area.value), apply()));
-    sort?.addEventListener('change', () => ((state.sort = sort.value as State['sort']), apply()));
-    sel?.addEventListener('change', () => ((state.sel = sel.checked), apply()));
+    author?.addEventListener('change', () => ((state.author = author.value), apply(true, { animate: true })));
+    area?.addEventListener('change', () => ((state.area = area.value), apply(true, { animate: true })));
+    sort?.addEventListener('change', () => ((state.sort = sort.value as State['sort']), apply(true, { animate: true })));
+    sel?.addEventListener('change', () => ((state.sel = sel.checked), apply(true, { animate: true })));
     typeButtons.forEach((b) =>
       b.addEventListener('click', () => {
         const ty = b.dataset.xType!;
         if (!ty) state.types = [];
         else state.types = state.types.includes(ty) ? state.types.filter((x) => x !== ty) : [...state.types, ty];
-        apply();
+        apply(true, { animate: true });
       }),
     );
-    viewButtons.forEach((b) => b.addEventListener('click', () => ((state.view = b.dataset.xView as State['view']), apply())));
+    viewButtons.forEach((b) => b.addEventListener('click', () => ((state.view = b.dataset.xView as State['view']), apply(true, { animate: true }))));
     bars.forEach((b) =>
       b.addEventListener('click', () => {
         const y = Number(b.dataset.xYear);
         if (state.from === y && state.to === y) state.from = state.to = null;
         else state.from = state.to = y;
-        apply();
+        apply(true, { animate: true });
       }),
     );
     clears.forEach((c) =>
       c.addEventListener('click', () => {
         state = { ...DEFAULT_STATE, types: [], sort: state.sort, view: state.view };
-        apply();
+        apply(true, { animate: true });
         q?.focus();
       }),
     );
@@ -491,8 +509,12 @@ const labels = {
     gap: var(--space-2);
   }
   .explorer__n {
-    opacity: 0.7;
     margin-inline-start: 0.2rem;
+    color: var(--color-ink-3);
+  }
+  :global(button.chip[aria-pressed='true']) .explorer__n {
+    color: inherit;
+    opacity: 0.8;
   }
   .explorer__selects {
     display: grid;
@@ -569,15 +591,22 @@ const labels = {
   .explorer__bar:disabled {
     cursor: default;
   }
+  /* Bar height is a transform (scaleY of the full track), so filtering animates
+     without layout work; 0.025 keeps the 2px floor for empty years. On load the
+     bars grow once from the baseline (chart-reveal). */
   .explorer__bar-fill {
     grid-row: 2;
-    align-self: end;
+    align-self: stretch;
     inline-size: min(100%, 1.6rem);
-    block-size: calc(var(--h, 0) * 100%);
-    min-block-size: 2px;
     border-radius: 2px 2px 0 0;
     background: var(--color-rule-strong);
-    transition: block-size var(--dur-2) var(--ease-out), background var(--dur-1) var(--ease);
+    transform: scaleY(max(var(--h, 0), 0.025));
+    transform-origin: 50% 100%;
+    transition: transform var(--motion-base) var(--ease-emphasized), background var(--motion-fast) var(--ease-standard);
+  }
+  :global(html[data-motion]) .explorer__bar-fill {
+    animation: motion-grow-y var(--motion-slow) var(--ease-emphasized) backwards;
+    animation-delay: calc(120ms + min(var(--i, 0), 14) * 18ms);
   }
   .explorer__bar:not(:disabled):hover .explorer__bar-fill {
     background: var(--color-accent);
@@ -586,7 +615,12 @@ const labels = {
   .explorer__bar[aria-pressed='true'] .explorer__bar-fill {
     background: var(--color-accent);
   }
-  .explorer__bar-n {
+  /* The visible label of each bar is its full year, the first word of the
+     accessible name ("2018: 1 publication"), so speech input can target it
+     (WCAG 2.5.3). The count is the bar's value, not its label, and is drawn from
+     data-n. Nine full-year ticks fit at 320px (25px columns, 21px labels). */
+  .explorer__bar::before {
+    content: attr(data-n);
     grid-row: 1;
     color: var(--color-ink-2);
   }
@@ -598,13 +632,6 @@ const labels = {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
     border-radius: 2px;
-  }
-  .explorer__axis {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
   }
 
   /* -------------------------------------------------------------- status */
@@ -686,6 +713,19 @@ const labels = {
     border: var(--border-hairline);
     border-radius: var(--radius-3);
     background: var(--color-surface-1);
+    transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
+  }
+  /* hover-lift on real pointers; keyboard focus inside a card gets the same emphasis */
+  @media (hover: hover) and (pointer: fine) {
+    .explorer__list[data-view='cards'] :global(.pub:hover) {
+      transform: translate3d(0, var(--lift), 0);
+      box-shadow: var(--shadow-lift);
+      border-color: var(--color-rule-strong);
+    }
+  }
+  .explorer__list[data-view='cards'] :global(.pub:focus-within) {
+    border-color: var(--color-accent);
   }
   .explorer__list[data-view='cards'] :global(.pub__grid) {
     grid-template-columns: minmax(0, 1fr);
