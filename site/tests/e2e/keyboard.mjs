@@ -60,12 +60,17 @@ const ok = (cond, msg) => {
   console.log(`${cond ? '✓' : '✗'} ${msg}`);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Wait for the page to reach a state rather than for a fixed time: CI machines are
+// slower and less predictable than a laptop. The check that follows still asserts
+// the same final state; a timeout simply leaves it to fail.
+const until = (fn, timeout = 5000) => page.waitForFunction(fn, { timeout, polling: 50 }).then(() => true, () => false);
+const dialogOpen = (want) => until(new Function(`return document.getElementById('site-search')?.open === ${want};`));
 const go = (path) => page.goto(B + path, { waitUntil: 'networkidle0' });
 const ctrlK = async () => {
   await page.keyboard.down('Control');
   await page.keyboard.press('k');
   await page.keyboard.up('Control');
-  await sleep(150);
+  await dialogOpen(true);
 };
 const visible = () => page.$$eval('[data-x-item]:not([hidden])', (l) => l.length);
 const query = () => new URL(page.url()).search;
@@ -77,7 +82,7 @@ try {
   ok(await page.$eval('#site-search', (d) => d.open), 'Ctrl+K opens the search dialog');
   ok(await page.evaluate(() => document.activeElement?.id === 'site-search-input'), 'focus moves into the search field');
   await page.keyboard.type('ridge');
-  await sleep(400);
+  await until(() => document.querySelectorAll('#site-search-list a[role=option]').length > 3);
   ok((await page.$$eval('#site-search-list [role=option]', (o) => o.length)) > 3, '"ridge" lists several results');
   ok(await page.$$eval('#site-search-list mark', (m) => m.length > 0), 'matches are highlighted');
   await page.keyboard.press('ArrowDown');
@@ -91,21 +96,22 @@ try {
   await go('/research/');
   await page.focus('.search-trigger');
   await page.keyboard.press('Enter');
-  await sleep(150);
+  await dialogOpen(true);
   ok(await page.$eval('#site-search', (d) => d.open), 'the header button opens the dialog');
   await page.keyboard.press('Escape');
-  await sleep(150);
+  await dialogOpen(false);
   ok(!(await page.$eval('#site-search', (d) => d.open)), 'Escape closes it');
   ok(await page.evaluate(() => document.activeElement?.classList.contains('search-trigger')), 'focus returns to the button');
   await page.keyboard.press('/');
-  await sleep(150);
+  await dialogOpen(true);
   ok(await page.$eval('#site-search', (d) => d.open), '"/" opens the dialog');
   await page.keyboard.type('zzzqqq');
-  await sleep(400);
+  await until(() => document.querySelector('[data-search-empty]')?.hidden === false);
   ok(await page.$eval('[data-search-empty]', (e) => !e.hidden), 'no results shows the empty state');
   await page.keyboard.press('Escape');
   await go('/ar/');
   await ctrlK();
+  await page.waitForNetworkIdle({ idleTime: 200, timeout: 10000 }).catch(() => {});
   for (const q of ['الحَرْف', 'التعدد الخطي', 'Abonazel ٢٠٢٣', 'ridge انحدار']) {
     await page.$eval('#site-search-input', (i) => (i.value = ''));
     await page.type('#site-search-input', q);
@@ -120,17 +126,17 @@ try {
   ok(await page.$eval('[data-x-type="book"]', (b) => b.getAttribute('aria-pressed') === 'true'), 'the type control reflects the URL');
   await go('/publications/');
   await page.click('[data-x-year="2019"]');
-  await sleep(100);
+  await until(() => location.search.includes('from=2019&to=2019'));
   ok(query().includes('from=2019&to=2019') && (await visible()) > 0, 'a year bar filters and updates the URL');
   await page.click('[data-x-year="2019"]');
   await page.select('[data-x="author"]', 'abonazel|mr');
   await page.type('[data-x="q"]', 'two-parameter');
-  await sleep(300);
+  await until(() => new URLSearchParams(location.search).get('q') === 'two-parameter');
   ok((await visible()) === 1, 'co-author + search combine');
   await page.click('[data-x-view="cards"]');
   ok(await page.$eval('[data-x-list]', (l) => l.dataset.view === 'cards'), 'the view switches to cards');
   await page.click('.explorer__clear');
-  await sleep(100);
+  await until(() => location.search === '?view=cards');
   ok((await visible()) === 22 && query() === '?view=cards', 'clearing filters keeps the chosen view');
 
   // ------------------------------------------------------------- section nav
@@ -158,7 +164,7 @@ try {
   ok(a?.startsWith('area:') && b?.startsWith('publication:'), 'arrow keys move between graph nodes and columns');
   ok(await page.evaluate(() => [...document.querySelectorAll('.graph__node')].filter((n) => n.tabIndex === 0).length === 1), 'the graph is a single tab stop');
   await page.keyboard.press('Enter');
-  await sleep(100);
+  await until(() => !!document.querySelector('.graph__node[aria-pressed="true"]'));
   ok(!!(await page.$('.graph__node[aria-pressed="true"]')) && (await page.$$('.graph__edge.is-lit')).length > 0, 'Enter selects a node and lights its links');
   await page.keyboard.press('Escape');
   ok(!(await page.$('.graph__node[aria-pressed="true"]')), 'Escape clears the selection');
@@ -171,7 +177,7 @@ try {
   await go('/');
   await page.focus('[data-normal-plot]');
   await page.keyboard.press('ArrowRight');
-  await sleep(150);
+  await until(() => (document.querySelector('[data-normal-plot]')?.getAttribute('aria-valuetext') ?? '').startsWith('z = 2.06'));
   ok((await page.$eval('[data-normal-plot]', (p) => p.getAttribute('aria-valuetext'))).startsWith('z = 2.06, Φ(z) = 0.980'), 'the normal-curve slider moves with the arrow keys');
   await page.focus('[data-idp-tab]');
   await page.keyboard.press('ArrowRight');
