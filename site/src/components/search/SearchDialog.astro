@@ -1,0 +1,603 @@
+---
+/**
+ * Site-wide search: a native modal <dialog> with an ARIA combobox + listbox.
+ * Opens from the header button, Ctrl/⌘ K, or "/" (outside text fields).
+ * The index (/search-index/{lang}.json, approved data only) loads on first use.
+ * Recent queries live in sessionStorage only (this tab), never on a server.
+ */
+import { t } from '../../i18n/ui';
+import { localePath } from '../../utils/paths';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const i18n = {
+  categories: ui.searchCategories,
+  empty: ui.searchEmpty('{q}'),
+  emptyHint: ui.searchEmptyHint,
+  recent: ui.searchRecent,
+  loading: ui.searchLoading,
+  error: ui.searchError,
+  draft: ui.draftBadge,
+  count: {
+    one: ui.searchCount(1),
+    two: ui.searchCount(2),
+    few: ui.searchCount(3).replace('3', '{n}'),
+    many: ui.searchCount(11).replace('11', '{n}'),
+  },
+  more: lang === 'ar' ? '+{n} في صفحة المنشورات' : '+{n} more on the publications page',
+};
+---
+
+<dialog class="search" id="site-search" aria-labelledby="site-search-title" data-site-search data-index={`/search-index/${lang}.json`} data-i18n={JSON.stringify(i18n)} data-browse={localePath(lang, '/publications/')}>
+  <div class="search__panel">
+    <h2 id="site-search-title" class="visually-hidden">{ui.searchDialogLabel}</h2>
+    <div class="search__bar">
+      <svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+        <path d="M12.6 12.6 17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+      </svg>
+      <input
+        id="site-search-input"
+        class="search__input"
+        type="search"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="site-search-list"
+        aria-autocomplete="list"
+        aria-describedby="site-search-hint"
+        aria-label={ui.searchInputLabel}
+        placeholder={ui.searchInputPlaceholder}
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        enterkeyhint="go"
+        dir="auto"
+        data-search-input
+      />
+      <button type="button" class="search__close" data-search-close>
+        <span>{ui.searchClose}</span>
+        <kbd aria-hidden="true">Esc</kbd>
+      </button>
+    </div>
+
+    <div class="search__body">
+      <div class="search__hintrow">
+        <p id="site-search-hint" class="search__hint" data-search-hint>{ui.searchHint}</p>
+        <button type="button" class="search__clear" data-search-clear hidden>{ui.searchClearRecent}</button>
+      </div>
+      <div id="site-search-list" class="search__list" role="listbox" aria-label={ui.searchDialogLabel} data-search-list></div>
+      <div class="search__empty" data-search-empty hidden>
+        <p class="search__empty-title" data-search-empty-title></p>
+        <p class="search__empty-hint">{ui.searchEmptyHint}</p>
+        <a class="button" href={localePath(lang, '/publications/')}>{ui.searchBrowse}</a>
+      </div>
+    </div>
+
+    <footer class="search__foot">
+      <span class="search__keys">{ui.searchKeys}</span>
+      <span class="search__note">{ui.searchRecentNote}</span>
+    </footer>
+    <p class="visually-hidden" aria-live="polite" data-search-status></p>
+  </div>
+</dialog>
+
+<script>
+  import { prepare, search, pushHistory, CATEGORIES } from '../../lib/search.mjs';
+  import { highlightSegments } from '../../lib/text.mjs';
+
+  type Rec = { id: string; cat: string; title: string; tl?: string; meta: string; url: string; draft?: boolean };
+  type I18n = {
+    categories: Record<string, string>;
+    empty: string;
+    recent: string;
+    loading: string;
+    error: string;
+    draft: string;
+    count: { one: string; two: string; few: string; many: string };
+    more: string;
+  };
+
+  const dialog = document.querySelector<HTMLDialogElement>('dialog[data-site-search]');
+  if (dialog) {
+    const input = dialog.querySelector<HTMLInputElement>('[data-search-input]')!;
+    const list = dialog.querySelector<HTMLElement>('[data-search-list]')!;
+    const empty = dialog.querySelector<HTMLElement>('[data-search-empty]')!;
+    const emptyTitle = dialog.querySelector<HTMLElement>('[data-search-empty-title]')!;
+    const hint = dialog.querySelector<HTMLElement>('[data-search-hint]')!;
+    const clearBtn = dialog.querySelector<HTMLButtonElement>('[data-search-clear]')!;
+    const status = dialog.querySelector<HTMLElement>('[data-search-status]')!;
+    const i18n = JSON.parse(dialog.dataset.i18n ?? '{}') as I18n;
+    const hintText = hint.textContent ?? '';
+    const KEY = 'axiom-search-history';
+    let index: ReturnType<typeof prepare> | null = null;
+    let loading: Promise<void> | null = null;
+    let failed = false;
+    let active = -1;
+    let opener: HTMLElement | null = null;
+    let typing = 0;
+    let announcing = 0;
+
+    const countText = (n: number) =>
+      (n === 1 ? i18n.count.one : n === 2 ? i18n.count.two : n <= 10 ? i18n.count.few : i18n.count.many).replace('{n}', String(n));
+    const history = (): string[] => {
+      try {
+        return JSON.parse(sessionStorage.getItem(KEY) ?? '[]');
+      } catch {
+        return [];
+      }
+    };
+    const saveHistory = (q: string) => {
+      try {
+        sessionStorage.setItem(KEY, JSON.stringify(pushHistory(history(), q)));
+      } catch {
+        /* storage unavailable: history is optional */
+      }
+    };
+
+    function load() {
+      if (index || loading) return loading;
+      loading = fetch(dialog!.dataset.index!)
+        .then((r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          return r.json();
+        })
+        .then((data) => {
+          index = prepare(data.records);
+        })
+        .catch(() => {
+          failed = true;
+        })
+        .finally(() => {
+          loading = null;
+          if (dialog!.open) render();
+        });
+      return loading;
+    }
+
+    const options = () => [...list.querySelectorAll<HTMLElement>('[role="option"]')];
+    function setActive(i: number) {
+      const opts = options();
+      if (!opts.length) {
+        active = -1;
+        input.removeAttribute('aria-activedescendant');
+        return;
+      }
+      active = (i + opts.length) % opts.length;
+      opts.forEach((o, k) => o.setAttribute('aria-selected', String(k === active)));
+      input.setAttribute('aria-activedescendant', opts[active].id);
+      opts[active].scrollIntoView({ block: 'nearest' });
+    }
+
+    function group(label: string, id: string) {
+      const g = document.createElement('div');
+      g.setAttribute('role', 'group');
+      g.setAttribute('aria-labelledby', id);
+      g.className = 'search__group';
+      const h = document.createElement('div');
+      h.id = id;
+      h.className = 'search__group-label';
+      h.setAttribute('role', 'presentation');
+      h.textContent = label;
+      g.append(h);
+      return g;
+    }
+
+    function announce(text: string) {
+      clearTimeout(announcing);
+      announcing = window.setTimeout(() => (status.textContent = text), 350);
+    }
+
+    function render() {
+      const q = input.value;
+      list.replaceChildren();
+      empty.hidden = true;
+      active = -1;
+      input.removeAttribute('aria-activedescendant');
+      clearBtn.hidden = true;
+      hint.textContent = hintText;
+
+      if (!q.trim()) {
+        const recent = history();
+        input.setAttribute('aria-expanded', String(recent.length > 0));
+        if (recent.length) {
+          clearBtn.hidden = false;
+          hint.textContent = i18n.recent;
+          const g = group(i18n.recent, 'search-g-recent');
+          recent.forEach((r, k) => {
+            const o = document.createElement('div');
+            o.id = `search-r-${k}`;
+            o.className = 'search__option search__option--recent';
+            o.setAttribute('role', 'option');
+            o.setAttribute('aria-selected', 'false');
+            o.dataset.query = r;
+            o.textContent = r;
+            o.dir = 'auto';
+            g.append(o);
+          });
+          list.append(g);
+        }
+        return;
+      }
+      if (!index) {
+        hint.textContent = failed ? i18n.error : i18n.loading;
+        input.setAttribute('aria-expanded', 'false');
+        if (!failed) load();
+        return;
+      }
+      const res = search(index, q);
+      input.setAttribute('aria-expanded', String(res.total > 0));
+      if (!res.total) {
+        empty.hidden = false;
+        emptyTitle.textContent = i18n.empty.replace('{q}', q.trim());
+        announce(emptyTitle.textContent);
+        return;
+      }
+      let n = 0;
+      for (const { category, items, more } of res.groups) {
+        const g = group(i18n.categories[category] ?? category, `search-g-${category}`);
+        for (const rec of items as Rec[]) {
+          const a = document.createElement('a');
+          a.id = `search-o-${n++}`;
+          a.href = rec.url;
+          a.className = 'search__option';
+          a.setAttribute('role', 'option');
+          a.setAttribute('aria-selected', 'false');
+          a.tabIndex = -1;
+          const title = document.createElement('span');
+          title.className = 'search__title';
+          title.dir = 'auto';
+          if (rec.tl) title.lang = rec.tl;
+          for (const seg of highlightSegments(rec.title, res.tokens)) {
+            if (seg.hit) {
+              const m = document.createElement('mark');
+              m.textContent = seg.text;
+              title.append(m);
+            } else title.append(seg.text);
+          }
+          const meta = document.createElement('span');
+          meta.className = 'search__meta';
+          meta.dir = 'auto';
+          meta.textContent = rec.meta;
+          a.append(title, meta);
+          if (rec.draft) {
+            const d = document.createElement('span');
+            d.className = 'draft-badge';
+            d.textContent = i18n.draft;
+            a.append(d);
+          }
+          g.append(a);
+        }
+        if (more > 0 && (category === 'publications' || category === 'books')) {
+          const link = document.createElement('a');
+          link.id = `search-o-${n++}`;
+          link.className = 'search__option search__option--more';
+          link.setAttribute('role', 'option');
+          link.setAttribute('aria-selected', 'false');
+          link.tabIndex = -1;
+          link.href = `${dialog!.dataset.browse}?q=${encodeURIComponent(q.trim())}`;
+          link.textContent = i18n.more.replace('{n}', String(more));
+          g.append(link);
+        }
+        list.append(g);
+      }
+      announce(countText(res.total));
+    }
+
+    function choose(el: HTMLElement | undefined) {
+      if (!el) return;
+      if (el.dataset.query !== undefined) {
+        input.value = el.dataset.query;
+        render();
+        input.focus();
+        return;
+      }
+      const href = el.getAttribute('href');
+      if (!href) return;
+      saveHistory(input.value);
+      dialog!.close();
+      location.assign(href);
+    }
+
+    function open(from?: HTMLElement | null) {
+      if (dialog!.open) return;
+      opener = from ?? (document.activeElement as HTMLElement | null);
+      dialog!.showModal();
+      input.focus();
+      input.select();
+      load();
+      render();
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(typing);
+      typing = window.setTimeout(render, 60);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActive(active + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActive(active - 1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(typing);
+        if (active < 0) render();
+        const opts = options();
+        choose(opts[active >= 0 ? active : 0]);
+      }
+    });
+    list.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('[role="option"]');
+      if (!el) return;
+      if (el.dataset.query !== undefined) {
+        e.preventDefault();
+        choose(el);
+      } else saveHistory(input.value);
+    });
+    list.addEventListener('mousemove', (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('[role="option"]');
+      if (el) {
+        const i = options().indexOf(el);
+        if (i !== active) setActive(i);
+      }
+    });
+    clearBtn.addEventListener('click', () => {
+      try {
+        sessionStorage.removeItem(KEY);
+      } catch {
+        /* ignore */
+      }
+      render();
+      input.focus();
+    });
+    dialog.querySelector('[data-search-close]')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      opener?.focus?.();
+      opener = null;
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-search-open]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        open(btn);
+      });
+      // Warm the index when the visitor shows intent.
+      btn.addEventListener('pointerenter', () => load(), { once: true });
+      btn.addEventListener('focus', () => load(), { once: true });
+    });
+    document.addEventListener('keydown', (e) => {
+      const target = e.target as HTMLElement;
+      const typingField = target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (dialog.open) dialog.close();
+        else open();
+      } else if (e.key === '/' && !typingField && !dialog.open && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        open();
+      }
+    });
+    // Category order is shared with the ranking module; keep a reference so
+    // bundlers do not drop it and the order stays in one place.
+    void CATEGORIES;
+  }
+</script>
+
+<style>
+  .search {
+    inline-size: min(44rem, calc(100vw - 2rem));
+    max-block-size: min(40rem, calc(100dvh - 4rem));
+    margin-block-start: clamp(1rem, 8vh, 6rem);
+    margin-inline: auto;
+    padding: 0;
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-float);
+    overflow: hidden;
+  }
+  .search::backdrop {
+    background: rgb(12 22 18 / 0.45);
+  }
+  :global(html:has(dialog.search[open])) {
+    overflow: hidden;
+  }
+  .search__panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    max-block-size: inherit;
+  }
+  .search__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-block-end: var(--border-hairline);
+  }
+  .search__icon {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    flex: none;
+    color: var(--color-ink-3);
+  }
+  .search__input {
+    flex: 1;
+    min-inline-size: 0;
+    min-block-size: 2.75rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--step-1);
+  }
+  .search__input:focus {
+    outline: none;
+  }
+  .search__input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .search__bar:focus-within {
+    box-shadow: inset 0 -2px 0 var(--color-accent);
+  }
+  .search__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-block-size: 2.5rem;
+    padding: 0.25rem 0.6rem;
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: transparent;
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    cursor: pointer;
+  }
+  .search__close:focus-visible,
+  .search__clear:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    padding: 0.05rem 0.35rem;
+    border: var(--border-hairline);
+    border-radius: 4px;
+    color: var(--color-ink-3);
+  }
+  .search__body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-3) var(--space-2) var(--space-4);
+  }
+  .search__hintrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-inline: var(--space-2);
+  }
+  .search__hint {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .search__clear {
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    cursor: pointer;
+    min-block-size: 2.25rem;
+  }
+  .search__list :global(.search__group) {
+    display: grid;
+    gap: 2px;
+    margin-block-start: var(--space-3);
+  }
+  .search__list :global(.search__group-label) {
+    padding: 0 var(--space-2) var(--space-1);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-brass);
+  }
+  :global(:lang(ar)) .search__list :global(.search__group-label) {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .search__list :global(.search__option) {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.6rem var(--space-3);
+    border-radius: var(--radius-2);
+    color: var(--color-ink);
+    text-decoration: none;
+    cursor: pointer;
+    scroll-margin-block: var(--space-4);
+  }
+  .search__list :global(.search__option[aria-selected='true']) {
+    background: var(--color-accent-soft);
+    box-shadow: inset 3px 0 0 var(--color-accent);
+  }
+  :global([dir='rtl']) .search__list :global(.search__option[aria-selected='true']) {
+    box-shadow: inset -3px 0 0 var(--color-accent);
+  }
+  .search__list :global(.search__title) {
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    line-height: 1.35;
+  }
+  .search__list :global(.search__title mark) {
+    background: color-mix(in srgb, var(--color-brass-soft) 85%, transparent);
+    color: inherit;
+    border-radius: 2px;
+    padding-inline: 1px;
+  }
+  .search__list :global(.search__meta) {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .search__list :global(.search__option .draft-badge) {
+    justify-self: start;
+  }
+  .search__list :global(.search__option--recent),
+  .search__list :global(.search__option--more) {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+  }
+  .search__empty {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-3);
+  }
+  .search__empty-title {
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
+  }
+  .search__empty-hint {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+  }
+  .search__foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-block-start: var(--border-hairline);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 40rem) {
+    .search {
+      inline-size: 100vw;
+      max-inline-size: 100vw;
+      block-size: 100dvh;
+      max-block-size: 100dvh;
+      margin: 0;
+      border-radius: 0;
+      border: 0;
+    }
+    .search__keys {
+      display: none;
+    }
+  }
+</style>

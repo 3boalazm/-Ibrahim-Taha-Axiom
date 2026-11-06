@@ -1,6 +1,9 @@
 ---
 import AuthorList from './AuthorList.astro';
 import CiteBlock from './CiteBlock.astro';
+import LangText from '../shared/LangText.astro';
+import { methods, projects, researchAreas } from '../../utils/content';
+import { areasOf, methodsOf, projectsOf } from '../../utils/relations';
 import { t } from '../../i18n/ui';
 import { localePath } from '../../utils/paths';
 import type { Publication } from '../../utils/publications';
@@ -13,19 +16,22 @@ interface Props {
   compact?: boolean;
   /** Position in a numbered list, for the editorial index numeral. */
   index?: number;
+  /** Show verified area/project/method links (from manifest relationships). */
+  related?: boolean;
 }
-const { pub, lang, compact = false, index } = Astro.props;
+const { pub, lang, compact = false, index, related = true } = Astro.props;
 const ui = t(lang);
 const ar = lang === 'ar';
 const href = localePath(lang, `/publications/${pub.key}/`);
-const fold = (s: string) => s.normalize('NFKD').replace(/[̀-ًͯ-ٟ]/g, '').toLowerCase();
-const searchText = fold(
-  [pub.title, ...pub.authors.map((a) => a.display), pub.venue ?? '', ...pub.keywords, String(pub.year ?? ''), pub.doi ?? ''].join(' '),
-);
 const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publication';
+const relAreas = related ? areasOf(pub.key).flatMap((id) => researchAreas.filter((a) => a.id === id)) : [];
+const relProjects = related ? projectsOf(pub.key).flatMap((id) => projects.filter((x) => x.id === id)) : [];
+const relMethods = related ? methodsOf(pub.key).flatMap((id) => methods.filter((m) => m.id === id)) : [];
+const researchPath = localePath(lang, '/research/');
+const projectsPath = localePath(lang, '/projects/');
 ---
 
-<article class:list={['pub', { 'pub--selected': pub.selected, 'pub--compact': compact }]} data-pub data-type={pub.type} data-selected={String(pub.selected)} data-search={searchText}>
+<article class:list={['pub', { 'pub--selected': pub.selected, 'pub--compact': compact }]} data-pub data-key={pub.key} data-type={pub.type} data-selected={String(pub.selected)}>
   <div class="pub__grid">
     <div class="pub__aside">
       {index !== undefined && <span class="pub__index ltr">{String(index).padStart(2, '0')}</span>}
@@ -51,6 +57,37 @@ const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publ
         {pub.volume && <span class="ltr">{pub.volume}{pub.number ? `(${pub.number})` : ''}</span>}
         {pub.pages && <span class="ltr">{pub.pages}</span>}
       </p>
+
+      {
+        !compact && relAreas.length + relProjects.length + relMethods.length > 0 && (
+          <ul class="pub__related" role="list">
+            {relAreas.map((a) => (
+              <li>
+                <a class="pub__chip pub__chip--area" href={`${researchPath}#${a.id}`}>
+                  <span class="visually-hidden">{ui.relatedAreas}: </span>
+                  <LangText value={a.title} lang={lang} />
+                </a>
+              </li>
+            ))}
+            {relProjects.map((x) => (
+              <li>
+                <a class="pub__chip pub__chip--project" href={`${projectsPath}#${x.id}`}>
+                  <span class="visually-hidden">{ui.relatedProjects}: </span>
+                  <LangText value={x.title} lang={lang} />
+                </a>
+              </li>
+            ))}
+            {relMethods.map((m) => (
+              <li>
+                <a class="pub__chip pub__chip--method" href={`${researchPath}?focus=method:${m.id}#knowledge-graph`}>
+                  <span class="visually-hidden">{ui.relatedMethods}: </span>
+                  <LangText value={m.title} lang={lang} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
 
       {
         !compact && (
@@ -91,6 +128,44 @@ const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publ
 </article>
 
 <style>
+  .pub__related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    margin: 0;
+    padding: 0;
+  }
+  .pub__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-block-size: 1.9rem;
+    padding: 0.15rem 0.6rem;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+  .pub__chip::before {
+    content: '';
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 50%;
+    background: var(--chip, var(--color-accent));
+    flex: none;
+  }
+  .pub__chip--project {
+    --chip: var(--color-brass);
+  }
+  .pub__chip--method {
+    --chip: var(--color-ink-3);
+  }
+  .pub__chip:hover {
+    border-color: var(--color-rule-strong);
+    color: var(--color-ink);
+  }
   .pub {
     position: relative;
     padding-block: var(--space-5);
@@ -286,7 +361,7 @@ const kind = pub.type === 'book' || pub.type === 'book-chapter' ? 'book' : 'publ
   }
   @media (max-width: 48rem) {
     .pub__grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-2);
     }
     .pub__aside {

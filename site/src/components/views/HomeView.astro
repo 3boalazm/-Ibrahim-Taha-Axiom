@@ -1,17 +1,22 @@
 ---
 /**
- * The home page: an editorial masthead over a full-bleed image, a figures band,
- * research areas as image cards, selected publications, the teaching studio,
- * the community, and a closing invitation.
+ * Home page — a living research profile:
+ *   hero (identity, positioning, a normal-density figure) → academic identity
+ *   (progressive disclosure) → research discovery (areas, graph teaser,
+ *   projects) → selected publications → the lab → source-labelled metrics →
+ *   site contents → an invitation to write.
+ * Every number on the page is derived from approved data at build time.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HomeHero from '../home/HomeHero.astro';
+import IdentityPanel from '../home/IdentityPanel.astro';
+import ResearchDiscovery from '../home/ResearchDiscovery.astro';
+import LabTeaser from '../home/LabTeaser.astro';
+import MetricCards from '../home/MetricCards.astro';
 import PublicationItem from '../publications/PublicationItem.astro';
-import LangText from '../shared/LangText.astro';
-import Picture from '../media/Picture.astro';
-import { PICTURES } from '../../utils/imagery';
+import DraftNote from '../shared/DraftNote.astro';
 import { PRIMARY, SECTION_ORDER, SECTION_PATHS, SITE_NAME, pageCopy, sectionCount, sectionNumber } from '../../config/site';
-import { manifest, pick, profile, projects, researchAreas, courses } from '../../utils/content';
-import { metrics, primaryMetrics, secondaryMetrics } from '../../utils/metrics';
+import { arDraft, profile, researchAreas } from '../../utils/content';
 import { publications, selectedPublications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
@@ -25,1522 +30,259 @@ const ui = t(lang);
 const copy = await pageCopy('home', lang);
 const ar = lang === 'ar';
 
+const contactPaths = ar
+  ? [
+      { id: 'collaboration', label: 'تعاون بحثي', note: 'ورقة أو مشروع أو بيانات مشتركة' },
+      { id: 'consulting', label: 'استشارة إحصائية', note: 'تحليل بيانات أو مراجعة منهجية' },
+      { id: 'supervision', label: 'إشراف أكاديمي', note: 'رسائل الماجستير والدكتوراه' },
+      { id: 'speaking', label: 'محاضرة أو ورشة', note: 'المؤتمرات والتدريب' },
+    ]
+  : [
+      { id: 'collaboration', label: 'Research collaboration', note: 'A joint paper, project or dataset' },
+      { id: 'consulting', label: 'Statistical consulting', note: 'Data analysis or a methods review' },
+      { id: 'supervision', label: 'Supervision', note: "Master's and doctoral work" },
+      { id: 'speaking', label: 'Lectures and workshops', note: 'Conferences and training' },
+    ];
 const sections = await Promise.all(
-  SECTION_ORDER.filter((k) => PRIMARY.includes(k) || (sectionCount(k) ?? 0) > 0).map(async (key) => {
-    const c = await pageCopy(key, lang);
-    const n = sectionCount(key);
-    return { key, href: localePath(lang, SECTION_PATHS[key]), title: c.navLabel, lead: c.lead, n, number: sectionNumber(key) };
-  }),
+  SECTION_ORDER.filter((k) => PRIMARY.includes(k) || (sectionCount(k) ?? 0) > 0)
+    .filter((k) => k !== 'about' && k !== 'contact')
+    .map(async (key) => {
+      const c = await pageCopy(key, lang);
+      return { key, href: localePath(lang, SECTION_PATHS[key]), title: c.navLabel, n: sectionCount(key), number: sectionNumber(key) };
+    }),
 );
-const list = (n: number) => ui.entries(n);
-const recent = publications.filter((p) => !p.selected).slice(0, 3);
-const pending = manifest.researcherApproval.status !== 'approved';
-const hasIdentity = !!(profile.name.en || profile.name.ar || profile.role.en || profile.role.ar);
-const summary = pick(profile.summary, lang);
-const leadText = summary && !summary.fallback ? summary.text : copy.lead;
-
-/* Editorial figure band: real, countable numbers from approved data only. */
-const figures = [
-  { value: String(publications.length), label: ar ? 'عملًا منشورًا في السجل' : 'works in the record', note: ar ? 'المعتمدة على هذا الموقع' : 'approved on this site' },
-  { value: String(secondaryMetrics.figures.publications), label: ar ? 'مادة على ResearchGate' : 'items on ResearchGate', note: `${ar ? 'حتى' : 'as of'} ${secondaryMetrics.retrieved}` },
-  { value: String(secondaryMetrics.figures.citations), label: ar ? 'استشهادًا (ResearchGate)' : 'citations (ResearchGate)', note: `${ar ? 'حتى' : 'as of'} ${secondaryMetrics.retrieved}` },
-  { value: `h ${primaryMetrics.hIndex}`, label: ar ? 'مؤشر هيرش (OpenAlex)' : 'h-index (OpenAlex)', note: `${primaryMetrics.works} ${ar ? 'عملًا مُفهرسًا' : 'indexed works'}` },
-];
-
-/* Research areas, each paired with an abstract image (no human figures). */
-const areaImage: Record<string, { src: string; alt: string }> = {
-  'penalized-count-regression': {
-    src: '/images/surface.webp',
-    alt: ar
-      ? 'سطح انحدار زجاجي شفاف بخطوط كنتورية دقيقة، تجسيد بصري لدالة انحدار'
-      : 'A translucent glass regression surface with fine contour lines',
-  },
-  'beta-regression': {
-    src: '/images/distributions.webp',
-    alt: ar ? 'منحنيات كثافة احتمالية منحوتة في الزجاج على سطح من الجص الفاتح' : 'Density curves sculpted in glass on a pale plaster surface',
-  },
-  'bayesian-estimation': {
-    src: '/images/strata.webp',
-    alt: ar
-      ? 'صفحات رقيقة من الزجاج المصنفر والسيراميك الفاتح مكدَّسة كسطح انحدار متدرّج'
-      : 'Thin sheets of frosted glass and pale ceramic stacked like a stepped regression plane',
-  },
-  'applied-quantitative-studies': {
-    src: '/images/study.webp',
-    alt: ar ? 'مكتب أكاديمي هادئ: دفتر مفتوح وقلم حبر ومسطرة نحاسية' : 'A quiet academic desk with an open notebook, fountain pen and brass ruler',
-  },
-};
-const areas = researchAreas.map((a, i) => ({ ...a, img: areaImage[a.id], index: i }));
-const wide = (i: number) => (areas.length === 4 ? i === 0 || i === 3 : i === 0);
-
-/* Section links as a numbered index (editorial table of contents). */
-const index = sections.filter((s) => s.key !== 'about' && s.key !== 'contact');
+// Arabic home shows unreviewed drafts (role, summary, areas…) — say so once.
+const usesDrafts =
+  ar &&
+  [profile.role, profile.summary, ...profile.interests, ...researchAreas.flatMap((a) => [a.title, a.summary])].some((v) => v && !v.ar && !!arDraft(v.en));
 ---
 
 <BaseLayout lang={lang} path="/" title={SITE_NAME} description={copy.description}>
-  <!-- ---------------------------------------------------------------- hero -->
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__media">
-      <img
-        src="/images/hero.webp"
-        width="2000"
-        height="1126"
-        alt={ar
-          ? 'منحوتة تجريدية لسطح إحصائي: تلال سيراميك عاجي وصفيح زجاجي أخضر فاتح'
-          : 'An abstract sculpture of a statistical surface: ivory ceramic ridges and pale green glass'}
-        fetchpriority="high"
-        decoding="async"
-      />
-      <span class="hero__veil" aria-hidden="true"></span>
-    </div>
-
-    <div class="container hero__inner">
-      <div class="hero__top">
-        <span class="hero__eyebrow label">
-          <span class="hero__dot" aria-hidden="true"></span>
-          {ar ? 'باحث في الإحصاء التطبيقي والقياس الاقتصادي' : 'Applied statistics · Econometrics'}
-        </span>
-        <span class="hero__year ltr">2019 — {new Date().getFullYear()}</span>
-      </div>
-
-      <div class="hero__body">
-        <h1 id="hero-title" class="hero__title">
-          {ar ? (
-            <>
-              <span class="hero__line">الإحصاء</span>
-              <span class="hero__line hero__line--italic">بلغةٍ تُفهم.</span>
-            </>
-          ) : (
-            <>
-              <span class="hero__line">Statistics,</span>
-              <span class="hero__line hero__line--italic">made legible.</span>
-            </>
-          )}
-        </h1>
-
-        <div class="hero__aside">
-          <p class="hero__lead">{ar ? copy.lead : leadText}</p>
-          <div class="hero__actions">
-            <a class="button button--solid button--lg" href={localePath(lang, '/publications/')}>
-              {ar ? 'تصفّح المنشورات' : 'Explore publications'}
-              <span class="button__arrow" aria-hidden="true">↗</span>
-            </a>
-            <a class="button button--lg hero__ghost" href={localePath(lang, '/about/')}>
-              {ar ? 'من أنا' : 'About Ibrahim'}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------------------------------------------------------- identity bar -->
+  <HomeHero lang={lang} lead={copy.lead} />
   {
-    hasIdentity && (
-      <section class="identity" aria-label={ar ? 'الهوية الأكاديمية' : 'Academic identity'}>
-        <div class="container identity__inner">
-          <div class="identity__text">
-            <p class="identity__name">
-              <LangText value={profile.name} lang={lang} />
-            </p>
-            <p class="identity__role">
-              <LangText value={profile.role} lang={lang} />
-            </p>
-            <ul class="identity__interests" role="list">
-              {profile.interests.slice(0, 4).map((i) => (
-                <li class="chip">{(ar ? i.ar : i.en) ?? i.en ?? i.ar}</li>
-              ))}
-            </ul>
-            {
-              (profile.contact.email || profile.contact.phone) && (
-                <p class="identity__contact">
-                  <span class="label">{ui.contactDirect}</span>
-                  {profile.contact.email && (
-                    <a class="ltr" href={`mailto:${profile.contact.email}`}>
-                      {profile.contact.email}
-                    </a>
-                  )}
-                </p>
-              )
-            }
+    usesDrafts && (
+      <div class="container home__draft">
+        <DraftNote lang={lang} />
+      </div>
+    )
+  }
+  <IdentityPanel lang={lang} />
+  <ResearchDiscovery lang={lang} />
+
+  {
+    selectedPublications.length > 0 && (
+      <section class="home-works container" aria-labelledby="selected-heading">
+        <div class="home-works__head">
+          <div>
+            <p class="kicker">{ar ? 'مختارات' : 'Selected'}</p>
+            <h2 id="selected-heading" class="home-works__title">
+              {ar ? 'منشورات مختارة' : 'Selected publications'}
+            </h2>
           </div>
-          <div class="identity__media frame frame--portrait">
-            <Picture picture={PICTURES.portraitWide} lang={lang} />
-            <span class="frame__caption">
-              {ar ? 'بورتريه استوديو' : 'Studio portrait'}
-            </span>
-          </div>
+          <a class="button" href={localePath(lang, '/publications/')}>
+            {ar ? 'كل المنشورات' : 'All publications'} <span class="ltr">({publications.length})</span>
+          </a>
+        </div>
+        <div class="home-works__list">
+          {selectedPublications.slice(0, 3).map((p) => (
+            <PublicationItem pub={p} lang={lang} />
+          ))}
         </div>
       </section>
     )
   }
 
-  <!-- ------------------------------------------------------------- figures -->
-  <section class="figures container" aria-label={ar ? 'أرقام' : 'Figures'}>
-    <ul class="figures__list" role="list">
+  <LabTeaser lang={lang} />
+  <MetricCards lang={lang} />
+
+  <nav class="home-index container" aria-labelledby="index-heading">
+    <h2 id="index-heading" class="label">{ui.contents}</h2>
+    <ol class="home-index__list" role="list">
       {
-        figures.map((f, i) => (
-          <li class="figures__item in-view">
-            <span class="figures__value ltr">{f.value}</span>
-            <span class="figures__label">{f.label}</span>
-            <span class="figures__note">{f.note}</span>
+        sections.map((s) => (
+          <li>
+            <a href={s.href}>
+              <span class="home-index__num ltr">{s.number}</span>
+              <span class="home-index__name">{s.title}</span>
+              <span class="home-index__meta">{s.key === 'lab' ? (ar ? 'تجربة تفاعلية' : 'interactive experiment') : s.n && s.n > 0 ? ui.entries(s.n) : ui.awaitingReview}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <div class="container">
+  <section class="home-cta" aria-labelledby="cta-heading">
+    <div class="home-cta__copy">
+      <p class="kicker">{ar ? 'تعاون' : 'Collaboration'}</p>
+      <h2 id="cta-heading" class="home-cta__title">
+        {ar ? 'هل لديك بياناتٌ تحتاج إلى قراءةٍ صحيحة؟' : 'Have data that deserves a fair reading?'}
+      </h2>
+      <p class="home-cta__lead">
+        {ar ? 'اختر نوع الطلب لتبدأ رسالة قصيرة بالبريد الإلكتروني؛ لا يُرسَل شيء من الموقع نفسه.' : 'Pick the kind of request to start a short e-mail; nothing is sent from the site itself.'}
+      </p>
+    </div>
+    <ul class="home-cta__paths" role="list">
+      {
+        contactPaths.map((p) => (
+          <li>
+            <a href={`${localePath(lang, '/contact/')}?path=${p.id}#composer`}>
+              <span class="home-cta__path">{p.label}</span>
+              <span class="home-cta__note">{p.note}</span>
+              <span class="home-cta__arrow icon-flip" aria-hidden="true">→</span>
+            </a>
           </li>
         ))
       }
     </ul>
   </section>
-
-  <!-- ---------------------------------------------------------- metrics -->
-  <section class="metrics container" aria-labelledby="metrics-heading">
-    <div class="metrics__inner">
-      <div class="metrics__copy">
-        <p class="kicker">{ar ? 'الأثر' : 'Impact'}</p>
-        <h2 id="metrics-heading">{ar ? 'أرقامٌ بمصادرها، لا أرقامًا مجرَّدة.' : 'Numbers with their sources attached.'}</h2>
-        <p>
-          {ar
-            ? 'لكل رقمٍ مصدره وتاريخ استخراجه. أرقام المنصّات لا تُقارن ببعضها: ResearchGate يحسب ما رُفع، وOpenAlex يحسب ما فُهرس.'
-            : 'Every figure names its platform and the date it was read. Platform counts are not comparable: ResearchGate counts uploads, OpenAlex counts indexed works.'}
-        </p>
-      </div>
-      <dl class="metrics__list">
-        <div>
-          <dt>{metrics.source}</dt>
-          <dd class="ltr">
-            {primaryMetrics.citations} {ar ? 'استشهادًا' : 'citations'} · h {primaryMetrics.hIndex} · i10 {primaryMetrics.i10Index}
-          </dd>
-          <dd class="metrics__meta">
-            <a href={metrics.url} rel="me noopener">{metrics.sourceLabel}</a> · {metrics.retrieved}
-          </dd>
-        </div>
-        {metrics.secondary.map((s) => (
-          <div>
-            <dt>{s.source}</dt>
-            <dd class="ltr">
-              {s.figures.publications} {ar ? 'مادة' : 'items'} · {s.figures.citations} {ar ? 'استشهادًا' : 'citations'} ·{' '}
-              {s.figures.reads.toLocaleString('en-US')} {ar ? 'قراءة' : 'reads'}
-            </dd>
-            <dd class="metrics__meta">
-              <a href={s.url} rel="me noopener">{s.source}</a> · {s.retrieved}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-    <p class="metrics__note">
-      {ar
-        ? 'أرقام المنصّات لا تُقارن ببعضها: ResearchGate يحسب ما رُفع من كتب وأدلة وتقارير ومسوّدات، وOpenAlex يحسب الأعمال المُفهرسة. وكل رقمٍ معروض هنا مقترنٌ بمصدره وتاريخ استخراجه، وليس أيٌّ منها مؤشرًا مؤسسيًا رسميًا.'
-        : metrics.note}
-    </p>
-  </section>
-
-  <!-- ------------------------------------------------------------- research -->
-  {
-    areas.length > 0 && (
-      <section class="section research" aria-labelledby="research-heading">
-        <div class="container">
-          <header class="section-head">
-            <p class="kicker">{ar ? 'البحث' : 'Research'}</p>
-            <h2 id="research-heading" class="section-head__title">
-              {ar ? 'أسئلة متعددة، ومنهجٌ واحد صارم.' : 'Several questions, one rigorous method.'}
-            </h2>
-            <a class="arrow-link" href={localePath(lang, '/research/')}>
-              {ar ? 'كل المجالات البحثية' : 'All research areas'}
-              <svg viewBox="0 0 16 16" aria-hidden="true" class="icon-flip"><path d="M3 8h9m-3.5-3.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            </a>
-          </header>
-
-          {
-            ar && researchAreas.every((a) => !a.title.ar) && (
-              <p class="fallback-note fallback-note--section" role="note">
-                {ui.sectionFallback}
-              </p>
-            )
-          }
-          <ul class="areas" role="list">
-            {areas.map((a, i) => (
-              <li class:list={['areas__item', { 'areas__item--wide': wide(i) }]}>
-                <a class="area" href={`${localePath(lang, '/research/')}#${a.id}`}>
-                  {a.img && (
-                    <span class="area__media frame frame--zoom">
-                      <img src={a.img.src} alt={a.img.alt} loading="lazy" decoding="async" width="1200" height="800" />
-                    </span>
-                  )}
-                  <span class="area__body">
-                    <span class="area__index ltr">{String(i + 1).padStart(2, '0')}</span>
-                    <span class="area__title"><LangText value={a.title} lang={lang} /></span>
-                    <span class="area__summary"><LangText value={a.summary} lang={lang} /></span>
-                    <span class="area__cta arrow-link">
-                      {ar ? 'اقرأ المجال' : 'Read the area'}
-                      <svg viewBox="0 0 16 16" aria-hidden="true" class="icon-flip"><path d="M3 8h9m-3.5-3.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                    </span>
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- ------------------------------------------------------------ showcase -->
-  <section class="showcase" aria-labelledby="showcase-heading">
-    <div class="container showcase__inner">
-      <div class="showcase__media frame">
-        <Picture picture={PICTURES.tangent} lang={lang} />
-      </div>
-      <div class="showcase__copy">
-        <p class="kicker">{ar ? 'المنهج' : 'The method'}</p>
-        <h2 id="showcase-heading">
-          {ar ? 'مقدِّرات مُعاقَبة، لأن البيانات الحقيقية لا تلتزم بالفروض المثالية.' : 'Penalized estimators, because real data never meets the ideal assumptions.'}
-        </h2>
-        <p>
-          {
-            ar
-              ? 'ارتباطٌ قويٌّ بين المتغيرات، أو أبعادٌ تفوق حجم العينة، يجعل التقدير التقليدي غير مستقر. أعمل على تقديرات Ridge وLiu وLASSO وelastic-net لنماذج الانحدار المعتدّة، عبر المحاكاة والتطبيق على بيانات حقيقية.'
-              : 'Strong predictor dependence, or dimensions that outgrow the sample, make maximum likelihood unstable. The work develops Ridge, Liu-type, LASSO and elastic-net estimators for count regression, verified by simulation and applied to real data.'
-          }
-        </p>
-        <ul class="showcase__points" role="list">
-          {(ar
-            ? ['نماذج بواسون والسالب الثنائي وCOM-Poisson', 'محاكاة مونت كارلو وأدلة تطبيقية', 'حزم R وSPSS وSmartPLS وAMOS']
-            : ['Poisson, negative binomial and COM-Poisson models', 'Monte Carlo simulation and applied evidence', 'R, SPSS, Stata, SmartPLS and AMOS']
-          ).map((p) => (
-            <li>{p}</li>
-          ))}
-        </ul>
-        <a class="button" href={localePath(lang, '/research/')}>
-          {ar ? 'الشغل البحثي بالتفصيل' : 'The research in detail'}
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ----------------------------------------------------------------- lab -->
-  <section class="labband" aria-labelledby="labband-heading">
-    <div class="container labband__inner">
-      <div class="labband__copy">
-        <p class="kicker">{ar ? 'جرّب بنفسك' : 'Try it yourself'}</p>
-        <h2 id="labband-heading">{ar ? 'لا تقرأ عن التقلّص. حرِّكه.' : 'Don’t read about shrinkage. Turn the dial.'}</h2>
-        <p>
-          {ar
-            ? 'تجربة تفاعلية داخل الموقع: غيّر الارتباط بين المتغيرات المستقلة، وشاهد ثلاثة مقدِّرات تتشاجر على نفس البيانات — وأحدها ينهار. كل رقم على الشاشة محسوب من البيانات، لا مرسوم يدويًا.'
-            : 'An interactive experiment: turn up the correlation between the predictors and watch three estimators fight over the same rows — one of them falls apart. Every figure on screen is computed from the data, none of it is drawn by hand.'}
-        </p>
-        <a class="button button--solid" href={localePath(lang, '/lab/')}>
-          {ar ? 'افتح المختبر' : 'Open the lab'}
-          <span class="button__arrow" aria-hidden="true">↗</span>
-        </a>
-      </div>
-      <div class="labband__art" aria-hidden="true">
-        <svg viewBox="0 0 320 150" class="labband__svg">
-          <path class="labband__grid" d="M0,30H320M0,60H320M0,90H320M0,120H320" />
-          <polyline class="labband__ml" points="0,118 32,116 64,120 96,108 128,124 160,96 192,120 224,88 256,112 288,74 320,104" />
-          <polyline class="labband__ridge" points="0,92 32,91 64,90 96,89 128,88 160,87 192,86 224,85 256,84 288,83 320,82" />
-          <line class="labband__truth" x1="0" y1="84" x2="320" y2="84" />
-        </svg>
-      </div>
-    </div>
-  </section>
-
-  <!-- --------------------------------------------------- selected + index -->
-  <section class="section works" aria-labelledby="selected-heading">
-    <div class="container works__grid">
-      {
-        selectedPublications.length > 0 && (
-          <div class="works__selected">
-            <header class="works__head">
-              <p class="kicker">{ar ? 'مختارات' : 'Selected'}</p>
-              <h2 id="selected-heading">{ar ? 'منشورات مختارة' : 'Selected publications'}</h2>
-            </header>
-            <div class="works__list">
-              {selectedPublications.slice(0, 3).map((p) => (
-                <PublicationItem pub={p} lang={lang} />
-              ))}
-            </div>
-            <a class="button" href={localePath(lang, '/publications/')}>
-              {ar ? 'كل المنشورات' : 'All publications'} <span class="ltr">({publications.length})</span>
-            </a>
-          </div>
-        )
-      }
-
-      <aside class="index-panel" aria-labelledby="index-heading">
-        <h2 id="index-heading" class="label">{ui.contents}</h2>
-        <ol class="index-panel__list" role="list">
-          {
-            index.map((s) => (
-              <li>
-                <a href={s.href}>
-                  <span class="index-panel__num ltr">{s.number}</span>
-                  <span class="index-panel__name">{s.title}</span>
-                  <span class="index-panel__meta">
-                    {s.key === 'lab' ? (ar ? 'تجربة تفاعلية' : 'interactive experiment') : s.n && s.n > 0 ? list(s.n) : ui.awaitingReview}
-                  </span>
-                </a>
-              </li>
-            ))
-          }
-        </ol>
-        {
-          pending && (
-            <p class="index-panel__notice" role="note">
-              <span class="label">{ui.statusLabel}</span> {ui.statusNotice}
-            </p>
-          )
-        }
-      </aside>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------ teaching -->
-  {
-    courses.length > 0 && (
-      <section class="section teaching" aria-labelledby="teaching-heading">
-        <div class="container teaching__grid">
-          <div class="teaching__copy">
-            <p class="kicker">{ar ? 'التدريس' : 'Teaching'}</p>
-            <h2 id="teaching-heading">{ar ? 'الإحصاء الذي يُدرَّس، لا يُحفظ.' : 'Statistics taught, not memorised.'}</h2>
-            <p>
-              {
-                ar
-                  ? 'محاضرات وورش عمل في الإحصاء والقياس الاقتصادي وبرمجياته، داخل الجامعة وخارجها، بالعربية والإنجليزية.'
-                  : 'Lectures and workshops in statistics, econometrics and statistical computing, inside the university and beyond, in Arabic and English.'
-              }
-            </p>
-            <div class="teaching__kv">
-              {(ar
-                ? [
-                    ['سنوات التدريس', '2017 — الآن'],
-                    ['المواد', 'إحصاء · قياس اقتصادي · برمجة إحصائية'],
-                    ['اللغتان', 'العربية والإنجليزية'],
-                  ]
-                : [
-                    ['Teaching since', '2017'],
-                    ['Subjects', 'Statistics · Econometrics · Statistical computing'],
-                    ['Languages', 'Arabic and English'],
-                  ]
-              ).map(([k, v]) => (
-                <div>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </div>
-            <a class="arrow-link" href={localePath(lang, '/teaching/')}>
-              {ar ? 'التدريس والمواد' : 'Teaching and materials'}
-              <svg viewBox="0 0 16 16" aria-hidden="true" class="icon-flip"><path d="M3 8h9m-3.5-3.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            </a>
-          </div>
-          <div class="teaching__media frame frame--zoom">
-            <Picture picture={PICTURES.sine} lang={lang} />
-          </div>
-          <ol class="teaching__list" role="list">
-            {courses.map((c, i) => (
-              <li>
-                <span class="teaching__num ltr">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3><LangText value={c.title} lang={lang} /></h3>
-                  <p class="teaching__meta">
-                    {c.institution && <LangText value={c.institution} lang={lang} />}
-                    {c.term && <span class="ltr">{c.term}</span>}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- ------------------------------------------------------------ projects -->
-  {
-    projects.length > 0 && (
-      <section class="section community" aria-labelledby="community-heading">
-        <div class="container">
-          <header class="section-head">
-            <p class="kicker">{ar ? 'أثر' : 'Reach'}</p>
-            <h2 id="community-heading" class="section-head__title">
-              {ar ? 'خارج قاعات الدرس أيضًا.' : 'Beyond the lecture hall.'}
-            </h2>
-          </header>
-          <ul class="community__grid" role="list">
-            {projects.map((p) => (
-              <li class="community__card panel">
-                <span class="community__media frame frame--zoom">
-                  {(() => {
-                    const pic = [PICTURES.lattice, PICTURES.distributions, PICTURES.study][projects.indexOf(p) % 3];
-                    return <Picture picture={pic} lang={lang} />;
-                  })()}
-                </span>
-                <h3><LangText value={p.title} lang={lang} /></h3>
-                <LangText value={p.summary} lang={lang} as="p" note />
-                {p.links.length > 0 && (
-                  <ul class="community__links" role="list">
-                    {p.links.slice(0, 2).map((l) => (
-                      <li>
-                        <a href={l.url} rel="noopener">
-                          <LangText value={l.label} lang={lang} />
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- ---------------------------------------------------------------- cta -->
-  <section class="cta" aria-labelledby="cta-heading">
-    <div class="cta__media" aria-hidden="true">
-      <img src="/images/contours.webp" alt="" loading="lazy" decoding="async" width="1800" height="1012" />
-    </div>
-    <div class="container cta__inner">
-      <p class="kicker kicker--invert">{ar ? 'تعاون' : 'Collaboration'}</p>
-      <h2 id="cta-heading">
-        {ar ? 'هل لديك بياناتٌ تحتاج إلى قراءةٍ صحيحة؟' : 'Have data that deserves a fair reading?'}
-      </h2>
-      <p class="cta__lead">
-        {
-          ar
-            ? 'للتعاون البحثي أو الاستشارات الإحصائية أو الإشراف أو المحاضرات — ابدأ برسالة قصيرة.'
-            : 'For research collaboration, statistical consulting, supervision or lectures — begin with a short message.'
-        }
-      </p>
-      <div class="cta__actions">
-        <a class="button button--solid button--lg cta__primary" href={localePath(lang, '/contact/')}>
-          {ar ? 'تواصل معي' : 'Get in touch'}
-          <span class="button__arrow" aria-hidden="true">↗</span>
-        </a>
-        <a class="button button--lg cta__secondary" href={localePath(lang, '/cv/')}>{ar ? 'السيرة الذاتية' : 'Curriculum vitae'}</a>
-      </div>
-    </div>
-  </section>
+  </div>
 </BaseLayout>
 
 <style>
-  /* ------------------------------------------------------------------ hero */
-  .hero {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    min-block-size: clamp(34rem, 88vh, 52rem);
-    padding-block: var(--space-6) clamp(var(--space-6), 4vw, var(--space-8));
-    color: #f4f2e9;
-    overflow: hidden;
-    border-end-start-radius: var(--radius-5);
-    border-end-end-radius: var(--radius-5);
+  .home__draft {
+    padding-block-start: var(--space-5);
   }
-  .hero__media {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-  .hero__media img {
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-    object-position: 62% 70%;
-  }
-  .hero__veil {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(to top, rgb(9 22 17 / 0.92) 0%, rgb(9 22 17 / 0.55) 38%, rgb(9 22 17 / 0.12) 72%),
-      linear-gradient(to right, rgb(9 22 17 / 0.7) 0%, rgb(9 22 17 / 0.15) 55%, transparent 85%);
-  }
-  .hero__inner {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: clamp(var(--space-7), 8vw, var(--space-9));
-  }
-  .hero__top {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
+  .home-works {
+    display: grid;
     gap: var(--space-3);
-  }
-  .hero__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 0.45em 0.9em;
-    border: 1px solid rgb(244 242 233 / 0.3);
-    border-radius: var(--radius-pill);
-    background: rgb(10 24 18 / 0.42);
-    backdrop-filter: blur(10px);
-    color: #f4f2e9;
-    font-size: var(--step--2);
-    letter-spacing: 0.13em;
-  }
-  :lang(ar) .hero__eyebrow {
-    letter-spacing: 0;
-    font-size: var(--step--1);
-  }
-  .hero__dot {
-    inline-size: 0.4rem;
-    block-size: 0.4rem;
-    border-radius: 50%;
-    background: #cbb079;
-    box-shadow: 0 0 0 3px rgb(203 176 121 / 0.22);
-  }
-  .hero__year {
-    padding: 0.4em 0.8em;
-    border-radius: var(--radius-pill);
-    background: rgb(10 24 18 / 0.38);
-    backdrop-filter: blur(10px);
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    letter-spacing: 0.08em;
-    color: rgb(244 242 233 / 0.8);
-  }
-  .hero__body {
-    display: grid;
-    gap: clamp(var(--space-5), 4vw, var(--space-7));
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    align-items: end;
-  }
-  .hero__title {
-    display: grid;
-    font-family: var(--font-serif);
-    font-size: clamp(2.8rem, 1.4rem + 6vw, 6.2rem);
-    font-weight: 300;
-    font-variation-settings: 'SOFT' 30, 'WONK' 1, 'opsz' 120;
-    line-height: 0.92;
-    letter-spacing: -0.045em;
-    color: #f7f5ec;
-    text-wrap: balance;
-  }
-  :lang(ar) .hero__title {
-    font-family: var(--font-ar-display);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: 0;
-  }
-  .hero__line--italic {
-    font-style: italic;
-    padding-inline-start: 0.08em;
-  }
-  :lang(ar) .hero__line--italic {
-    /* Arabic has no italic in these families: use weight, not a synthesised slant. */
-    font-style: normal;
-    font-weight: 700;
-    color: #fbf7ea;
-  }
-  .hero__aside {
-    display: grid;
-    gap: var(--space-5);
-    max-inline-size: 30rem;
-    justify-self: end;
-    padding: var(--space-5);
-    border: 1px solid rgb(244 242 233 / 0.2);
-    border-radius: var(--radius-3);
-    background: rgb(12 26 20 / 0.42);
-    backdrop-filter: blur(16px) saturate(1.2);
-  }
-  .hero__lead {
-    font-family: var(--font-ui);
-    font-size: var(--step-0);
-    line-height: 1.6;
-    color: rgb(244 242 233 / 0.92);
-  }
-  :lang(ar) .hero__lead {
-    line-height: 1.85;
-  }
-  .hero__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-  }
-  .hero__actions .button--solid {
-    --btn-bg: #f4f2e9;
-    --btn-fg: #10241b;
-    --btn-line: #f4f2e9;
-  }
-  .hero__actions .button--solid:hover {
-    --btn-bg: #ffffff;
-    --btn-line: #ffffff;
-    color: #10241b;
-  }
-  .hero__ghost {
-    --btn-fg: #f4f2e9;
-    --btn-line: rgb(244 242 233 / 0.38);
-  }
-  .hero__ghost:hover {
-    background: rgb(244 242 233 / 0.12);
-    color: #ffffff;
-  }
-
-  /* --------------------------------------------------------- identity bar */
-  .identity {
-    border-block-end: var(--border-hairline);
-  }
-  .identity__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
-    gap: clamp(var(--space-5), 4vw, var(--space-7));
-    align-items: center;
     padding-block: clamp(var(--space-6), 5vw, var(--space-8));
   }
-  .identity__text {
-    display: grid;
-    gap: var(--space-3);
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-  }
-  .identity__media {
-    aspect-ratio: 16 / 9;
-    border-radius: var(--radius-4);
-    box-shadow: var(--shadow-card);
-  }
-  .identity__media :global(img) {
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-  }
-  .identity__name {
-    font-family: var(--font-display);
-    font-size: var(--step-3);
-    font-weight: 400;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-  }
-  :lang(ar) .identity__name {
-    line-height: 1.3;
-  }
-  .identity__role {
-    color: var(--color-ink-2);
-    font-size: var(--step-0);
-  }
-  .identity__interests {
+  .home-works__head {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0;
-    margin-block-start: var(--space-1);
-    list-style: none;
-  }
-  .identity__contact {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-2) var(--space-3);
-    padding-block-start: var(--space-3);
-    border-block-start: var(--border-hairline);
-    color: var(--color-ink-2);
-  }
-  .identity__contact .label {
-    margin-inline-end: var(--space-1);
-  }
-
-  /* --------------------------------------------------------------- lab band */
-  .labband {
-    border-block: var(--border-hairline);
-    background: var(--color-surface-2);
-  }
-  .labband__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    align-items: center;
-    gap: clamp(var(--space-5), 4vw, var(--space-7));
-    padding-block: clamp(var(--space-6), 4.5vw, var(--space-8));
-  }
-  .labband__copy {
-    display: grid;
+    align-items: end;
+    justify-content: space-between;
     gap: var(--space-3);
-    justify-items: start;
   }
-  .labband__copy h2 {
+  .home-works__title {
     font-family: var(--font-display);
     font-size: var(--step-3);
     font-weight: 400;
     line-height: 1.1;
-    letter-spacing: -0.025em;
-    text-wrap: balance;
   }
-  :lang(ar) .labband__copy h2 {
-    line-height: 1.4;
-    letter-spacing: 0;
+  .home-works__list {
+    border-block-start: var(--border-hairline);
   }
-  .labband__copy p:not(.kicker) {
-    max-inline-size: 42ch;
-    font-family: var(--font-ui);
-    font-size: var(--step-0);
-    line-height: 1.6;
-    color: var(--color-ink-2);
+  .home-index {
+    padding-block: clamp(var(--space-6), 5vw, var(--space-8));
   }
-  .labband__art {
-    padding: var(--space-4);
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-surface-1);
-  }
-  .labband__svg {
-    inline-size: 100%;
-    block-size: auto;
-    overflow: visible;
-  }
-  .labband__grid {
-    fill: none;
-    stroke: var(--color-rule);
-    stroke-width: 1;
-  }
-  .labband__ml {
-    fill: none;
-    stroke: var(--color-ink-3);
-    stroke-width: 1.6;
-    stroke-dasharray: 5 4;
-  }
-  .labband__ridge {
-    fill: none;
-    stroke: var(--color-accent);
-    stroke-width: 2;
-  }
-  .labband__truth {
-    stroke: var(--color-brass);
-    stroke-width: 1.4;
-    stroke-dasharray: 2 3;
-  }
-
-  /* -------------------------------------------------------------- figures */
-  .figures {
-    padding-block: clamp(var(--space-7), 5vw, var(--space-8));
-  }
-  .figures__list {
+  .home-index__list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 0 var(--space-5);
+    margin: var(--space-3) 0 0;
     padding: 0;
-    list-style: none;
   }
-  .figures__item {
+  .home-index__list a {
     display: grid;
-    gap: var(--space-1);
-    padding-inline-start: var(--space-4);
-    border-inline-start: 2px solid var(--color-rule-strong);
-  }
-  .figures__value {
-    font-family: var(--font-display);
-    font-size: var(--step-5);
-    font-weight: 300;
-    font-variation-settings: 'SOFT' 20, 'WONK' 0;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: lining-nums tabular-nums;
-  }
-  .figures__label {
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-3);
-  }
-  .figures__note {
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
-  }
-
-  /* ---------------------------------------------------------------- metrics */
-  .metrics {
-    padding-block-end: clamp(var(--space-6), 4vw, var(--space-8));
-  }
-  .metrics__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: clamp(var(--space-5), 4vw, var(--space-7));
-    align-items: start;
-    padding: clamp(var(--space-5), 4vw, var(--space-7));
-    border: var(--border-hairline);
-    border-radius: var(--radius-4);
-    background: var(--color-surface-1);
-    box-shadow: var(--shadow-card);
-  }
-  .metrics__copy {
-    display: grid;
-    gap: var(--space-3);
-    justify-items: start;
-  }
-  .metrics__copy h2 {
-    font-size: var(--step-3);
-    font-weight: 400;
-    line-height: 1.12;
-  }
-  .metrics__copy p:not(.kicker) {
-    max-inline-size: 40ch;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    line-height: 1.6;
-    color: var(--color-ink-2);
-  }
-  .metrics__list {
-    display: grid;
-    gap: var(--space-4);
-    margin: 0;
-  }
-  .metrics__list > div {
-    display: grid;
-    gap: var(--space-1);
-    padding-block-end: var(--space-4);
-    border-block-end: var(--border-hairline);
-  }
-  .metrics__list > div:last-child {
-    border-block-end: 0;
-    padding-block-end: 0;
-  }
-  .metrics__list dt {
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    font-weight: 600;
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-    color: var(--color-brass);
-  }
-  :lang(ar) .metrics__list dt {
-    text-transform: none;
-    letter-spacing: 0;
-    font-size: var(--step--1);
-  }
-  .metrics__list dd {
-    margin: 0;
-    font-family: var(--font-ui);
-    font-size: var(--step-0);
-    font-variant-numeric: tabular-nums;
-    color: var(--color-ink);
-  }
-  .metrics__meta {
-    font-size: var(--step--2) !important;
-    color: var(--color-ink-3) !important;
-  }
-  .metrics__meta a {
-    color: inherit;
-    text-decoration: none;
-    border-block-end: 1px solid var(--color-rule);
-  }
-  .metrics__meta a:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-  }
-  .metrics__note {
-    margin-block-start: var(--space-3);
-    max-inline-size: 78ch;
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    line-height: 1.6;
-    color: var(--color-ink-3);
-  }
-
-  /* ------------------------------------------------------------ section head */
-  .section-head {
-    display: grid;
-    gap: var(--space-4);
-    padding-block-end: var(--space-6);
-  }
-  .section-head__title {
-    max-inline-size: 26ch;
-    font-size: var(--step-4);
-    font-weight: 400;
-  }
-  .section-head .arrow-link {
-    justify-self: start;
-  }
-  @media (min-width: 60rem) {
-    .section-head {
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: end;
-    }
-    .section-head .kicker,
-    .section-head__title {
-      grid-column: 1;
-    }
-    .section-head .arrow-link {
-      grid-column: 2;
-      grid-row: 2;
-      align-self: end;
-    }
-  }
-
-  /* ---------------------------------------------------------- research areas */
-  .fallback-note--section {
-    margin-block-end: var(--space-4);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-2);
-    background: var(--color-surface-1);
-    border: var(--border-hairline);
-    border-inline-start: 2px solid var(--color-brass);
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-2);
-  }
-  .areas {
-    display: grid;
-    gap: var(--space-4);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 0;
-    list-style: none;
-  }
-  .areas__item--wide {
-    grid-column: span 2;
-  }
-  .area {
-    position: relative;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    block-size: 100%;
-    overflow: hidden;
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-surface-1);
-    color: inherit;
-    text-decoration: none;
-    box-shadow: var(--shadow-card);
-    transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), border-color var(--dur-2) var(--ease);
-  }
-  .area:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-rule-strong);
-    box-shadow: var(--shadow-lift);
-  }
-  .area__media {
-    display: block;
-    border-radius: 0;
-    aspect-ratio: 16 / 10;
-  }
-  .areas__item--wide .area__media {
-    aspect-ratio: 19 / 9;
-  }
-  /* keep the two-card rows even when one card is wide */
-  .areas__item--wide .area__body {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--space-3) var(--space-5);
-    align-items: start;
-  }
-  .areas__item--wide .area__index {
-    grid-column: 1 / -1;
-  }
-  .areas__item--wide .area__title {
-    grid-column: 1;
-  }
-  .areas__item--wide .area__summary {
-    grid-column: 2;
-    align-self: start;
-  }
-  .areas__item--wide .area__cta {
-    grid-column: 2;
-  }
-  .area__body {
-    display: grid;
-    gap: var(--space-3);
-    align-content: start;
-    padding: var(--space-5);
-    color: var(--color-ink);
-  }
-  .area__index {
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    color: var(--color-brass);
-    letter-spacing: 0.1em;
-  }
-  .area__title {
-    font-family: var(--font-display);
-    font-size: var(--step-2);
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-  }
-  :lang(ar) .area__title {
-    line-height: 1.45;
-  }
-  .area__summary {
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    line-height: 1.6;
-    color: var(--color-ink-2);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .area__cta {
-    justify-self: start;
-    margin-block-start: var(--space-1);
-    border: 0;
-    font-size: var(--step--1);
-    color: var(--color-accent);
-  }
-  .area:hover .area__cta svg {
-    transform: translateX(3px);
-  }
-
-  /* -------------------------------------------------------------- showcase */
-  .showcase {
-    position: relative;
-    padding-block: clamp(var(--space-7), 7vw, var(--space-10));
-    background: var(--color-surface-1);
-    border-block: var(--border-hairline);
-  }
-  .showcase__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
-    gap: clamp(var(--space-6), 6vw, var(--space-9));
-    align-items: center;
-  }
-  .showcase__media {
-    aspect-ratio: 3 / 2;
-    border-radius: var(--radius-4);
-    box-shadow: var(--shadow-lift);
-  }
-  .showcase__copy {
-    display: grid;
-    gap: var(--space-5);
-    justify-items: start;
-    max-inline-size: 34rem;
-  }
-  .showcase__copy h2 {
-    font-size: var(--step-3);
-    font-weight: 400;
-    line-height: 1.12;
-  }
-  :lang(ar) .showcase__copy h2 {
-    line-height: 1.45;
-  }
-  .showcase__copy > p {
-    color: var(--color-ink-2);
-  }
-  .showcase__points {
-    display: grid;
-    gap: var(--space-3);
-    padding: 0;
-    list-style: none;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-2);
-  }
-  .showcase__points li {
-    display: flex;
-    gap: var(--space-3);
-    align-items: baseline;
-    padding-block-end: var(--space-3);
-    border-block-end: var(--border-hairline);
-  }
-  .showcase__points li::before {
-    content: '';
-    inline-size: 0.45rem;
-    block-size: 0.45rem;
-    border-radius: 50%;
-    background: var(--color-brass);
-    flex: none;
-    transform: translateY(-0.15em);
-  }
-
-  /* ---------------------------------------------------------------- works */
-  .works__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: clamp(var(--space-6), 5vw, var(--space-8));
-    align-items: start;
-  }
-  .works__selected {
-    display: grid;
-    align-content: start;
-  }
-  .works__head {
-    display: grid;
-    gap: var(--space-3);
-    padding-block-end: var(--space-4);
-  }
-  .works__head h2 {
-    font-size: var(--step-3);
-    font-weight: 400;
-  }
-  .works__list {
-    margin-block-end: var(--space-5);
-  }
-  .index-panel {
-    position: sticky;
-    inset-block-start: calc(var(--header-height) + var(--space-5));
-    padding: var(--space-5);
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-surface-1);
-    box-shadow: var(--shadow-card);
-  }
-  .index-panel__list {
-    margin-block: var(--space-4) 0;
-    padding: 0;
-    list-style: none;
-  }
-  .index-panel__list a {
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
-    gap: var(--space-2) var(--space-3);
-    align-items: baseline;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'num name' 'num meta';
+    gap: 0 var(--space-3);
     padding-block: var(--space-3);
     border-block-end: var(--border-hairline);
     color: var(--color-ink);
     text-decoration: none;
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
   }
-  .index-panel__list li:last-child a {
-    border-block-end: 0;
-  }
-  .index-panel__list a:hover .index-panel__name {
+  .home-index__list a:hover .home-index__name {
     color: var(--color-accent);
   }
-  .index-panel__num {
+  .home-index__num {
+    grid-area: num;
     font-family: var(--font-mono);
     font-size: var(--step--2);
     color: var(--color-brass);
+    padding-block-start: 0.3rem;
   }
-  .index-panel__name {
-    font-weight: 500;
-    transition: color var(--dur-1) var(--ease);
+  .home-index__name {
+    grid-area: name;
+    font-family: var(--font-serif);
+    font-size: var(--step-1);
   }
-  .index-panel__meta {
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
-    white-space: nowrap;
-  }
-  @media (max-width: 30rem) {
-    .index-panel__list a {
-      grid-template-columns: 1.75rem minmax(0, 1fr);
-    }
-    .index-panel__meta {
-      grid-column: 2;
-      white-space: normal;
-    }
-  }
-  .index-panel__notice {
-    margin-block-start: var(--space-4);
-    padding: var(--space-3);
-    border-radius: var(--radius-2);
-    background: var(--color-surface-2);
+  .home-index__meta {
+    grid-area: meta;
     font-family: var(--font-ui);
     font-size: var(--step--2);
-    line-height: 1.55;
-    color: var(--color-ink-2);
+    color: var(--color-ink-3);
   }
-  .index-panel__notice .label {
-    display: block;
-    margin-block-end: var(--space-1);
-  }
-
-  /* ------------------------------------------------------------- teaching */
-  .teaching {
-    background: var(--color-surface-2);
-  }
-  .teaching__grid {
+  .home-cta {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: clamp(var(--space-6), 6vw, var(--space-9));
-    align-items: start;
+    gap: var(--space-6);
+    align-items: center;
+    margin-block-end: clamp(var(--space-6), 5vw, var(--space-8));
+    padding: clamp(var(--space-5), 4vw, var(--space-7));
+    background: var(--color-surface-1);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
   }
-  .teaching__copy {
+  .home-cta__copy {
     display: grid;
-    gap: var(--space-5);
-    justify-items: start;
+    gap: var(--space-3);
   }
-  .teaching__copy h2 {
+  .home-cta__title {
+    font-family: var(--font-display);
     font-size: var(--step-3);
     font-weight: 400;
+    line-height: 1.1;
   }
-  .teaching__copy > p:not(.kicker) {
-    max-inline-size: 34ch;
+  .home-cta__lead {
     color: var(--color-ink-2);
+    line-height: 1.7;
   }
-  .teaching__kv {
+  .home-cta__paths {
     display: grid;
-    gap: var(--space-3);
-    margin-block: var(--space-3) var(--space-2);
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-  }
-  .teaching__kv div {
-    display: grid;
-    grid-template-columns: 9.5rem minmax(0, 1fr);
-    gap: var(--space-3);
-    padding-block-end: var(--space-3);
-    border-block-end: var(--border-hairline);
-  }
-  .teaching__kv dt {
-    color: var(--color-ink-3);
-    font-size: var(--step--2);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  :lang(ar) .teaching__kv dt {
-    text-transform: none;
-    letter-spacing: 0;
-    font-size: var(--step--1);
-  }
-  .teaching__kv dd {
-    margin: 0;
-    color: var(--color-ink);
-  }
-  .teaching__media {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    aspect-ratio: 21 / 7;
-    border-radius: var(--radius-4);
-    box-shadow: var(--shadow-card);
-  }
-  .teaching__copy {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .teaching__list {
-    grid-column: 2;
-    grid-row: 2;
-  }
-  .teaching__list {
-    display: grid;
-    gap: 0;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-  .teaching__list li {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    gap: var(--space-4);
-    padding-block: var(--space-5);
     border-block-start: var(--border-hairline);
   }
-  .teaching__list li:last-child {
+  .home-cta__paths a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'path arrow' 'note arrow';
+    gap: 0.15rem var(--space-3);
+    align-items: center;
+    padding: var(--space-3) var(--space-1);
     border-block-end: var(--border-hairline);
+    color: var(--color-ink);
+    text-decoration: none;
   }
-  .teaching__num {
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-    color: var(--color-brass);
-  }
-  .teaching__list h3 {
+  .home-cta__path {
+    grid-area: path;
+    font-family: var(--font-serif);
     font-size: var(--step-1);
-    font-weight: 500;
-    line-height: 1.35;
   }
-  .teaching__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--space-3);
-    margin-block-start: var(--space-2);
+  .home-cta__note {
+    grid-area: note;
     font-family: var(--font-ui);
     font-size: var(--step--1);
     color: var(--color-ink-3);
   }
-
-  /* -------------------------------------------------------------- reach */
-  .research {
-    scroll-margin-block-start: var(--header-height);
+  .home-cta__arrow {
+    grid-area: arrow;
+    color: var(--color-accent);
+    transition: transform var(--dur-2) var(--ease-out);
   }
-  .community__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-    gap: var(--space-4);
-    padding: 0;
-    list-style: none;
-  }
-  .community__card {
-    display: grid;
-    gap: var(--space-3);
-    align-content: start;
-    padding: var(--space-3) var(--space-3) var(--space-5);
-    overflow: hidden;
-    transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
-  }
-  .community__card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lift);
-  }
-  .community__media {
-    aspect-ratio: 16 / 10;
-    border-radius: var(--radius-2);
-  }
-  .community__card h3,
-  .community__card p,
-  .community__card ul {
-    margin-inline: var(--space-2);
-  }
-  .community__card h3 {
-    font-size: var(--step-1);
-    font-weight: 500;
-  }
-  .community__card p {
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    line-height: 1.6;
-    color: var(--color-ink-2);
-  }
-  .community__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0;
-    margin-block-start: var(--space-1);
-    list-style: none;
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-  }
-  .community__links a {
-    display: inline-block;
-    padding: 0.3em 0.7em;
-    border: var(--border-hairline);
-    border-radius: var(--radius-pill);
-    text-decoration: none;
+  .home-cta__paths a:hover .home-cta__path {
     color: var(--color-accent);
   }
-
-  /* ------------------------------------------------------------------ cta */
-  .cta {
-    position: relative;
-    isolation: isolate;
-    margin-block-start: 0;
-    padding-block: clamp(var(--space-8), 8vw, var(--space-10));
-    color: #f4f2e9;
-    overflow: hidden;
+  .home-cta__paths a:hover .home-cta__arrow {
+    transform: translateX(3px);
   }
-  .cta__media {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
+  :global([dir='rtl']) .home-cta__paths a:hover .home-cta__arrow {
+    transform: translateX(-3px) scaleX(-1);
   }
-  .cta__media img {
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
+  .home-cta__paths a:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
   }
-  .cta__media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgb(8 20 15 / 0.9), rgb(8 20 15 / 0.62));
-  }
-  .cta__inner {
-    display: grid;
-    gap: var(--space-5);
-    justify-items: center;
-    text-align: center;
-  }
-  .cta__inner h2 {
-    max-inline-size: 24ch;
-    font-size: var(--step-4);
-    font-weight: 300;
-    line-height: 1.1;
-    color: #f7f5ec;
-  }
-  :lang(ar) .cta__inner h2 {
-    line-height: 1.45;
-  }
-  .cta__lead {
-    max-inline-size: 46ch;
-    font-family: var(--font-ui);
-    font-size: var(--step-0);
-    color: rgb(244 242 233 / 0.8);
-  }
-  .cta__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    justify-content: center;
-    margin-block-start: var(--space-3);
-  }
-  .cta__primary {
-    --btn-bg: #f4f2e9;
-    --btn-fg: #10241b;
-    --btn-line: #f4f2e9;
-  }
-  .cta__primary:hover {
-    --btn-bg: #ffffff;
-    --btn-line: #ffffff;
-    color: #10241b;
-  }
-  .cta__secondary {
-    --btn-fg: #f4f2e9;
-    --btn-line: rgb(244 242 233 / 0.4);
-  }
-  .cta__secondary:hover {
-    background: rgb(244 242 233 / 0.12);
-    color: #fff;
-  }
-  .kicker--invert {
-    color: rgb(244 242 233 / 0.75);
-  }
-
-  /* -------------------------------------------------------------- responsive */
-  @media (max-width: 68rem) {
-    .works__grid,
-    .teaching__grid {
-      grid-template-columns: 1fr;
-    }
-    .index-panel {
-      position: static;
+  @media (max-width: 48rem) {
+    .home-cta {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
-  @media (max-width: 56rem) {
-    .metrics__inner {
-      grid-template-columns: 1fr;
-    }
-    .labband__inner {
-      grid-template-columns: 1fr;
-    }
-    .hero__body {
-      grid-template-columns: 1fr;
-    }
-    .hero__aside {
-      justify-self: stretch;
-      max-inline-size: none;
-    }
-    .showcase__inner {
-      grid-template-columns: 1fr;
-    }
-    .showcase__media {
-      aspect-ratio: 16 / 10;
-    }
-    .figures__list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-5) var(--space-4);
-    }
-    .identity__inner {
-      grid-template-columns: 1fr;
-    }
-    .teaching__media,
-    .teaching__copy,
-    .teaching__list {
-      grid-column: 1;
-      grid-row: auto;
-    }
-  }
-  @media (max-width: 40rem) {
-    .areas {
-      grid-template-columns: 1fr;
-    }
-    .areas__item--wide {
-      grid-column: auto;
-    }
-    .areas__item--wide .area__media {
-      aspect-ratio: 16 / 10;
-    }
-    .areas__item--wide .area__body {
-      grid-template-columns: 1fr;
-    }
-    .areas__item--wide .area__title,
-    .areas__item--wide .area__summary,
-    .areas__item--wide .area__cta {
-      grid-column: 1;
-    }
-    .hero {
-      min-block-size: auto;
-    }
-    .hero__title {
-      font-size: clamp(3rem, 13vw, 4.6rem);
+  @media (prefers-reduced-motion: reduce) {
+    .home-cta__arrow {
+      transition: none;
     }
   }
 </style>

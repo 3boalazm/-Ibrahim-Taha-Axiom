@@ -1,0 +1,803 @@
+---
+/**
+ * Knowledge graph of verified relationships (signature feature).
+ *
+ * Map view: HTML buttons for nodes (native focus, text wrapping, automatic
+ * RTL mirroring) over an SVG edge layer drawn at build time from the same
+ * row geometry. Pointer: hover previews, click selects. Keyboard: one tab
+ * stop (roving tabindex); arrows move within and across columns, Home/End
+ * jump, Enter/Space select, Escape clears. The panel lists every connection
+ * with the manifest's evidence (and the verbatim quote when recorded).
+ * List view: the same data as nested lists — the default on small screens
+ * and without JavaScript.
+ */
+import { buildGraph, GEOMETRY, type GraphNode } from '../../utils/graph';
+import { localePath } from '../../utils/paths';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const ar = lang === 'ar';
+const g = buildGraph(lang, {
+  research: localePath(lang, '/research/'),
+  projects: localePath(lang, '/projects/'),
+  talks: localePath(lang, '/talks/'),
+  pub: (key) => localePath(lang, `/publications/${key}/`),
+});
+const col = (side: GraphNode['side']) => g.nodes.filter((n) => n.side === side).sort((a, b) => a.row - b.row);
+const start = col('start');
+const centre = col('centre');
+const end = col('end');
+const byRef = new Map(g.nodes.map((n) => [n.ref, n]));
+const linksOf = (ref: string) =>
+  g.edges
+    .filter((e) => e.from === ref || e.to === ref)
+    .map((e) => ({ node: byRef.get(e.from === ref ? e.to : e.from)!, edge: e }))
+    .sort((a, b) => (a.node.side === b.node.side ? a.node.row - b.node.row : 0));
+const fieldLabel = (f: string) =>
+  (ar
+    ? { title: 'العنوان', keywords: 'الكلمات المفتاحية', abstract: 'الملخص', supp: 'المواد الإضافية', links: 'الروابط' }
+    : { title: 'title', keywords: 'keywords', abstract: 'abstract', supp: 'supplementary data', links: 'links' })[f] ?? f;
+const lead = ar
+  ? `كل خط هنا علاقة مسجّلة في بيان المحتوى المعتمد، ومعها دليلها. لا شيء مستنتج من الكلمات المفتاحية. ${g.edges.length} علاقة موثّقة.`
+  : `Every line is a relationship recorded in the approved content manifest, with its evidence. Nothing is inferred from keywords. ${g.edges.length} verified links.`;
+const evidenceNote = ar
+  ? 'نصوص الدليل مكتوبة بالإنجليزية كما سُجِّلت في بيان المحتوى.'
+  : null;
+const payload = {
+  nodes: g.nodes.map((n) => ({ ref: n.ref, kind: n.kind, label: n.label, lang: n.labelLang, href: n.href, side: n.side, row: n.row, draft: n.draft, year: n.year })),
+  edges: g.edges.map((e) => ({ from: e.from, to: e.to, evidence: e.evidence, field: e.source ? fieldLabel(e.source.field) : undefined, quote: e.source?.quote })),
+  i18n: {
+    kinds: ui.graphKinds,
+    connections: Object.fromEntries(Array.from({ length: 30 }, (_, n) => [n, ui.graphConnections(n)])),
+    evidence: ui.graphEvidence,
+    quoted: ui.graphQuoted,
+    open: ui.openRecord,
+    clear: ui.graphClear,
+    none: ui.graphNone,
+    draft: ui.draftBadge,
+    evidenceLang: ar ? 'en' : null,
+  },
+};
+const nodeButton = (n: GraphNode, first: boolean) => ({
+  class: `graph__node kind-${n.kind}`,
+  'data-ref': n.ref,
+  'aria-pressed': 'false',
+  tabindex: first ? '0' : '-1',
+});
+---
+
+<section class="graph" id="knowledge-graph" aria-labelledby="graph-title" data-graph>
+  <div class="graph__head">
+    <div>
+      <p class="kicker">{ar ? 'خريطة الترابط' : 'Knowledge graph'}</p>
+      <h2 id="graph-title" class="graph__title">{ui.graphTitle}</h2>
+      <p class="graph__lead">{lead}</p>
+    </div>
+    <div class="segmented graph__views" role="group" aria-label={ui.viewLabel}>
+      <button type="button" aria-pressed="true" data-graph-view="map">{ui.graphMap}</button>
+      <button type="button" aria-pressed="false" data-graph-view="list">{ui.graphList}</button>
+    </div>
+  </div>
+
+  <div class="graph__mapwrap" data-graph-map>
+    <p class="graph__hint" id="graph-hint">{ui.graphHint}</p>
+    <div class="graph__layout">
+      <div class="graph__scroll" role="region" aria-label={ui.graphTitle} tabindex="-1">
+        <div class="graph__colheads" aria-hidden="true">
+          <span>{ui.graphColumns.left}</span>
+          <span>{ui.graphColumns.centre}</span>
+          <span>{ui.graphColumns.right}</span>
+        </div>
+        <div class="graph__canvas" style={`--rows: ${g.rows.centre}`} role="group" aria-labelledby="graph-title" aria-describedby="graph-hint">
+          <svg class="graph__edges" viewBox={`0 0 ${GEOMETRY.width} ${g.height}`} preserveAspectRatio="none" aria-hidden="true">
+            {
+              g.edges
+                .filter((e) => e.d)
+                .map((e) => (
+                  <path d={e.d!} class={`graph__edge to-${byRef.get(e.to)!.kind} from-${byRef.get(e.from)!.kind}`} data-from={e.from} data-to={e.to} vector-effect="non-scaling-stroke" />
+                ))
+            }
+          </svg>
+          <div class="graph__col graph__col--start" style={`--n: ${start.length}`}>
+            {
+              start.map((n, i) => (
+                <div class="graph__slot">
+                  <button type="button" {...nodeButton(n, i === 0)}>
+                    <span class="graph__label" lang={n.labelLang} dir="auto">
+                      {n.label}
+                    </span>
+                    <span class="visually-hidden">
+                      {' '}
+                      ({ui.graphKinds[n.kind]}, {ui.graphConnections(linksOf(n.ref).length)})
+                    </span>
+                  </button>
+                </div>
+              ))
+            }
+          </div>
+          <div class="graph__col graph__col--centre" style={`--n: ${centre.length}`}>
+            {
+              centre.map((n) => (
+                <div class="graph__slot">
+                  <button type="button" {...nodeButton(n, false)}>
+                    <span class="graph__year ltr" aria-hidden="true">
+                      {n.year ?? ''}
+                    </span>
+                    <span class="graph__label" lang={n.labelLang} dir="auto">
+                      {n.label}
+                    </span>
+                    <span class="visually-hidden">
+                      {' '}
+                      ({ui.graphKinds.publication}
+                      {n.year ? `, ${n.year}` : ''}, {ui.graphConnections(linksOf(n.ref).length)})
+                    </span>
+                  </button>
+                </div>
+              ))
+            }
+          </div>
+          <div class="graph__col graph__col--end" style={`--n: ${end.length}`}>
+            {
+              end.map((n) => (
+                <div class="graph__slot">
+                  <button type="button" {...nodeButton(n, false)}>
+                    <span class="graph__label" lang={n.labelLang} dir="auto">
+                      {n.label}
+                    </span>
+                    <span class="visually-hidden">
+                      {' '}
+                      ({ui.graphKinds[n.kind]}, {ui.graphConnections(linksOf(n.ref).length)})
+                    </span>
+                  </button>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+      <aside class="graph__panel" aria-live="polite" data-graph-panel>
+        <p class="graph__none">{ui.graphNone}</p>
+      </aside>
+    </div>
+  </div>
+
+  <div class="graph__list" data-graph-list>
+    {
+      [
+        { title: ui.graphColumns.left, nodes: start },
+        { title: ui.graphColumns.right, nodes: end },
+      ].map((group) => (
+        <section class="graph__group">
+          <h3>{group.title}</h3>
+          <ul role="list">
+            {group.nodes.map((n) => (
+              <li>
+                <details>
+                  <summary>
+                    <span class="graph__list-kind">{ui.graphKinds[n.kind]}</span>
+                    <span lang={n.labelLang} dir="auto">
+                      {n.label}
+                    </span>
+                    <span class="graph__list-n">{ui.graphConnections(linksOf(n.ref).length)}</span>
+                  </summary>
+                  <ul role="list" class="graph__links">
+                    {linksOf(n.ref).map(({ node, edge }) => (
+                      <li>
+                        <a href={node.href} lang={node.labelLang} dir="auto">
+                          {node.label}
+                        </a>
+                        {node.year && <span class="ltr graph__list-year"> {node.year}</span>}
+                        <p class="graph__evidence">
+                          <span class="label">{ui.graphEvidence}:</span> <span lang="en" dir="ltr">{edge.evidence}</span>
+                          {edge.source && (
+                            <>
+                              {' '}
+                              <q lang="en" dir="ltr">
+                                {edge.source.quote}
+                              </q>{' '}
+                              <span class="graph__field">({fieldLabel(edge.source.field)})</span>
+                            </>
+                          )}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+    {evidenceNote && <p class="graph__note">{evidenceNote}</p>}
+  </div>
+  <script type="application/json" data-graph-data set:html={JSON.stringify(payload)} />
+</section>
+
+<script>
+  type Node = { ref: string; kind: string; label: string; lang?: string; href: string; side: 'start' | 'centre' | 'end'; row: number; draft?: boolean; year?: number | null };
+  type Edge = { from: string; to: string; evidence: string; field?: string; quote?: string };
+
+  const root = document.querySelector<HTMLElement>('[data-graph]');
+  if (root) {
+    const data = JSON.parse(root.querySelector('[data-graph-data]')?.textContent ?? '{}') as { nodes: Node[]; edges: Edge[]; i18n: Record<string, any> };
+    const I = data.i18n;
+    const panel = root.querySelector<HTMLElement>('[data-graph-panel]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('.graph__node')];
+    const btnOf = new Map(buttons.map((b) => [b.dataset.ref!, b]));
+    const paths = [...root.querySelectorAll<SVGPathElement>('.graph__edge')];
+    const nodeOf = new Map(data.nodes.map((n) => [n.ref, n]));
+    const sides: Node['side'][] = ['start', 'centre', 'end'];
+    const columns = sides.map((s) => buttons.filter((b) => nodeOf.get(b.dataset.ref!)?.side === s));
+    const rtl = document.documentElement.dir === 'rtl';
+    let selected: string | null = null;
+
+    const neighbours = (ref: string) => data.edges.filter((e) => e.from === ref || e.to === ref).map((e) => ({ ref: e.from === ref ? e.to : e.from, edge: e }));
+
+    function light(ref: string | null) {
+      root!.toggleAttribute('data-active', !!ref);
+      const lit = new Set(ref ? [ref, ...neighbours(ref).map((n) => n.ref)] : []);
+      buttons.forEach((b) => b.classList.toggle('is-lit', lit.has(b.dataset.ref!)));
+      paths.forEach((p) => p.classList.toggle('is-lit', !!ref && (p.dataset.from === ref || p.dataset.to === ref)));
+    }
+
+    function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function renderPanel(ref: string | null) {
+      panel.replaceChildren();
+      if (!ref) {
+        panel.append(el('p', 'graph__none', I.none));
+        return;
+      }
+      const n = nodeOf.get(ref)!;
+      const links = neighbours(ref);
+      panel.append(el('p', 'graph__panel-kind', I.kinds[n.kind] ?? n.kind));
+      const h = el('h3', 'graph__panel-title');
+      const a = el('a', undefined, n.label);
+      a.href = n.href;
+      if (n.lang) a.lang = n.lang;
+      a.dir = 'auto';
+      h.append(a);
+      panel.append(h);
+      if (n.draft) panel.append(el('span', 'draft-badge', I.draft));
+      panel.append(el('p', 'graph__panel-count', I.connections[links.length] ?? String(links.length)));
+      const ul = el('ul', 'graph__panel-links');
+      ul.setAttribute('role', 'list');
+      for (const { ref: other, edge } of links) {
+        const m = nodeOf.get(other)!;
+        const li = el('li');
+        const go = el('button', 'graph__goto');
+        go.type = 'button';
+        go.dataset.goto = other;
+        const kind = el('span', 'graph__goto-kind', I.kinds[m.kind] ?? m.kind);
+        const label = el('span', 'graph__goto-label', m.label);
+        if (m.lang) label.lang = m.lang;
+        label.dir = 'auto';
+        go.append(kind, label);
+        li.append(go);
+        const ev = el('p', 'graph__evidence');
+        const evLabel = el('span', 'label', `${I.evidence}: `);
+        const evText = el('span', undefined, edge.evidence);
+        if (I.evidenceLang) {
+          evText.lang = I.evidenceLang;
+          evText.dir = 'ltr';
+        }
+        ev.append(evLabel, evText);
+        if (edge.quote) {
+          const qt = el('q', undefined, edge.quote);
+          qt.lang = 'en';
+          qt.dir = 'ltr';
+          ev.append(' ', qt, ` (${I.quoted}: ${edge.field})`);
+        }
+        li.append(ev);
+        ul.append(li);
+      }
+      panel.append(ul);
+      const actions = el('div', 'graph__panel-actions');
+      const open = el('a', 'button', I.open);
+      open.href = n.href;
+      const clear = el('button', 'button graph__clear', I.clear);
+      clear.type = 'button';
+      clear.addEventListener('click', () => select(null, true));
+      actions.append(open, clear);
+      panel.append(actions);
+    }
+
+    function setTabStop(btn: HTMLButtonElement) {
+      buttons.forEach((b) => (b.tabIndex = b === btn ? 0 : -1));
+    }
+
+    function select(ref: string | null, focus = false) {
+      selected = ref;
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ref === ref)));
+      light(ref);
+      renderPanel(ref);
+      if (ref) {
+        const b = btnOf.get(ref);
+        if (b) {
+          setTabStop(b);
+          if (focus) b.focus();
+        }
+      } else if (focus) {
+        (root!.querySelector<HTMLButtonElement>('.graph__node[tabindex="0"]') ?? buttons[0])?.focus();
+      }
+    }
+
+    function move(from: HTMLButtonElement, key: string) {
+      const ci = columns.findIndex((c) => c.includes(from));
+      const col = columns[ci];
+      const i = col.indexOf(from);
+      let target: HTMLButtonElement | undefined;
+      if (key === 'ArrowDown') target = col[Math.min(col.length - 1, i + 1)];
+      else if (key === 'ArrowUp') target = col[Math.max(0, i - 1)];
+      else if (key === 'Home') target = col[0];
+      else if (key === 'End') target = col[col.length - 1];
+      else {
+        const step = (key === 'ArrowRight' ? 1 : -1) * (rtl ? -1 : 1);
+        const next = columns[ci + step];
+        if (next?.length) {
+          // the neighbour whose vertical centre is closest
+          const y = from.getBoundingClientRect().top + from.offsetHeight / 2;
+          target = next.reduce((best, b) => {
+            const d = Math.abs(b.getBoundingClientRect().top + b.offsetHeight / 2 - y);
+            const bd = Math.abs(best.getBoundingClientRect().top + best.offsetHeight / 2 - y);
+            return d < bd ? b : best;
+          }, next[0]);
+        }
+      }
+      if (target && target !== from) {
+        setTabStop(target);
+        target.focus();
+        if (!selected) light(target.dataset.ref!);
+      }
+    }
+
+    buttons.forEach((b) => {
+      b.addEventListener('click', () => select(selected === b.dataset.ref ? null : b.dataset.ref!));
+      b.addEventListener('keydown', (e) => {
+        if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+          e.preventDefault();
+          move(b, e.key);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          select(null);
+          light(null);
+        }
+      });
+      b.addEventListener('pointerenter', () => !selected && light(b.dataset.ref!));
+      b.addEventListener('pointerleave', () => !selected && light(null));
+      b.addEventListener('blur', () => {
+        if (!selected && !root!.contains(document.activeElement)) light(null);
+      });
+    });
+    panel.addEventListener('click', (e) => {
+      const go = (e.target as HTMLElement).closest<HTMLElement>('[data-goto]');
+      if (go) select(go.dataset.goto!, true);
+    });
+
+    // views: map by default on wide screens, list on narrow ones
+    const viewButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-graph-view]')];
+    const setView = (v: string) => {
+      root.dataset.view = v;
+      viewButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.graphView === v)));
+    };
+    viewButtons.forEach((b) => b.addEventListener('click', () => setView(b.dataset.graphView!)));
+    setView(window.matchMedia('(min-width: 48rem)').matches ? 'map' : 'list');
+
+    // ?focus=kind:id preselects a node (used by search results and chips)
+    const focus = new URLSearchParams(location.search).get('focus');
+    if (focus && nodeOf.has(focus)) {
+      if (root.dataset.view === 'list') {
+        const summary = [...root.querySelectorAll<HTMLElement>('.graph__list summary')].find((s) => s.textContent?.includes(nodeOf.get(focus)!.label));
+        summary?.parentElement?.setAttribute('open', '');
+      }
+      select(focus);
+    }
+  }
+</script>
+
+<style>
+  .graph {
+    display: grid;
+    gap: var(--space-4);
+    scroll-margin-block-start: calc(var(--header-height) + var(--space-4));
+  }
+  .graph__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+  .graph__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .graph__lead {
+    max-inline-size: 46rem;
+    margin-block-start: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .graph__views {
+    display: none;
+  }
+  :global(html[data-js]) .graph__views {
+    display: inline-flex;
+  }
+  .graph__hint {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  /* Without JS (no data-view) only the list shows. */
+  .graph__mapwrap {
+    display: none;
+  }
+  .graph[data-view='map'] .graph__mapwrap {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .graph[data-view='map'] .graph__list {
+    display: none;
+  }
+  .graph__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .graph__scroll {
+    overflow-x: auto;
+    padding-block-end: var(--space-2);
+  }
+  .graph__colheads,
+  .graph__canvas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+    min-inline-size: 44rem;
+  }
+  .graph__colheads {
+    padding-block-end: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-brass);
+  }
+  :global(:lang(ar)) .graph__colheads {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .graph__colheads span:nth-child(2) {
+    padding-inline-start: 14%;
+  }
+  .graph__colheads span:nth-child(3) {
+    padding-inline-start: 8%;
+  }
+  .graph__canvas {
+    position: relative;
+    block-size: calc(var(--rows) * 2.6rem);
+  }
+  .graph__edges {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  :global([dir='rtl']) .graph__edges {
+    transform: scaleX(-1);
+  }
+  .graph__edge {
+    fill: none;
+    stroke: var(--color-rule-strong);
+    stroke-width: 1;
+    opacity: 0.75;
+    transition: opacity var(--dur-1) var(--ease), stroke var(--dur-1) var(--ease);
+  }
+  .graph__edge.to-project,
+  .graph__edge.to-talk,
+  .graph__edge.to-dataset {
+    stroke: color-mix(in srgb, var(--color-brass) 55%, var(--color-rule-strong));
+  }
+  .graph__edge.to-method {
+    stroke-dasharray: 3 3;
+  }
+  .graph[data-active] .graph__edge {
+    opacity: 0.12;
+  }
+  .graph[data-active] .graph__edge.is-lit {
+    opacity: 1;
+    stroke: var(--color-accent);
+    stroke-width: 2;
+  }
+  .graph[data-active] .graph__edge.is-lit.to-project,
+  .graph[data-active] .graph__edge.is-lit.to-talk,
+  .graph[data-active] .graph__edge.is-lit.to-dataset {
+    stroke: var(--color-brass);
+  }
+  .graph__col {
+    position: relative;
+    display: grid;
+    grid-template-rows: repeat(var(--n), minmax(0, 1fr));
+  }
+  .graph__slot {
+    display: flex;
+    align-items: center;
+    min-block-size: 0;
+  }
+  .graph__col--start .graph__slot {
+    justify-content: flex-end;
+    padding-inline-end: 8%;
+  }
+  .graph__col--centre .graph__slot {
+    padding-inline: 14%;
+  }
+  .graph__col--end .graph__slot {
+    padding-inline-start: 8%;
+  }
+  .graph__node {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    max-inline-size: 100%;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-2);
+    background: transparent;
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.3;
+    text-align: start;
+    cursor: pointer;
+    transition: opacity var(--dur-1) var(--ease), background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  }
+  .graph__col--start .graph__node,
+  .graph__col--end .graph__node {
+    font-size: var(--step--1);
+    border-color: var(--color-rule);
+    background: var(--color-surface-1);
+  }
+  .graph__col--start .graph__node {
+    text-align: end;
+  }
+  .graph__node.kind-area {
+    border-inline-start: 3px solid var(--color-accent);
+  }
+  .graph__node.kind-method {
+    border-inline-start: 3px dashed var(--color-ink-3);
+  }
+  .graph__node.kind-project,
+  .graph__node.kind-talk,
+  .graph__node.kind-dataset {
+    border-inline-end: 3px solid var(--color-brass);
+  }
+  .graph__col--centre .graph__node {
+    inline-size: 100%;
+  }
+  .graph__label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .graph__col--centre .graph__label {
+    font-family: var(--font-serif);
+    font-size: 0.8rem;
+  }
+  .graph__year {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--color-ink-3);
+  }
+  .graph__node:hover {
+    border-color: var(--color-rule-strong);
+  }
+  .graph__node:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .graph[data-active] .graph__node:not(.is-lit) {
+    opacity: 0.38;
+  }
+  .graph__node[aria-pressed='true'] {
+    background: var(--color-accent-soft);
+    border-color: var(--color-accent);
+  }
+
+  /* ----------------------------------------------------------------- panel */
+  .graph__panel {
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-4));
+    display: grid;
+    gap: var(--space-2);
+    max-block-size: calc(100dvh - var(--header-height) - var(--space-6));
+    overflow-y: auto;
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  .graph__none {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  .graph__panel :global(.graph__panel-kind) {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-brass);
+  }
+  .graph__panel :global(.graph__panel-title) {
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    line-height: 1.35;
+  }
+  .graph__panel :global(.graph__panel-title a) {
+    color: var(--color-ink);
+  }
+  .graph__panel :global(.graph__panel-count) {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .graph__panel :global(.graph__panel-links) {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+  .graph__panel :global(.graph__goto) {
+    display: grid;
+    gap: 0.1rem;
+    inline-size: 100%;
+    padding: 0.35rem 0.5rem;
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    text-align: start;
+    cursor: pointer;
+  }
+  .graph__panel :global(.graph__goto:focus-visible) {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .graph__panel :global(.graph__goto-kind) {
+    font-family: var(--font-ui);
+    font-size: 0.68rem;
+    color: var(--color-ink-3);
+  }
+  .graph__panel :global(.graph__goto-label) {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    line-height: 1.35;
+  }
+  .graph :global(.graph__evidence) {
+    margin-block-start: 0.3rem;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+  }
+  .graph :global(.graph__evidence q) {
+    font-style: italic;
+  }
+  .graph__panel :global(.graph__panel-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+
+  /* ------------------------------------------------------------------ list */
+  .graph__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+  .graph__group h3 {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    font-weight: 600;
+    margin-block-end: var(--space-2);
+  }
+  .graph__group > ul {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+  }
+  .graph__group details {
+    border: var(--border-hairline);
+    border-radius: var(--radius-2);
+    background: var(--color-surface-1);
+  }
+  .graph__group summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.1rem 0.75rem;
+    min-block-size: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .graph__group summary::-webkit-details-marker {
+    display: none;
+  }
+  .graph__group summary > :global(*) {
+    grid-column: 1;
+  }
+  .graph__group summary::after {
+    content: '+';
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+  .graph__group details[open] > summary::after {
+    content: '−';
+  }
+  .graph__list-kind,
+  .graph__list-n {
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .graph__links {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0 0.75rem 0.75rem;
+  }
+  .graph__links a {
+    font-family: var(--font-serif);
+    font-size: var(--step--1);
+    color: var(--color-ink);
+  }
+  .graph__list-year {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .graph__note {
+    grid-column: 1 / -1;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 64rem) {
+    .graph__layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .graph__panel {
+      position: static;
+      max-block-size: none;
+    }
+  }
+  @media (max-width: 48rem) {
+    .graph__list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

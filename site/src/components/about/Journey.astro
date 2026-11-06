@@ -1,0 +1,402 @@
+---
+/**
+ * Academic journey: milestones derived ONLY from approved records — CV
+ * periods (education, positions), courses, approved talks, publication years,
+ * project periods. Nothing is dated unless an approved record dates it;
+ * undated items are listed separately. Each year expands and collapses
+ * (native <details>), and links to that year in the publication explorer.
+ */
+import LangText from '../shared/LangText.astro';
+import { courses, cv, pick, projects, talks } from '../../utils/content';
+import { publications, type Publication } from '../../utils/publications';
+import { publicationsOfTalk, publicationsOfProject } from '../../utils/relations';
+import { formatPeriod } from '../../utils/format';
+import { localePath } from '../../utils/paths';
+import { t } from '../../i18n/ui';
+import type { Lang, LocalizedText } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const ar = lang === 'ar';
+type Kind = keyof typeof ui.journeyKinds;
+interface Milestone {
+  kind: Kind;
+  text: LocalizedText;
+  /** Already-localised UI text (rendered as is instead of `text`). */
+  plain?: string;
+  period?: string | null;
+  href?: string;
+  pubs: Publication[];
+}
+const pub = (key: string) => publications.find((p) => p.key === key);
+const byYear = new Map<number, Milestone[]>();
+const undated: Milestone[] = [];
+const push = (year: number | null, m: Milestone) => {
+  if (year === null || Number.isNaN(year)) return undated.push(m);
+  byYear.set(year, [...(byYear.get(year) ?? []), m]);
+};
+const startYear = (period?: string | null) => {
+  const m = period?.match(/\d{4}/);
+  return m ? Number(m[0]) : null;
+};
+
+// CV: education and positions, dated only by their approved periods.
+for (const section of cv?.sections ?? []) {
+  if (section.id !== 'education' && section.id !== 'positions') continue;
+  for (const item of section.items) {
+    const thesis = section.id === 'education' && /thesis/i.test(item.text.en ?? '') ? publications.filter((p) => p.type === 'thesis') : [];
+    push(startYear(item.period), { kind: section.id === 'education' ? 'education' : 'position', text: item.text, period: item.period, pubs: thesis });
+  }
+}
+// Teaching: courses that carry an approved term.
+const dated = courses.filter((c) => c.term);
+if (dated.length) {
+  const term = dated[0].term!;
+  push(startYear(term), {
+    kind: 'teaching',
+    text: { en: dated.map((c) => c.title.en).join(', '), ar: null },
+    period: term,
+    href: localePath(lang, '/teaching/'),
+    pubs: [],
+  });
+}
+// Approved talks and the papers they presented.
+for (const tk of talks) {
+  push(startYear(tk.date), { kind: 'conference', text: tk.event, period: tk.date, href: `${localePath(lang, '/talks/')}#${tk.id}`, pubs: publicationsOfTalk(tk.id).flatMap((k) => pub(k) ?? []) });
+}
+// Projects with an approved period; undated projects go to the undated group.
+for (const pr of projects) {
+  push(startYear(pr.period), {
+    kind: pr.id === 'statistical-guides' ? 'guides' : 'project',
+    text: pr.title,
+    period: pr.period,
+    href: `${localePath(lang, '/projects/')}#${pr.id}`,
+    pubs: [],
+  });
+}
+// Publication years: counts plus the selected works of that year.
+const pubYears = [...new Set(publications.map((p) => p.year).filter((y): y is number => y !== null))];
+const pubsIn = (y: number) => publications.filter((p) => p.year === y);
+for (const y of pubYears) {
+  const sel = pubsIn(y).filter((p) => p.selected);
+  push(y, { kind: 'publication', text: { en: null, ar: null }, plain: ui.results(pubsIn(y).length), pubs: sel, href: `${localePath(lang, '/publications/')}?from=${y}&to=${y}` });
+}
+const years = [...byYear.keys()].sort((a, b) => a - b);
+const kindOrder: Kind[] = ['education', 'position', 'teaching', 'conference', 'project', 'guides', 'dataset', 'publication'];
+const sortMs = (ms: Milestone[]) => [...ms].sort((a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind));
+// The course list is English titles joined; show localized titles instead on Arabic pages.
+const teachingText = (m: Milestone) => m.plain ?? (m.kind === 'teaching' ? dated.map((c) => pick(c.title, lang)?.text).join(ar ? '، ' : ', ') : null);
+const latest = years[years.length - 1];
+---
+
+<section class="journey" id="journey" aria-labelledby="journey-title">
+  <div class="journey__head">
+    <p class="kicker">{ar ? 'المسار' : 'Journey'}</p>
+    <h2 id="journey-title" class="journey__title">{ar ? 'المسار الأكاديمي' : 'Academic journey'}</h2>
+    <p class="journey__lead">
+      {
+        ar
+          ? 'محطات مأخوذة من السجلات المعتمدة فقط: السيرة الذاتية، والمواد الدراسية، والمحاضرات، وسنوات النشر، والمشروعات. ما ليس له تاريخ معتمد يظهر في مجموعة مستقلة.'
+          : 'Milestones taken only from approved records — the CV, courses, talks, publication years and projects. Anything without an approved date is listed separately.'
+      }
+    </p>
+    <button type="button" class="button journey__toggle" data-journey-toggle data-open-label={ar ? 'فتح الكل' : 'Expand all'} data-close-label={ar ? 'طي الكل' : 'Collapse all'}>
+      {ar ? 'فتح الكل' : 'Expand all'}
+    </button>
+  </div>
+
+  <ol class="journey__years" role="list">
+    {
+      years.map((y) => {
+        const ms = sortMs(byYear.get(y)!);
+        const kinds = [...new Set(ms.map((m) => m.kind))];
+        const n = pubsIn(y).length;
+        return (
+          <li class="journey__year">
+            <details open={y === latest || y === years[0]} data-journey-item>
+              <summary>
+                <span class="journey__y ltr">{y}</span>
+                <span class="journey__kinds">
+                  {kinds.map((k) => (
+                    <span class={`journey__kind kind-${k}`}>{ui.journeyKinds[k]}</span>
+                  ))}
+                </span>
+              </summary>
+              <ul class="journey__list" role="list">
+                {ms.map((m) => (
+                  <li class={`journey__ms kind-${m.kind}`}>
+                    <p class="journey__ms-kind">
+                      {ui.journeyKinds[m.kind]}
+                      {m.period && m.period !== String(y) && (
+                        <span class="journey__period" dir={ar ? 'auto' : 'ltr'}>
+                          {' '}
+                          · {formatPeriod(m.period, lang)}
+                        </span>
+                      )}
+                    </p>
+                    <p class="journey__ms-text">
+                      {m.href ? (
+                        <a href={m.href}>{teachingText(m) ?? <LangText value={m.text} lang={lang} />}</a>
+                      ) : (
+                        (teachingText(m) ?? <LangText value={m.text} lang={lang} />)
+                      )}
+                    </p>
+                    {m.pubs.length > 0 && (
+                      <ul class="journey__pubs" role="list">
+                        {m.pubs.map((p) => (
+                          <li>
+                            <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
+                              {p.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {n > 0 && (
+                <a class="journey__yearlink" href={`${localePath(lang, '/publications/')}?from=${y}&to=${y}`}>
+                  {ui.journeyYearLink(y)} <span aria-hidden="true" class="icon-flip">→</span>
+                </a>
+              )}
+            </details>
+          </li>
+        );
+      })
+    }
+    {
+      undated.length > 0 && (
+        <li class="journey__year journey__year--undated">
+          <details open data-journey-item>
+            <summary>
+              <span class="journey__y">{ui.journeyUndated}</span>
+            </summary>
+            <ul class="journey__list" role="list">
+              {sortMs(undated).map((m) => (
+                <li class={`journey__ms kind-${m.kind}`}>
+                  <p class="journey__ms-kind">
+                    {ui.journeyKinds[m.kind]}
+                    {m.period && <span dir={ar ? 'auto' : 'ltr'}> · {formatPeriod(m.period, lang)}</span>}
+                  </p>
+                  <p class="journey__ms-text">
+                    {m.href ? (
+                      <a href={m.href}>
+                        <LangText value={m.text} lang={lang} />
+                      </a>
+                    ) : (
+                      <LangText value={m.text} lang={lang} />
+                    )}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <p class="journey__note">
+              {ar ? 'لا تحمل هذه البنود تاريخًا في السجلات المعتمدة، لذا لا يُخمَّن لها تاريخ.' : 'These items carry no date in the approved records, so none is guessed.'}
+            </p>
+          </details>
+        </li>
+      )
+    }
+  </ol>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-journey-toggle]').forEach((btn) => {
+    const root = btn.closest('.journey');
+    const items = () => [...(root?.querySelectorAll<HTMLDetailsElement>('[data-journey-item]') ?? [])];
+    const sync = () => {
+      const allOpen = items().every((d) => d.open);
+      btn.textContent = allOpen ? btn.dataset.closeLabel! : btn.dataset.openLabel!;
+      btn.setAttribute('aria-expanded', String(allOpen));
+    };
+    btn.addEventListener('click', () => {
+      const open = !items().every((d) => d.open);
+      items().forEach((d) => (d.open = open));
+      sync();
+    });
+    items().forEach((d) => d.addEventListener('toggle', sync));
+    sync();
+  });
+</script>
+
+<style>
+  .journey {
+    display: grid;
+    gap: var(--space-5);
+    margin-block-start: var(--space-8);
+    scroll-margin-block-start: calc(var(--header-height) + var(--space-5));
+  }
+  .journey__head {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+  .journey__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .journey__lead {
+    max-inline-size: 44rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  .journey__toggle {
+    display: none;
+  }
+  :global(html[data-js]) .journey__toggle {
+    display: inline-flex;
+  }
+  .journey__years {
+    position: relative;
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+  }
+  .journey__years::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-start: 2.6rem;
+    border-inline-start: 1px solid var(--color-rule);
+  }
+  .journey__year details {
+    position: relative;
+  }
+  .journey__year summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    min-block-size: 2.75rem;
+    padding-block: var(--space-2);
+    cursor: pointer;
+    list-style: none;
+  }
+  .journey__year summary::-webkit-details-marker {
+    display: none;
+  }
+  .journey__y {
+    position: relative;
+    inline-size: 5.2rem;
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1;
+    color: var(--color-ink);
+    background: var(--color-paper);
+    padding-block: 0.1rem;
+    z-index: 1;
+  }
+  .journey__year--undated .journey__y {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    inline-size: auto;
+    color: var(--color-ink-3);
+  }
+  .journey__year summary::after {
+    content: '+';
+    margin-inline-start: auto;
+    font-family: var(--font-mono);
+    color: var(--color-ink-3);
+  }
+  .journey__year details[open] > summary::after {
+    content: '−';
+  }
+  .journey__year summary:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .journey__kinds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .journey__kind {
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill);
+    border: var(--border-hairline);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-2);
+  }
+  .journey__list {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-3);
+    padding-inline-start: 5.2rem;
+  }
+  .journey__ms {
+    padding: var(--space-3) var(--space-4);
+    border: var(--border-hairline);
+    border-inline-start: 3px solid var(--color-rule-strong);
+    border-radius: var(--radius-2);
+    background: var(--color-surface-1);
+  }
+  .journey__ms.kind-education,
+  .journey__ms.kind-position {
+    border-inline-start-color: var(--color-accent);
+  }
+  .journey__ms.kind-conference,
+  .journey__ms.kind-guides {
+    border-inline-start-color: var(--color-brass);
+  }
+  .journey__ms-kind {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .journey__ms-text {
+    margin-block-start: 0.2rem;
+    font-family: var(--font-serif);
+    font-size: var(--step-0);
+    line-height: 1.45;
+  }
+  .journey__ms-text a {
+    color: var(--color-ink);
+  }
+  .journey__pubs {
+    display: grid;
+    gap: 0.3rem;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+  }
+  .journey__pubs a {
+    font-family: var(--font-serif);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+  .journey__yearlink {
+    display: inline-flex;
+    gap: 0.4rem;
+    margin-inline-start: 5.2rem;
+    margin-block-end: var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+  }
+  .journey__note {
+    padding-inline-start: 0;
+    margin-block-end: var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 40rem) {
+    .journey__years::before {
+      display: none;
+    }
+    .journey__list {
+      padding-inline-start: 0;
+    }
+    .journey__yearlink {
+      margin-inline-start: 0;
+    }
+  }
+</style>

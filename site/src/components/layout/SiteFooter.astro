@@ -1,7 +1,8 @@
 ---
+import { arNoun } from '../../lib/text.mjs';
 import Wordmark from '../shared/Wordmark.astro';
 import { SECTION_PATHS, SITE_NAME, navKeys, pageCopy } from '../../config/site';
-import { manifest, profile, researchAreas } from '../../utils/content';
+import { arDrafts, manifest, profile, researchAreas, showArDrafts } from '../../utils/content';
 import { publications, selectedPublications } from '../../utils/publications';
 import { localePath, otherLang } from '../../utils/paths';
 import { t } from '../../i18n/ui';
@@ -16,6 +17,9 @@ const ui = t(lang);
 const items = await Promise.all(navKeys.map(async (key) => ({ href: localePath(lang, SECTION_PATHS[key]), label: (await pageCopy(key, lang)).navLabel })));
 const year = new Date().getFullYear();
 const target = otherLang(lang);
+// Arabic translation status, counted from the drafts file (never claims a review).
+const draftCount = arDrafts.entries.filter((e) => e.status !== 'reviewed').length;
+const reviewedCount = arDrafts.entries.length - draftCount;
 // One link per platform: the researcher has two Scopus ids, which would read as a duplicate.
 const ids = profile.identifiers
   .filter((i) => ['ORCID', 'Google Scholar', 'Scopus', 'ResearchGate', 'LinkedIn', 'GitHub', 'OpenAlex'].includes(i.type))
@@ -108,13 +112,27 @@ const headline =
     </div>
   </div>
 
+  {
+    lang === 'ar' && showArDrafts && (
+      <div class="container site-footer__translation">
+        <p>
+          <span class="label">{ui.translationStatus}</span> {ui.draftFooter}{' '}
+          <span>
+            ({draftCount} نصًّا مبدئيًا بانتظار المراجعة{reviewedCount > 0 ? `، و${reviewedCount} نصًّا رُوجع` : ''}.)
+          </span>
+        </p>
+      </div>
+    )
+  }
   <div class="container site-footer__bottom">
     <p class="site-footer__copy">
       <bdi dir="ltr">© {year} {SITE_NAME}</bdi>. {ui.rights}
     </p>
-    <p class="site-footer__counts ltr">
-      {publications.length} {lang === 'ar' ? 'منشورًا' : 'publications'} · {selectedPublications.length}{' '}
-      {lang === 'ar' ? 'مختارة' : 'selected'} · {researchAreas.length} {lang === 'ar' ? 'مجالات بحثية' : 'research areas'}
+    <p class:list={['site-footer__counts', { ltr: lang !== 'ar' }]}>
+      {publications.length}{' '}
+      {lang === 'ar' ? arNoun(publications.length, { one: 'منشور', two: 'منشوران', few: 'منشورات', many: 'منشورًا' }) : 'publications'} ·{' '}
+      {selectedPublications.length} {lang === 'ar' ? 'مختارة' : 'selected'} · {researchAreas.length}{' '}
+      {lang === 'ar' ? arNoun(researchAreas.length, { one: 'مجال بحثي', two: 'مجالان بحثيان', few: 'مجالات بحثية', many: 'مجالًا بحثيًا' }) : 'research areas'}
     </p>
   </div>
 </footer>
@@ -208,6 +226,25 @@ const headline =
     opacity: 0.8;
     margin-inline-end: var(--space-2);
   }
+  /* The wordmark is drawn for paper; on the inverted footer it needs the inverted ink. */
+  .site-footer :global(.wordmark),
+  .site-footer :global(.wordmark:hover .wordmark__name) {
+    color: var(--color-invert-fg);
+  }
+  .site-footer :global(.wordmark__mark) {
+    color: var(--color-brass-soft);
+  }
+  .site-footer__translation .label {
+    margin-inline-end: 0.5em;
+    color: var(--color-brass-soft);
+  }
+  .site-footer__translation {
+    padding-block: var(--space-3);
+    border-block-start: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    font-size: var(--step--2);
+    line-height: 1.6;
+    opacity: 0.85;
+  }
   .site-footer__bottom {
     display: flex;
     flex-wrap: wrap;
@@ -225,7 +262,7 @@ const headline =
   }
   @media (max-width: 40rem) {
     .site-footer__grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 </style>

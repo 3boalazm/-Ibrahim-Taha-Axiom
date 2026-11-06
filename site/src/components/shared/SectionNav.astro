@@ -1,0 +1,165 @@
+---
+/**
+ * Sticky in-page navigation for long pages, with a reading-progress hairline.
+ * - Plain anchor links: works without JavaScript.
+ * - A small script marks the section in view with aria-current="location".
+ * - Progress uses a CSS scroll-driven animation where supported; it moves only
+ *   with the reader's own scrolling (no autoplay) and is hidden otherwise.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+  items: { id: string; label: string }[];
+}
+const { lang, items } = Astro.props;
+const ui = t(lang);
+---
+
+<nav class="section-nav" aria-label={ui.onThisPage} data-section-nav>
+  <div class="container section-nav__inner">
+    <span class="section-nav__label" aria-hidden="true">{ui.onThisPage}</span>
+    <ol class="section-nav__list" role="list">
+      {
+        items.map((it) => (
+          <li>
+            <a href={`#${it.id}`} data-section-link={it.id}>
+              {it.label}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+  <span class="section-nav__progress" aria-hidden="true"></span>
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-section-nav]');
+  if (nav && 'IntersectionObserver' in window) {
+    const links = [...nav.querySelectorAll<HTMLAnchorElement>('[data-section-link]')];
+    const targets = links.map((a) => document.getElementById(a.dataset.sectionLink ?? '')).filter((el): el is HTMLElement => !!el);
+    const visible = new Map<string, number>();
+    const mark = () => {
+      // the first section (in document order) that is on screen wins
+      const current = targets.find((el) => (visible.get(el.id) ?? 0) > 0);
+      if (!current) return;
+      links.forEach((a) => {
+        if (a.dataset.sectionLink === current.id) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+      });
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => visible.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+        mark();
+      },
+      { rootMargin: '-20% 0px -55% 0px', threshold: [0, 0.01] },
+    );
+    targets.forEach((el) => io.observe(el));
+  }
+</script>
+
+<style>
+  .section-nav {
+    position: sticky;
+    inset-block-start: var(--header-height);
+    z-index: 20;
+    background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    border-block-end: var(--border-hairline);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .section-nav {
+      backdrop-filter: saturate(1.2) blur(6px);
+    }
+  }
+  .section-nav__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-block-size: 3.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .section-nav__inner::-webkit-scrollbar {
+    display: none;
+  }
+  .section-nav__label {
+    flex: none;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  :lang(ar) .section-nav__label {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .section-nav__list {
+    display: flex;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+  }
+  .section-nav__list a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.5rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .section-nav__list a:hover {
+    color: var(--color-ink);
+    background: var(--color-surface-2);
+  }
+  .section-nav__list a[aria-current='location'] {
+    color: var(--color-ink);
+    background: var(--color-accent-soft);
+  }
+  .section-nav__list a:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .section-nav__progress {
+    display: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    .section-nav__progress {
+      display: block;
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: -1px;
+      block-size: 2px;
+      background: var(--color-brass);
+      transform-origin: 0 50%;
+      animation: section-progress linear both;
+      animation-timeline: scroll(root block);
+    }
+    [dir='rtl'] .section-nav__progress {
+      transform-origin: 100% 50%;
+    }
+  }
+  @keyframes section-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  /* The global reduced-motion rule shortens animations, which would freeze a
+     scroll-linked bar at its end state; scroll-linked progress follows the
+     reader's own scrolling, so keep it but with no easing. */
+  @media (prefers-reduced-motion: reduce) {
+    .section-nav__progress {
+      animation-duration: auto !important;
+    }
+  }
+</style>

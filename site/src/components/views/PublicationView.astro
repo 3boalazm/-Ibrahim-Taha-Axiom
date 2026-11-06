@@ -301,7 +301,7 @@ const meta: [string, string | null, boolean][] = [
   }
   @media (max-width: 60rem) {
     .detail {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .detail__aside {
       position: static;

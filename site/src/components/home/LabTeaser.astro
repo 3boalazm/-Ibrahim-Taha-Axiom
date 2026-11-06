@@ -1,0 +1,197 @@
+---
+/**
+ * Home-page invitation to the lab. The chart is drawn from the lab's
+ * precomputed Monte Carlo payload (spread of the estimates at each of the 15
+ * correlation levels), so every point is a computed value — nothing is
+ * hand-drawn. Labelled as an illustrative controlled experiment.
+ */
+import { arNoun } from '../../lib/text.mjs';
+import { LAB_PAYLOAD } from '../../lab/snapshots';
+import { localePath } from '../../utils/paths';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const S = LAB_PAYLOAD.states;
+const C = LAB_PAYLOAD.claims;
+const W = 360;
+const H = 170;
+const pad = { l: 34, r: 12, t: 12, b: 28 };
+const maxY = Math.max(...S.map((s) => s.mc.est.ml.spread));
+const yMax = Math.ceil(maxY * 10) / 10;
+const x = (i: number) => pad.l + (i / (S.length - 1)) * (W - pad.l - pad.r);
+const y = (v: number) => H - pad.b - (v / yMax) * (H - pad.t - pad.b);
+const line = (key: 'ml' | 'ridge') => S.map((s, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(s.mc.est[key].spread).toFixed(1)}`).join('');
+const yTicks = [0, yMax / 2, yMax];
+const L = ar
+  ? {
+      kicker: 'المختبر',
+      title: 'التعدد الخطي، بالأرقام لا بالكلمات',
+      body: `تجربة توضيحية مضبوطة: ${LAB_PAYLOAD.meta.reps} ${arNoun(LAB_PAYLOAD.meta.reps, { one: 'تكرار', two: 'تكراران', few: 'تكرارات', many: 'تكرارًا' })} عند كل مستوى من ${S.length} ${arNoun(S.length, { one: 'مستوى', two: 'مستويان', few: 'مستويات', many: 'مستوًى' })} للارتباط. عند ρ = ${C.rhoMax} يبلغ تشتت تقديرات الإمكان الأعظم ${C.ratioMax} ضعف تشتت تقديرات الحَرْف (Ridge).`,
+      cta: 'افتح المختبر',
+      ml: 'الإمكان الأعظم',
+      ridge: 'الحَرْف (Ridge)',
+      x: 'الارتباط بين المتنبئات ρ',
+      caption: 'تشتُّت التقديرات في محاكاة مونت كارلو (± انحرافان معياريان، في المتوسط على الميول الأربعة) مقابل',
+      note: 'ليست طريقة COM-Poisson المنشورة؛ انظر ما تُظهره التجربة وما لا تُثبته داخل المختبر.',
+    }
+  : {
+      kicker: 'The lab',
+      title: 'Multicollinearity, in numbers rather than words',
+      body: `An illustrative controlled experiment: ${LAB_PAYLOAD.meta.reps} replicates at each of ${S.length} correlation levels. At ρ = ${C.rhoMax} the maximum-likelihood estimates spread ${C.ratioMax}× as widely as the ridge estimates.`,
+      cta: 'Open the lab',
+      ml: 'Maximum likelihood',
+      ridge: 'Ridge',
+      x: 'correlation between predictors ρ',
+      caption: 'Monte Carlo spread of the estimates (± 2 SD, averaged over the four slopes) against the',
+      note: 'Not the published COM-Poisson method — the lab states what the experiment shows and what it does not prove.',
+    };
+---
+
+<section class="lteaser" aria-labelledby="lteaser-title">
+  <div class="container lteaser__grid">
+    <div class="lteaser__copy">
+      <p class="kicker">{L.kicker}</p>
+      <h2 id="lteaser-title" class="lteaser__title">{L.title}</h2>
+      <p class="lteaser__body">{L.body}</p>
+      <p class="lteaser__note">{L.note}</p>
+      <a class="button button--solid" href={localePath(lang, '/lab/')}>
+        {L.cta}
+        <span class="button__arrow icon-flip" aria-hidden="true">→</span>
+      </a>
+    </div>
+    <figure class="lteaser__fig">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="lteaser-cap" dir="ltr" direction="ltr">
+        {yTicks.map((v) => <line class="lteaser__grid-line" x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} />)}
+        {
+          yTicks.map((v) => (
+            <text class="lteaser__tick" x={pad.l - 6} y={y(v) + 3.5} text-anchor="end">
+              {v.toFixed(2)}
+            </text>
+          ))
+        }
+        <path class="lteaser__ml" d={line('ml')} />
+        <path class="lteaser__ridge" d={line('ridge')} />
+        <text class="lteaser__tick" x={x(0)} y={H - 10} text-anchor="start">
+          ρ = {S[0].rho}
+        </text>
+        <text class="lteaser__tick" x={x(S.length - 1)} y={H - 10} text-anchor="end">
+          {S[S.length - 1].rho}
+        </text>
+      </svg>
+      <figcaption id="lteaser-cap" class="lteaser__cap">
+        <span class="lteaser__legend">
+          <span class="lteaser__key lteaser__key--ml" aria-hidden="true"></span>
+          {L.ml}
+        </span>
+        <span class="lteaser__legend">
+          <span class="lteaser__key lteaser__key--ridge" aria-hidden="true"></span>
+          {L.ridge}
+        </span>
+        <span class="lteaser__capt">{L.caption} {L.x}.</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .lteaser {
+    padding-block: clamp(var(--space-7), 6vw, var(--space-9));
+    background: var(--color-surface-2);
+    border-block: var(--border-hairline);
+  }
+  .lteaser__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(var(--space-5), 5vw, var(--space-8));
+    align-items: center;
+  }
+  .lteaser__copy {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+  }
+  .lteaser__title {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1.1;
+  }
+  .lteaser__body {
+    max-inline-size: 34rem;
+    font-family: var(--font-body);
+    line-height: 1.7;
+    color: var(--color-ink-2);
+  }
+  .lteaser__note {
+    max-inline-size: 34rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .lteaser__fig {
+    margin: 0;
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-4);
+    background: var(--color-paper);
+  }
+  .lteaser__fig svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+  .lteaser__grid-line {
+    stroke: var(--color-rule);
+  }
+  .lteaser__tick {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--color-ink-3);
+  }
+  .lteaser__ml {
+    fill: none;
+    stroke: var(--color-ink-3);
+    stroke-width: 2;
+    stroke-dasharray: 5 4;
+  }
+  .lteaser__ridge {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 2.4;
+  }
+  .lteaser__cap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    margin-block-start: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-2);
+  }
+  .lteaser__legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .lteaser__key {
+    inline-size: 1.4rem;
+    block-size: 0;
+    border-block-start: 2px dashed var(--color-ink-3);
+  }
+  .lteaser__key--ridge {
+    border-block-start: 2.4px solid var(--color-accent);
+  }
+  .lteaser__capt {
+    flex-basis: 100%;
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 56rem) {
+    .lteaser__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

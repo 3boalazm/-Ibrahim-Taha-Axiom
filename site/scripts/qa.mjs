@@ -100,7 +100,8 @@ for (const f of files) if (forbiddenName.test(f)) errors.push(`forbidden file in
 const textFiles = files.filter((f) => /\.(html|xml|txt|js|css|json)$/.test(f));
 for (const f of textFiles) {
   const s = readFileSync(join(DIST, f), 'utf8');
-  for (const [m] of s.matchAll(/[\w.+-]+@(gmail|yahoo|hotmail|outlook|sadatacademy)\.[a-z.]+/gi)) {
+  for (const [raw] of s.matchAll(/[\w.+-]+@(gmail|yahoo|hotmail|outlook|sadatacademy)\.[a-z.]+/gi)) {
+    const m = raw.replace(/\.+$/, ''); // a sentence-ending full stop is not part of the address
     if (!allowedEmails.includes(m.toLowerCase())) errors.push(`${f}: unapproved personal e-mail address ${m}`);
   }
   for (const [m] of s.matchAll(/\+20\s?1\d[\d\s-]{7,}\d/g)) {

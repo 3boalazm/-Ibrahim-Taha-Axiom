@@ -104,7 +104,11 @@ const ui = t(lang);
     background: var(--color-surface-2);
     border-radius: var(--radius-2);
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
+  }
+  .cite__panel > * {
+    min-inline-size: 0;
   }
   .cite__text {
     font-size: var(--step--1);

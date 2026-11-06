@@ -46,6 +46,14 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     </nav>
 
     <div class="site-header__tools">
+      <button type="button" class="search-trigger" aria-haspopup="dialog" aria-controls="site-search" data-search-open aria-keyshortcuts="Control+K Meta+K /" title={ui.searchShortcut}>
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+          <path d="M12.6 12.6 17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+        </svg>
+        <span class="search-trigger__label">{ui.searchOpen}</span>
+        <kbd class="search-trigger__kbd" aria-hidden="true" data-search-kbd>Ctrl K</kbd>
+      </button>
       <LanguageSwitcher lang={lang} path={path} />
       <ThemeToggle lang={lang} />
       <a class="site-header__cta" href={localePath(lang, '/contact/')}>
@@ -81,6 +89,10 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
   });
   header?.querySelectorAll('#site-nav a').forEach((a) => a.addEventListener('click', () => set(false)));
   window.matchMedia('(min-width: 60.01rem)').addEventListener('change', (m) => m.matches && set(false));
+  // Show the platform's shortcut on the search button.
+  if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
+    document.querySelectorAll('[data-search-kbd]').forEach((k) => (k.textContent = '⌘ K'));
+  }
   // Condense the bar once the hero starts scrolling away.
   const onScroll = () => header?.toggleAttribute('data-condensed', window.scrollY > 24);
   onScroll();
@@ -230,6 +242,65 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     color: var(--color-paper);
     transform: translateY(-1px);
   }
+  .search-trigger {
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
+    min-block-size: 2.5rem;
+    padding: 0.3rem 0.7rem;
+    border: var(--border-hairline);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    cursor: pointer;
+    transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  }
+  :global(html[data-js]) .search-trigger {
+    display: inline-flex;
+  }
+  .search-trigger:hover {
+    border-color: var(--color-rule-strong);
+    color: var(--color-ink);
+  }
+  .search-trigger:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .search-trigger svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+  .search-trigger__kbd {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.05rem 0.35rem;
+    border: var(--border-hairline);
+    border-radius: 4px;
+    color: var(--color-ink-3);
+  }
+  @media (max-width: 90rem) {
+    .search-trigger__kbd {
+      display: none;
+    }
+  }
+  @media (max-width: 82rem) {
+    .search-trigger {
+      inline-size: 2.75rem;
+      block-size: 2.75rem;
+      padding: 0;
+      justify-content: center;
+    }
+    .search-trigger__label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
   .menu-button {
     display: none;
     align-items: center;
@@ -261,7 +332,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
   }
 
   /* Before the nav collapses, tighten the pills so eight sections still fit. */
-  @media (max-width: 74rem) {
+  @media (max-width: 82rem) {
     .site-nav a {
       padding: 0.5em 0.62em;
       font-size: var(--step--2);
@@ -273,7 +344,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       padding: 0.62em 0.8em;
     }
   }
-  @media (max-width: 60rem) {
+  @media (max-width: 64rem) {
     .site-header__tools {
       margin-inline-start: auto;
     }

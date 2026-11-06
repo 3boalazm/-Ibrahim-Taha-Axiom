@@ -1,0 +1,715 @@
+---
+/**
+ * Publication explorer: search, filters (type, year range, selected,
+ * co-author, research area), sorting, three views, a clickable year
+ * histogram and shareable URL state (?q, type, from, to, sel, author, area,
+ * sort, view — written with history.replaceState).
+ *
+ * Static first: every publication is rendered on the server, so the full list
+ * works without JavaScript. Areas come only from verified manifest
+ * relationships. Logic lives in src/lib/explorer.mjs (shared with the tests).
+ */
+import PublicationItem from './PublicationItem.astro';
+import { t } from '../../i18n/ui';
+import { pick, researchAreas } from '../../utils/content';
+import { PUB_TYPES, type Publication } from '../../utils/publications';
+import { areasOf } from '../../utils/relations';
+import { coauthorKey, sortItems } from '../../lib/explorer.mjs';
+import { tokenize } from '../../lib/text.mjs';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  pubs: Publication[];
+  lang: Lang;
+  /** Prefix for element ids (two explorers never share a page, but keep ids unique). */
+  id?: string;
+}
+const { pubs, lang, id = 'explorer' } = Astro.props;
+const ui = t(lang);
+const ar = lang === 'ar';
+
+const typesPresent = PUB_TYPES.filter((ty) => pubs.some((p) => p.type === ty)).map((ty) => ({ ty, n: pubs.filter((p) => p.type === ty).length }));
+const years = pubs.map((p) => p.year).filter((y): y is number => y !== null);
+const minYear = Math.min(...years);
+const maxYear = Math.max(...years);
+const yearRange = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
+const yearCount = (y: number) => pubs.filter((p) => p.year === y).length;
+const maxCount = Math.max(...yearRange.map(yearCount), 1);
+
+const initials = (first: string) =>
+  first
+    .split(/[\s.\-]+/)
+    .filter(Boolean)
+    .map((p) => `${p[0].toUpperCase()}.`)
+    .join(' ');
+const coauthorMap = new Map<string, { key: string; label: string; last: string; n: number }>();
+for (const p of pubs)
+  for (const a of p.authors) {
+    if (a.isResearcher) continue;
+    const key = coauthorKey(a.first, a.last);
+    const prev = coauthorMap.get(key);
+    if (prev) prev.n++;
+    else coauthorMap.set(key, { key, label: `${initials(a.first)} ${a.last}`.trim(), last: a.last, n: 1 });
+  }
+const coauthors = [...coauthorMap.values()].sort((a, b) => b.n - a.n || a.last.localeCompare(b.last));
+const areaOptions = researchAreas
+  .map((a) => ({ id: a.id, title: pick(a.title, lang), n: pubs.filter((p) => areasOf(p.key).includes(a.id)).length }))
+  .filter((a) => a.n > 0);
+const hasSelected = pubs.some((p) => p.selected);
+
+const items = pubs.map((p) => ({
+  key: p.key,
+  year: p.year,
+  type: p.type,
+  selected: p.selected,
+  title: p.title,
+  authors: [...new Set(p.authors.filter((a) => !a.isResearcher).map((a) => coauthorKey(a.first, a.last)))],
+  areas: areasOf(p.key),
+  words: [
+    ...new Set(
+      tokenize(
+        [p.title, ...p.authors.map((a) => `${a.first} ${a.last}`), p.venue, p.publisher, ...p.keywords, p.year, p.doi, t('en').types[p.type], t('ar').types[p.type]]
+          .filter(Boolean)
+          .join(' '),
+      ),
+    ),
+  ],
+}));
+const ordered = sortItems(items, 'newest').map((it) => pubs.find((p) => p.key === it.key)!);
+const labels = {
+  types: ui.types,
+  year: ui.year,
+  from: ui.yearFrom,
+  to: ui.yearTo,
+  selected: ui.selectedOnly,
+  author: ui.filterAuthor,
+  area: ui.filterArea,
+  query: ar ? 'بحث' : 'Search',
+  remove: ui.removeFilter('{label}'),
+  results: Object.fromEntries(Array.from({ length: pubs.length + 1 }, (_, n) => [n, ui.results(n)])),
+  bar: Object.fromEntries(yearRange.flatMap((y) => Array.from({ length: pubs.length + 1 }, (_, n) => [`${y}:${n}`, ui.timelineBar(y, n)]))),
+  copied: ui.linkCopied,
+  copyFailed: ui.copyFailed,
+  authors: Object.fromEntries(coauthors.map((c) => [c.key, c.label])),
+  areas: Object.fromEntries(areaOptions.map((a) => [a.id, a.title?.text ?? a.id])),
+};
+---
+
+<div class="explorer" id={id} data-explorer data-labels={JSON.stringify(labels)} data-min-year={minYear} data-max-year={maxYear}>
+  <p class="explorer__nojs">{ui.filtersNoJs}</p>
+
+  <div class="explorer__controls" role="search" aria-label={ui.search}>
+    <div class="explorer__search">
+      <label class="label" for={`${id}-q`}>{ui.search}</label>
+      <input id={`${id}-q`} type="search" placeholder={ui.searchPlaceholder} autocomplete="off" spellcheck="false" dir="auto" data-x="q" />
+    </div>
+
+    {
+      typesPresent.length > 1 && (
+        <fieldset class="explorer__types">
+          <legend class="label">{ui.filterType}</legend>
+          <div class="explorer__chips">
+            <button type="button" class="chip" aria-pressed="true" data-x-type="">
+              {ui.allTypes}
+            </button>
+            {typesPresent.map(({ ty, n }) => (
+              <button type="button" class="chip" aria-pressed="false" data-x-type={ty}>
+                {ui.types[ty]} <span class="ltr explorer__n" data-x-type-count={ty}>{n}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )
+    }
+
+    <div class="explorer__selects">
+      <div class="explorer__field">
+        <label class="label" for={`${id}-from`}>{ui.yearFrom}</label>
+        <select id={`${id}-from`} data-x="from">
+          <option value="">—</option>
+          {yearRange.map((y) => <option value={y}>{y}</option>)}
+        </select>
+      </div>
+      <div class="explorer__field">
+        <label class="label" for={`${id}-to`}>{ui.yearTo}</label>
+        <select id={`${id}-to`} data-x="to">
+          <option value="">—</option>
+          {yearRange.map((y) => <option value={y}>{y}</option>)}
+        </select>
+      </div>
+      {
+        coauthors.length > 0 && (
+          <div class="explorer__field">
+            <label class="label" for={`${id}-author`}>{ui.filterAuthor}</label>
+            <select id={`${id}-author`} data-x="author">
+              <option value="">{ui.anyAuthor}</option>
+              {coauthors.map((c) => (
+                <option value={c.key}>
+                  {c.label} ({c.n})
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      }
+      {
+        areaOptions.length > 0 && (
+          <div class="explorer__field">
+            <label class="label" for={`${id}-area`}>{ui.filterArea}</label>
+            <select id={`${id}-area`} data-x="area">
+              <option value="">{ui.anyArea}</option>
+              {areaOptions.map((a) => (
+                <option value={a.id}>
+                  {a.title?.text} ({a.n})
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      }
+      <div class="explorer__field">
+        <label class="label" for={`${id}-sort`}>{ui.sortLabel}</label>
+        <select id={`${id}-sort`} data-x="sort">
+          <option value="newest">{ui.sorts.newest}</option>
+          <option value="oldest">{ui.sorts.oldest}</option>
+          <option value="title">{ui.sorts.title}</option>
+          {hasSelected && <option value="selected">{ui.sorts.selected}</option>}
+        </select>
+      </div>
+    </div>
+
+    <div class="explorer__row">
+      {
+        hasSelected && (
+          <label class="explorer__check">
+            <input type="checkbox" data-x="sel" />
+            <span>{ui.selectedOnly}</span>
+          </label>
+        )
+      }
+      <div class="segmented" role="group" aria-label={ui.viewLabel}>
+        <button type="button" aria-pressed="true" data-x-view="list">{ui.views.list}</button>
+        <button type="button" aria-pressed="false" data-x-view="compact">{ui.views.compact}</button>
+        <button type="button" aria-pressed="false" data-x-view="cards">{ui.views.cards}</button>
+      </div>
+    </div>
+
+    <figure class="explorer__timeline">
+      <figcaption>
+        <span class="label">{ui.timelineLabel}</span>
+        <span class="explorer__hint">{ui.timelineHint}</span>
+      </figcaption>
+      <div class="explorer__bars" dir="ltr">
+        {
+          yearRange.map((y) => (
+            <button
+              type="button"
+              class="explorer__bar"
+              data-x-year={y}
+              aria-pressed="false"
+              aria-label={ui.timelineBar(y, yearCount(y))}
+              disabled={yearCount(y) === 0}
+              style={`--h: ${yearCount(y) / maxCount}`}
+            >
+              <span class="explorer__bar-fill" aria-hidden="true" />
+              <span class="explorer__bar-n ltr" aria-hidden="true" data-x-year-count>
+                {yearCount(y) || ''}
+              </span>
+              <span class="explorer__bar-y ltr" aria-hidden="true">
+                {String(y).slice(2)}
+              </span>
+            </button>
+          ))
+        }
+      </div>
+      <div class="explorer__axis ltr" aria-hidden="true" dir="ltr"><span>{minYear}</span><span>{maxYear}</span></div>
+    </figure>
+
+    <div class="explorer__status">
+      <p class="explorer__count" aria-live="polite" data-x-count>{ui.results(pubs.length)}</p>
+      <div class="explorer__active" data-x-active aria-label={ui.activeFilters}></div>
+      <div class="explorer__tools">
+        <button type="button" class="button explorer__clear" data-x-clear hidden>{ui.clearFilters}</button>
+        <button type="button" class="button" data-x-share>{ui.shareView}</button>
+        <span class="explorer__share-status" role="status" data-x-share-status></span>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="visually-hidden" id={`${id}-results`}>{ui.results(pubs.length)}</h2>
+  <ol class="explorer__list" role="list" data-view="list" data-x-list aria-labelledby={`${id}-results`}>
+    {
+      ordered.map((p) => (
+        <li class="explorer__item" data-x-item={p.key}>
+          <PublicationItem pub={p} lang={lang} />
+        </li>
+      ))
+    }
+  </ol>
+  <div class="explorer__empty" data-x-empty hidden>
+    <p>{ui.noMatches}</p>
+    <button type="button" class="button" data-x-clear>{ui.clearFilters}</button>
+  </div>
+  <script type="application/json" data-x-items set:html={JSON.stringify(items)} />
+</div>
+
+<script>
+  import { DEFAULT_STATE, filterItems, parseState, serializeState, sortItems, typeCounts, yearHistogram } from '../../lib/explorer.mjs';
+
+  type Item = { key: string; year: number | null; type: string; selected: boolean; title: string; authors: string[]; areas: string[]; words: string[] };
+  type State = typeof DEFAULT_STATE extends infer T ? { -readonly [K in keyof T]: T[K] } : never;
+
+  document.querySelectorAll<HTMLElement>('[data-explorer]').forEach((root) => {
+    const items = JSON.parse(root.querySelector('[data-x-items]')?.textContent ?? '[]') as Item[];
+    const L = JSON.parse(root.dataset.labels ?? '{}');
+    const minYear = Number(root.dataset.minYear);
+    const maxYear = Number(root.dataset.maxYear);
+    const list = root.querySelector<HTMLElement>('[data-x-list]')!;
+    const nodes = new Map([...root.querySelectorAll<HTMLElement>('[data-x-item]')].map((li) => [li.dataset.xItem!, li]));
+    const field = <T extends HTMLElement>(name: string) => root.querySelector<T>(`[data-x="${name}"]`);
+    const q = field<HTMLInputElement>('q');
+    const from = field<HTMLSelectElement>('from');
+    const to = field<HTMLSelectElement>('to');
+    const author = field<HTMLSelectElement>('author');
+    const area = field<HTMLSelectElement>('area');
+    const sort = field<HTMLSelectElement>('sort');
+    const sel = field<HTMLInputElement>('sel');
+    const typeButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-x-type]')];
+    const viewButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-x-view]')];
+    const bars = [...root.querySelectorAll<HTMLButtonElement>('[data-x-year]')];
+    const count = root.querySelector<HTMLElement>('[data-x-count]')!;
+    const active = root.querySelector<HTMLElement>('[data-x-active]')!;
+    const clears = [...root.querySelectorAll<HTMLButtonElement>('[data-x-clear]')];
+    const empty = root.querySelector<HTMLElement>('[data-x-empty]')!;
+    const known = {
+      types: typeButtons.map((b) => b.dataset.xType!).filter(Boolean),
+      authors: author ? [...author.options].map((o) => o.value).filter(Boolean) : [],
+      areas: area ? [...area.options].map((o) => o.value).filter(Boolean) : [],
+    };
+    let state: State = { ...parseState(location.search, known) };
+    let typing = 0;
+
+    function syncControls() {
+      if (q && q.value !== state.q) q.value = state.q;
+      if (from) from.value = state.from === null ? '' : String(state.from);
+      if (to) to.value = state.to === null ? '' : String(state.to);
+      if (author) author.value = state.author;
+      if (area) area.value = state.area;
+      if (sort) sort.value = state.sort;
+      if (sel) sel.checked = state.sel;
+      typeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.xType ? state.types.includes(b.dataset.xType) : state.types.length === 0)));
+      viewButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.xView === state.view)));
+    }
+
+    function chip(label: string, onRemove: () => void) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip explorer__chip';
+      b.setAttribute('aria-label', L.remove.replace('{label}', label));
+      const text = document.createElement('span');
+      text.textContent = label;
+      text.dir = 'auto';
+      const x = document.createElement('span');
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = '×';
+      b.append(text, x);
+      b.addEventListener('click', () => {
+        onRemove();
+        apply();
+        (root.querySelector<HTMLElement>('.explorer__chip') ?? q)?.focus();
+      });
+      return b;
+    }
+
+    function apply(writeUrl = true) {
+      syncControls();
+      const matched = sortItems(filterItems(items, state), state.sort) as Item[];
+      const keys = new Set(matched.map((m) => m.key));
+      for (const it of matched) list.append(nodes.get(it.key)!);
+      nodes.forEach((li, key) => (li.hidden = !keys.has(key)));
+      list.dataset.view = state.view;
+      count.textContent = L.results[matched.length] ?? String(matched.length);
+      empty.hidden = matched.length > 0;
+
+      const hist = yearHistogram(items, state, minYear, maxYear);
+      const peak = Math.max(1, ...hist.map((h) => h.count));
+      bars.forEach((b) => {
+        const y = Number(b.dataset.xYear);
+        const h = hist.find((x) => x.year === y)!;
+        b.style.setProperty('--h', String(h.count / peak));
+        b.disabled = h.count === 0 && !(state.from === y && state.to === y);
+        b.setAttribute('aria-label', L.bar[`${y}:${h.count}`] ?? `${y}: ${h.count}`);
+        b.setAttribute('aria-pressed', String(state.from === y && state.to === y));
+        b.classList.toggle('is-in-range', (state.from === null || y >= state.from) && (state.to === null || y <= state.to) && (state.from !== null || state.to !== null));
+        const n = b.querySelector('[data-x-year-count]');
+        if (n) n.textContent = h.count ? String(h.count) : '';
+      });
+      const tc = typeCounts(items, state);
+      root.querySelectorAll<HTMLElement>('[data-x-type-count]').forEach((el) => (el.textContent = String(tc[el.dataset.xTypeCount!] ?? 0)));
+
+      active.replaceChildren();
+      if (state.q.trim()) active.append(chip(`${L.query}: ${state.q.trim()}`, () => (state.q = '')));
+      state.types.forEach((ty) => active.append(chip(L.types[ty] ?? ty, () => (state.types = state.types.filter((x) => x !== ty)))));
+      if (state.from !== null || state.to !== null)
+        active.append(chip(`${L.year}: ${state.from ?? minYear}–${state.to ?? maxYear}`, () => ((state.from = null), (state.to = null))));
+      if (state.sel) active.append(chip(L.selected, () => (state.sel = false)));
+      if (state.author) active.append(chip(`${L.author}: ${L.authors[state.author] ?? state.author}`, () => (state.author = '')));
+      if (state.area) active.append(chip(`${L.area}: ${L.areas[state.area] ?? state.area}`, () => (state.area = '')));
+      const filtered = active.childElementCount > 0;
+      clears.forEach((c) => (c.hidden = !filtered && c.closest('[data-x-empty]') === null));
+
+      if (writeUrl) {
+        const url = `${location.pathname}${serializeState(state)}${location.hash}`;
+        if (url !== `${location.pathname}${location.search}${location.hash}`) history.replaceState(history.state, '', url);
+      }
+    }
+
+    q?.addEventListener('input', () => {
+      clearTimeout(typing);
+      typing = window.setTimeout(() => {
+        state.q = q.value;
+        apply();
+      }, 120);
+    });
+    const num = (v: string) => (v === '' ? null : Number(v));
+    from?.addEventListener('change', () => {
+      state.from = num(from.value);
+      if (state.from !== null && state.to !== null && state.from > state.to) state.to = state.from;
+      apply();
+    });
+    to?.addEventListener('change', () => {
+      state.to = num(to.value);
+      if (state.from !== null && state.to !== null && state.to < state.from) state.from = state.to;
+      apply();
+    });
+    author?.addEventListener('change', () => ((state.author = author.value), apply()));
+    area?.addEventListener('change', () => ((state.area = area.value), apply()));
+    sort?.addEventListener('change', () => ((state.sort = sort.value as State['sort']), apply()));
+    sel?.addEventListener('change', () => ((state.sel = sel.checked), apply()));
+    typeButtons.forEach((b) =>
+      b.addEventListener('click', () => {
+        const ty = b.dataset.xType!;
+        if (!ty) state.types = [];
+        else state.types = state.types.includes(ty) ? state.types.filter((x) => x !== ty) : [...state.types, ty];
+        apply();
+      }),
+    );
+    viewButtons.forEach((b) => b.addEventListener('click', () => ((state.view = b.dataset.xView as State['view']), apply())));
+    bars.forEach((b) =>
+      b.addEventListener('click', () => {
+        const y = Number(b.dataset.xYear);
+        if (state.from === y && state.to === y) state.from = state.to = null;
+        else state.from = state.to = y;
+        apply();
+      }),
+    );
+    clears.forEach((c) =>
+      c.addEventListener('click', () => {
+        state = { ...DEFAULT_STATE, types: [], sort: state.sort, view: state.view };
+        apply();
+        q?.focus();
+      }),
+    );
+    const shareStatus = root.querySelector<HTMLElement>('[data-x-share-status]');
+    root.querySelector('[data-x-share]')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        if (shareStatus) shareStatus.textContent = L.copied;
+      } catch {
+        if (shareStatus) shareStatus.textContent = L.copyFailed;
+      }
+      setTimeout(() => shareStatus && (shareStatus.textContent = ''), 2600);
+    });
+
+    root.classList.add('is-ready');
+    apply(false);
+  });
+</script>
+
+<style>
+  .explorer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+  .explorer__nojs {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-3);
+  }
+  :global(html[data-js]) .explorer__nojs {
+    display: none;
+  }
+  .explorer__controls {
+    display: none;
+    gap: var(--space-4);
+    padding: clamp(var(--space-4), 2.5vw, var(--space-5));
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  :global(html[data-js]) .explorer__controls {
+    display: grid;
+  }
+  .explorer__search {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .explorer__search input,
+  .explorer__field select {
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-2);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+  }
+  .explorer__field select {
+    font-size: var(--step--1);
+    inline-size: 100%;
+    min-inline-size: 0;
+    text-overflow: ellipsis;
+  }
+  .explorer__search input:focus-visible,
+  .explorer__field select:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+  .explorer__types {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-1);
+  }
+  .explorer__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .explorer__n {
+    opacity: 0.7;
+    margin-inline-start: 0.2rem;
+  }
+  .explorer__selects {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+    gap: var(--space-3);
+  }
+  .explorer__field {
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+  .explorer__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .explorer__check {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: 2.75rem;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+  .explorer__check input {
+    inline-size: 1.1rem;
+    block-size: 1.1rem;
+    accent-color: var(--color-accent);
+  }
+
+  /* ------------------------------------------------------------ timeline */
+  .explorer__timeline {
+    margin: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .explorer__timeline figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+  }
+  .explorer__hint {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .explorer__bars {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    align-items: end;
+    gap: 3px;
+    block-size: 6.5rem;
+  }
+  .explorer__bar {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    justify-items: center;
+    align-items: end;
+    block-size: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink-3);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+  }
+  .explorer__bar:disabled {
+    cursor: default;
+  }
+  .explorer__bar-fill {
+    grid-row: 2;
+    align-self: end;
+    inline-size: min(100%, 1.6rem);
+    block-size: calc(var(--h, 0) * 100%);
+    min-block-size: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--color-rule-strong);
+    transition: block-size var(--dur-2) var(--ease-out), background var(--dur-1) var(--ease);
+  }
+  .explorer__bar:not(:disabled):hover .explorer__bar-fill {
+    background: var(--color-accent);
+  }
+  .explorer__bar.is-in-range .explorer__bar-fill,
+  .explorer__bar[aria-pressed='true'] .explorer__bar-fill {
+    background: var(--color-accent);
+  }
+  .explorer__bar-n {
+    grid-row: 1;
+    color: var(--color-ink-2);
+  }
+  .explorer__bar-y {
+    grid-row: 3;
+    padding-block-start: 2px;
+  }
+  .explorer__bar:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  .explorer__axis {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+
+  /* -------------------------------------------------------------- status */
+  .explorer__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding-block-start: var(--space-3);
+    border-block-start: var(--border-hairline);
+  }
+  .explorer__count {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+  }
+  .explorer__active {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    flex: 1;
+  }
+  .explorer__active :global(.explorer__chip) {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+    min-block-size: 2.25rem;
+    cursor: pointer;
+  }
+  .explorer__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .explorer__share-status {
+    font-family: var(--font-ui);
+    font-size: var(--step--2);
+    color: var(--color-ink-3);
+  }
+  .explorer__empty {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+    padding: var(--space-6) 0;
+    font-family: var(--font-ui);
+    color: var(--color-ink-2);
+  }
+
+  /* --------------------------------------------------------------- views */
+  .explorer__list {
+    margin: 0;
+    padding: 0;
+  }
+  .explorer__item[hidden] {
+    display: none;
+  }
+  .explorer__list[data-view='compact'] :global(.pub) {
+    padding-block: var(--space-3);
+  }
+  .explorer__list[data-view='compact'] :global(.pub__actions),
+  .explorer__list[data-view='compact'] :global(.pub__abstract),
+  .explorer__list[data-view='compact'] :global(.cite),
+  .explorer__list[data-view='compact'] :global(.pub__related),
+  .explorer__list[data-view='compact'] :global(.pub__venue),
+  .explorer__list[data-view='compact'] :global(.pub__index) {
+    display: none;
+  }
+  .explorer__list[data-view='compact'] :global(.pub__title) {
+    font-size: var(--step-0);
+  }
+  .explorer__list[data-view='cards'] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: var(--space-4);
+  }
+  .explorer__list[data-view='cards'] :global(.pub) {
+    block-size: 100%;
+    padding: var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-surface-1);
+  }
+  .explorer__list[data-view='cards'] :global(.pub__grid) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .explorer__list[data-view='cards'] :global(.pub__aside) {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .explorer__list[data-view='cards'] :global(.pub__abstract),
+  .explorer__list[data-view='cards'] :global(.cite),
+  .explorer__list[data-view='cards'] :global(.pub__link) {
+    display: none;
+  }
+  @media (max-width: 40rem) {
+    .explorer__selects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .explorer__bars {
+      block-size: 5rem;
+    }
+    .explorer__bar-y {
+      font-size: 0.55rem;
+    }
+  }
+</style>

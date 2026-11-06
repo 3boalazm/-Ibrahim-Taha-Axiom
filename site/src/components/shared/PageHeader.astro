@@ -191,7 +191,7 @@ const pic = picture ?? PICTURES.hero;
   }
   @media (max-width: 48rem) {
     .page-header__footer {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .page-header {
       min-block-size: auto;
