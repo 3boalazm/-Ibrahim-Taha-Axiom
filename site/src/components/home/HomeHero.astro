@@ -234,8 +234,8 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
   .hhero__eyebrow {
     color: var(--color-brass-ink);
   }
-  /* The name stays in its original Latin form on the Arabic page (DQ-10):
-     give it the Latin display face rather than the Arabic face's fallback Latin. */
+  /* The Arabic page shows the approved Arabic name (DQ-10) in the Arabic display face.
+     Should a Latin fallback ever be shown, it keeps the Latin display face. */
   .hhero__name :global([lang='en']) {
     font-family: var(--font-serif);
     letter-spacing: -0.03em;
@@ -247,6 +247,11 @@ const valueText = (z: number) => `z = ${z.toFixed(2)}, Φ(z) = ${cdf(z).toFixed(
     line-height: 1;
     letter-spacing: var(--tracking-display);
     color: var(--color-ink);
+  }
+  /* Arabic letters rise and fall further than Latin ones: at 320 px the name wraps, and a
+     line height of 1 brings the descenders of the first line onto the second. */
+  :lang(ar) .hhero__name {
+    line-height: var(--leading-tight);
   }
   .hhero__role {
     font-family: var(--font-serif);

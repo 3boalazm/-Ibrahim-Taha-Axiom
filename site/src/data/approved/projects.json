@@ -9,7 +9,7 @@
     "period": "2026",
     "links": [
       { "label": { "en": "Dataset (Zenodo, CC BY 4.0)", "ar": null }, "url": "https://doi.org/10.5281/zenodo.23120962" },
-      { "label": { "en": "Data repository (GitHub)", "ar": null }, "url": "https://github.com/IbrahimTaha2018/CMP-Correlation-Weighted-Elastic-Net-Data" }
+      { "label": { "en": "Data repository (GitHub, CC BY 4.0)", "ar": null }, "url": "https://github.com/IbrahimTaha2018/CMP-Correlation-Weighted-Elastic-Net-Data" }
     ]
   },
   {
@@ -33,6 +33,6 @@
       "ar": null
     },
     "period": "2025–2026",
-    "links": [{ "label": { "en": "ResearchGate profile", "ar": null }, "url": "https://www.researchgate.net/profile/Ibrahim_Taha11" }]
+    "links": [{ "label": { "en": "ResearchGate profile", "ar": null }, "url": "https://www.researchgate.net/profile/Ibrahim-Taha-5" }]
   }
 ]

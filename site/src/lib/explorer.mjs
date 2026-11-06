@@ -16,8 +16,9 @@ export const DEFAULT_STATE = Object.freeze({ q: '', types: [], from: null, to: n
 
 /**
  * Co-author identity key: last name + exact initials, so "Abonazel, M. R."
- * and "Mohamed R. Abonazel" match, while "Rady, E. A." and "Rady, E. H. A."
- * stay distinct (an open data-quality question; nothing is merged by guess).
+ * and "Mohamed R. Abonazel" match, while different initials such as "E. A."
+ * and "E. H. A." stay distinct: nothing is merged by guess. When two forms are
+ * one person, the bibliography is corrected instead (DQ-11: "Rady, E. A.").
  */
 export function coauthorKey(first, last) {
   const initials = String(first ?? '')

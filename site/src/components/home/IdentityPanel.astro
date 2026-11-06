@@ -71,6 +71,11 @@ const groups = [
                     <p class="idp__muted">
                       <LangText value={a.organization} lang={lang} />
                     </p>
+                    {a.note && (
+                      <p class="idp__muted">
+                        <LangText value={a.note} lang={lang} />
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

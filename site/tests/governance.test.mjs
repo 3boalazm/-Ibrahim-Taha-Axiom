@@ -1,6 +1,7 @@
 // Governance data: consent record, manifest relationships, translations, open issues.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { bibKeys, data } from './helpers.mjs';
 
 const manifest = data('approved/public-content.manifest.json');
@@ -53,13 +54,27 @@ test('Arabic drafts carry a status, and a reviewed entry names its reviewer', ()
   }
 });
 
-test('open data-quality issues stay open with sources', () => {
+test('data-quality issues: nothing resolved silently, every answer on record', () => {
   const issues = data('review/open-issues.json');
   const list = issues.issues ?? issues;
   assert.ok(list.length >= 10);
   for (const i of list) {
     assert.match(i.id, /^DQ-\d{2}$/);
     assert.ok(i.sources?.length >= 1, `${i.id} needs at least one source`);
-    assert.notEqual(i.status, 'resolved', `${i.id} must not be resolved silently`);
+    const r = i.response;
+    if (i.status === 'resolved') {
+      assert.equal(r?.outcome, 'decided', `${i.id} must not be resolved without a recorded decision`);
+      for (const k of ['date', 'by', 'answer', 'applied', 'source']) assert.ok(r[k], `${i.id}: the decision lacks ${k}`);
+    } else {
+      assert.equal(i.status, 'open', i.id);
+      assert.notEqual(r?.outcome, 'decided', `${i.id} has a recorded decision but is still open`);
+      if (r) assert.ok(r.date && r.by && r.answer && r.source, `${i.id}: an undetermined answer is recorded in full`);
+    }
   }
+});
+
+test('the data-quality register page is generated from the issues file', async () => {
+  const { renderRegister, REGISTER_PATH } = await import('../scripts/dq-register.mjs');
+  const onDisk = readFileSync(REGISTER_PATH, 'utf8');
+  assert.equal(onDisk, renderRegister(data('review/open-issues.json')), 'docs/data-quality-register.md is stale: run npm run dq:register');
 });

@@ -88,6 +88,28 @@ Bugs found by these checks and fixed on the branch:
 
 **Still not run:** real-device testing, VoiceOver/NVDA/TalkBack, and visual-regression diffing. Do not cite them as done.
 
+## Run for the data-quality decisions (2026-11-06)
+
+Run in the development sandbox (Node 22, headless Chromium 153) on the final tree of the branch that applies the researcher's Data Quality Review decisions ([data-quality-register.md](data-quality-register.md)):
+
+| Check | Result |
+| --- | --- |
+| `npm ci` → `npm run build` | 67 HTML files |
+| `npm run qa` | All QA checks passed |
+| `npm run lab:verify` | Unchanged: ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 71 tests, 71 pass, 0 fail (Phase 5: 58). New: `data-quality.test.mjs` (12 tests: the applied decisions, then the built pages) and a governance test that `docs/data-quality-register.md` equals the output of `npm run dq:register` |
+| Negative checks | Marking DQ-13 resolved without a decision fails the build (`[content gate] … status 'resolved' requires response.outcome 'decided'`); a hand-edited register fails the governance test. Both were reverted after the check |
+| `npm run test:e2e` | 78 checks, all pass, no JavaScript errors (`keyboard.mjs` 37, `motion.mjs` 41). Three checks counted 4 books and now count 6 (DQ-12); one of them had matched the count as a substring and now matches the whole number |
+| Overflow: home, profile, projects, books, research (EN/AR) × light/dark | 0 px at 320, 390 and 1280 px (60 combinations) |
+| axe-core 4.14.0 | 0 violations in 40 runs: the same 10 pages × light/dark at 390 and 1280 px, run after animations finish |
+| Arabic name, measured in the browser | Letter-spacing 0 and line height 1.3 for the Arabic name on `/ar/` and `/ar/about/`. At 320 px the home-page name wraps onto two lines; at the earlier line height of 1 the ink of each line was 4 px taller than the line, and now it fits with 8 px to spare. The official name is an isolated right-to-left unit (`<bdi dir="rtl">`, inline-block) and stays on one line at every width tested. The English names are unchanged |
+| Fonts | Every English page already loads the Arabic 500-weight file for the language switch («العربية»). The official name uses that weight, so the English profile page loads no extra font file (at weight 400 it had loaded one more, 42.8 KB) |
+| Visual review | The screenshots in [`screenshots/dq-review/`](screenshots/dq-review/README.md) were reviewed by eye |
+
+**Not run:** Lighthouse (no script, image or loading change), real devices and screen readers.
+
+**Seen, not changed:** at 280 px, below the 320 px target, the header's menu button overflows by 6 px (English) and 18 px (Arabic). The header is not touched by this work.
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.

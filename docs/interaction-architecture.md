@@ -29,7 +29,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
   - type (with counts that ignore the type filter);
   - year range (a clickable histogram that includes empty years);
   - selected only;
-  - co-author, keyed by last name plus exact initials so that "Rady, E. A." and "Rady, E. H. A." stay distinct (DQ-05);
+  - co-author, keyed by last name plus exact initials, so that different initials are never merged by guesswork. The bibliography carries one form per person: all three Rady entries read "Rady, E. A." (DQ-11);
   - research area, using verified manifest relationships only.
 - **Sorts:** newest, oldest, A–Z, selected first. **Views:** list, compact, cards.
 - **Shareable URLs:** `?q=&type=&from=&to=&sel=1&author=&area=&sort=&view=`. Invalid values fall back to defaults, and history uses `replaceState`, so filtering does not flood the back button.

@@ -46,11 +46,19 @@
       "by": "Ibrahim Mohamed Taha (researcher), recorded by the project owner",
       "scope": "See researcherApproval.scope.",
       "note": "Researcher consent; supersedes the on-behalf records above without deleting them."
+    },
+    {
+      "date": "2026-11-06",
+      "status": "data-quality decisions",
+      "by": "Ibrahim Mohamed Taha (researcher), Data Quality Review; clarifications by the project owner",
+      "scope": "Answers to DQ-01 to DQ-16 in src/data/review/open-issues.json: 15 decided and applied, DQ-13 still open. Includes the approved Arabic name and the official full Arabic name (profile field officialName).",
+      "note": "Review completed 2026-11-06 at 18:22, 16 of 16 questions answered. In the project chat the project owner then chose the short Arabic form for headings, the target area of the two DQ-14 links, and gave the co-author's full name for DQ-11."
     }
   ],
   "profile": {
     "approvedFields": [
       "name",
+      "officialName",
       "role",
       "summary",
       "biography",
@@ -289,13 +297,13 @@
     },
     {
       "from": "publication:taha2026regression",
-      "to": "area:penalized-count-regression",
-      "evidence": "The handbook covers 250+ regression models, the broadest statement of the researcher's regression work."
+      "to": "area:statistical-reporting-and-software",
+      "evidence": "Data-quality review, 2026-11-06 (DQ-14): the researcher asked to replace the weak link to penalized-count-regression; the project owner chose this area, which holds the researcher's other guides."
     },
     {
       "from": "publication:taha2026uncertainty",
-      "to": "area:bayesian-estimation",
-      "evidence": "The paper compares Bayesian statistics with four other approaches under uncertainty."
+      "to": "area:statistical-reporting-and-software",
+      "evidence": "Data-quality review, 2026-11-06 (DQ-14): the researcher asked to replace the weak link to bayesian-estimation; the project owner chose this area."
     },
     {
       "from": "publication:rady2018ridge",

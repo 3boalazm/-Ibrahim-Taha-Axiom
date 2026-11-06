@@ -18,7 +18,10 @@ const summary = pick(profile.summary, lang);
 const labels = {
   bio: ar ? 'السيرة' : 'Biography',
   facts: ar ? 'في سطور' : 'At a glance',
+  official: ar ? 'الاسم الرسمي' : 'Official name in Arabic',
 };
+// The official full Arabic name (DQ-10), shown when it adds something to the display name.
+const officialAr = profile.officialName.ar && profile.officialName.ar !== profile.name.ar ? profile.officialName.ar : null;
 ---
 
 <div class="profile">
@@ -26,6 +29,12 @@ const labels = {
     {(profile.name.en || profile.name.ar) && (
       <p class="profile__name">
         <LangText value={profile.name} lang={lang} />
+      </p>
+    )}
+    {officialAr && (
+      <p class="profile__official">
+        <span class="label">{labels.official}</span>{' '}
+        <bdi class="profile__official-name" lang="ar" dir="rtl">{officialAr}</bdi>
       </p>
     )}
     {(profile.role.en || profile.role.ar) && (
@@ -89,6 +98,7 @@ const labels = {
                 </span>
                 {a.department && <LangText value={a.department} lang={lang} as="p" />}
                 {a.role && <LangText value={a.role} lang={lang} as="p" />}
+                {a.note && <LangText value={a.note} lang={lang} as="p" class="fact__note" />}
                 {(a.from || a.to) && (
                   <p class="fact__period ltr">
                     {a.from ?? ''}–{a.to ?? (ar ? 'الآن' : 'present')}
@@ -178,8 +188,32 @@ const labels = {
     font-family: var(--font-display);
     font-size: var(--step-4);
     font-weight: 400;
-    letter-spacing: -0.03em;
+    /* -0.03em in Latin, 0 on Arabic pages: tracking would break Arabic joining. */
+    letter-spacing: var(--tracking-display);
     line-height: 1.05;
+  }
+  /* Arabic letters need more height than Latin ones if the name wraps (zoom, narrow screens). */
+  :lang(ar) .profile__name {
+    line-height: var(--leading-tight);
+  }
+  .profile__official {
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
+  }
+  .profile__official .label {
+    margin-inline-end: var(--space-1);
+  }
+  .profile__official-name {
+    /* One unit: on a narrow English page the name moves to its own line instead of
+       breaking after its first word; if it is still too wide it wraps inside, in RTL order. */
+    display: inline-block;
+    font-family: var(--font-ar-sans);
+    font-size: var(--step-0);
+    /* 500: the Arabic weight every English page already loads for the language switch,
+       so the name adds no font download there. */
+    font-weight: 500;
+    color: var(--color-ink);
   }
   .profile__role {
     font-family: var(--font-ui);
@@ -278,6 +312,11 @@ const labels = {
   .fact__strong {
     font-weight: 500;
     color: var(--color-ink);
+  }
+  .fact__note {
+    margin-block-start: var(--space-1);
+    font-size: var(--step--1);
+    color: var(--color-ink-2);
   }
   .fact__period {
     margin-block-start: var(--space-1);
