@@ -77,9 +77,17 @@ const ok = (cond, msg) => {
   }
   console.log(`${cond ? '✓' : '✗'} ${msg}`);
 };
-async function open({ width = 1280, height = 900, ua, touchPoints = 0, standalone = false } = {}) {
+async function open({ width = 1280, height = 900, ua, touchPoints = 0, standalone = false, realPrompt = false } = {}) {
   const page = await browser.newPage();
   page.on('pageerror', (e) => jsErrors.push(`${page.url()}: ${e.message}`));
+  if (!realPrompt) {
+    // Whether the browser fires a real beforeinstallprompt depends on its own heuristics
+    // (headless Chrome 156 in CI does, Chromium 153 does not). The tests hold real events
+    // back, as Safari and Firefox never send one, and dispatch their own (isTrusted false).
+    await page.evaluateOnNewDocument(() => {
+      addEventListener('beforeinstallprompt', (e) => e.isTrusted && e.stopImmediatePropagation(), true);
+    });
+  }
   const cdp = await page.createCDPSession();
   if (ua) await cdp.send('Emulation.setUserAgentOverride', { userAgent: ua });
   if (touchPoints) await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: touchPoints });
@@ -217,6 +225,21 @@ ok(withdrawn?.status() === 404, 'a withdrawn page shows the server’s 404, not 
 ok(await until(page, async () => !(await (await caches.open('axiom-pages')).match(location.origin + '/research/'))), 'and its saved copy is deleted, so it is not readable offline any more');
 gone.delete('/research/');
 await page.close();
+
+// ------------------------------------- install: a real prompt, where the browser sends one
+{
+  const { page: p } = await open({ realPrompt: true });
+  await p.evaluateOnNewDocument(() => addEventListener('beforeinstallprompt', (e) => e.isTrusted && (window.__realPrompt = true), true));
+  await go(p, '/');
+  if (await until(p, () => window.__realPrompt === true, undefined, 5000)) {
+    ok((await shown(p, '.site-footer [data-app-install]'))[0] === true, 'this browser sent a real beforeinstallprompt, and the footer button appeared');
+    if (process.env.GITHUB_ACTIONS === 'true') console.log('::notice title=e2e app::the browser sent a real beforeinstallprompt for the site, and the install button appeared');
+  } else {
+    console.log('ℹ this browser sent no real beforeinstallprompt (it depends on its install heuristics); the simulated one below stands in');
+    if (process.env.GITHUB_ACTIONS === 'true') console.log('::notice title=e2e app::the browser sent no real beforeinstallprompt; the simulated one stands in');
+  }
+  await p.close();
+}
 
 // --------------------------------------------------- install: Chromium's prompt
 {

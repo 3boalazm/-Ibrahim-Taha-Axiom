@@ -244,6 +244,7 @@ Further details:
   - back online, the network wins again;
   - a withdrawn page (the server answers 404) shows the 404 and loses its saved copy;
   - the install button: a simulated `beforeinstallprompt`; iPhone, iPad, Mac Safari and Firefox user agents; the phone menu; the installed-app and no-JS cases.
+  - **Real prompts are held back.** Whether a browser sends a real `beforeinstallprompt` depends on its own heuristics: headless Chrome 156 in CI does, and Chromium 153 does not. So every test page holds real events back, as Safari and Firefox never send one, except one probe. When the browser does send one, the probe checks that the button appears and reports it as a CI notice.
 - **Not covered:** no real phone, tablet or Mac was used. Browsers decide when to offer installation, so the first check on real devices is on the deployed site.
 
 **Not included:**
