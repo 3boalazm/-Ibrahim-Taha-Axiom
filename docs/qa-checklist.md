@@ -266,6 +266,26 @@ The owner asked for a section at the end of the site saying it was developed by 
 | Screenshots | 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/), all viewed |
 | Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
 
+### Follow-up: a section before the footer (2026-11-07)
+
+The owner asked to move it: «ليه تحت الفوتر انا عاوزها سيكشن جوا الصفحة عادي بس قبل الفوتر» ("why under the footer? I want it as a normal section inside the page, just before the footer"). The credit is now a section of its own between `</main>` and the footer: a rounded obsidian panel inside the page width, headed by an `<h2>`. The footer, the assistant's launcher and the install button are back to `main` byte for byte. Environment: the sandbox's Node 22 and Chromium 153, on the built site.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages; all 67 have the section after `</main>` with nothing between it and the footer, and none in the footer. `sw.js` VERSION `841fa583c88d` |
+| `npm test` | 98 tests, all pass. `studio-credit.test.mjs` now has 5: the place, the heading and search exclusion, the link, the identity, and the footer's room for the floating buttons |
+| `npm run qa`, `npm run lab:verify` | Both pass: 67 pages, 152 files, 31 external links. The assistant's knowledge file is byte-identical |
+| `E2E_REQUIRED=1 npm run test:e2e` | 194 checks, all pass: keyboard 37, motion 41, chat 39, app 77. New or changed in the studio block:<br>- after `<main>` and right before the footer (gaps 56 and 104 px at 1280); heading "Developed by Aboalazm OS Studio"; panel radius 24 px;<br>- Tab goes from the page's last link to the button (amber ring), then into the footer;<br>- in Arabic, the heading reads «من تطوير Aboalazm OS Studio» and the name stays in Montserrat;<br>- Arabic at 390 px: the text starts at the panel's right edge and the button spans the panel (295 of 295 px);<br>- the reserved height equals the laid-out one: 189.8, 214.6 and 251.5 px at 1280 (EN), 390 (AR) and 320 (EN) |
+| Reserved height, all widths | Before laying the section out, the browser keeps the height computed from its layout values. At 34 width × language pairs from 320 to 1920 px, it matched the laid-out height to 0.1 px |
+| What the test catches | With the stacked gap and button set to 4rem instead of 4.5rem, the two stacked checks fail (206.6 vs 214.6 px, 243.5 vs 251.5 px); restored, they pass |
+| What it fixed on the way | The first version reserved 13rem (208 px) at every width, while the real height runs from 158 to 251 px depending on the width and language. Jumping straight to the end of `/ar/research/` at 320 px then moved the footer by 33 px, and the existing check "the install button stays below the footer's last line" failed by 1 px. With the computed height it passes with 32 px to spare |
+| axe-core 4.14.0 | 22 runs, the section in the middle of the viewport and at the end of pages (EN/AR × light/dark × 1280/390, 320 px, the button hovered and keyboard-focused): 0 violations |
+| Contrast in the section | Unchanged: label and line 8.75:1, name 18.89:1, button 9.88:1, hovered 11.38:1, focus ring against the panel 9.88:1 |
+| The header, corrected | `main` (`8f02cc5`) itself fails at the end of Arabic pages at 1280 × 800 in the light theme: the 917 px footer fills the viewport under the 92 % header, and "AXIOM" measures 4.4:1 on `/ar/` and `/ar/research/`. English passes there. This branch with the header put back to 92 % fails the same way; at 96 % it passes. So the header change fixes an issue that predates the credit; the first run above put it down to the band |
+| Lighthouse 12.8.2 (`main` `8f02cc5` → this) | Medians of 3 alternating runs:<br>- `/`: 80 → 80; LCP 4.00 → 4.06 s, TBT 0 → 0, CLS 0.0183 → 0.0183.<br>- `/ar/`: 67 → 67; LCP 5.41 → 5.49 s, TBT 0 → 0, CLS 0.0460 → 0.0458.<br>- +5.3 KiB per page.<br>- Neither studio font was fetched during page load in any of the 12 runs |
+| Screenshots | The 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/) retaken with the section in the middle of the viewport, all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.

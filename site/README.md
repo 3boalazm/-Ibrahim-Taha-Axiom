@@ -33,7 +33,7 @@ Run `npm run inventory` for the current figures rather than trusting this paragr
 ```
 src/
 ├── components/
-│   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots), StudioCredit (the studio's band at the end of the footer)
+│   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots), StudioCredit (the studio's section, right before the footer)
 │   ├── home/          HomeHero (normal-density figure), IdentityPanel, MetricCards, ResearchDiscovery, LabTeaser
 │   ├── search/        SearchDialog (Ctrl/⌘ K, combobox + listbox)
 │   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
@@ -255,15 +255,16 @@ Further details:
 
 ## Studio credit
 
-The last band of every page, inside the site footer (`src/components/layout/StudioCredit.astro`), says the website was developed by **Aboalazm OS Studio**. It links to the studio's site, <https://aboalazm-os.vercel.app/>, with "Visit the studio" / «زيارة الاستوديو»; the link opens in a new tab, and screen readers are told so. The owner asked for it on 2026-11-07 (decision D-22).
+A section of its own on every page, after the page's content and right before the site footer, says the website was developed by **Aboalazm OS Studio** (`src/components/layout/StudioCredit.astro`, placed by `BaseLayout.astro`). Its heading, an `<h2>` that labels the section, reads "Developed by Aboalazm OS Studio" / «من تطوير Aboalazm OS Studio». It links to the studio's site, <https://aboalazm-os.vercel.app/>, with "Visit the studio" / «زيارة الاستوديو»; the link opens in a new tab, and screen readers are told so. The owner asked for it on 2026-11-07 (decision D-22). The first version was a band at the end of the footer; the owner then asked for a section inside the page, before the footer.
 
-**The studio's identity, not the site's.** The band uses none of the site's colour, font, spacing or motion tokens; `tests/studio-credit.test.mjs` checks this. Its values come from the studio:
+**The studio's identity, not the site's.** The section uses none of the site's colour, font, spacing or motion tokens; `tests/studio-credit.test.mjs` checks this. Its values come from the studio:
 - **Canvas:** obsidian `#080710`, the theme colour of the studio's own app manifest (`https://aboalazm-os.vercel.app/manifest.webmanifest`).
 - **Token layer ("semantic monochrome"):** taken from `app/globals.css` in `3boalazm/Youssefguba-os`, a site built on the studio's system with the same `#080710`. It gives:
   - one text colour at fixed opacities;
   - the 8 % white "spec line";
   - the studio accent `#F5A623`, which that layer keeps "ONLY for focus rings & critical CTAs" (here, the one button and its focus ring);
-  - the signature curve `cubic-bezier(0.16, 1, 0.3, 1)`.
+  - the signature curve `cubic-bezier(0.16, 1, 0.3, 1)`;
+  - the 24 px radius of its large panels (from the same project's architecture notes): the section is a rounded obsidian panel inside the page width.
 - **Typefaces:**
   - Montserrat 700 and JetBrains Mono 500, Latin only, from `@fontsource` (OFL);
   - IBM Plex Sans Arabic in Arabic, which the site already loads;
@@ -272,15 +273,19 @@ The last band of every page, inside the site footer (`src/components/layout/Stud
 
 **Arabic.** Labels drop the Latin tracking and capitals, which would break the joins of Arabic letters. The studio's name stays in Latin, isolated with `<bdi lang="en">`. The button's arrow points the reading way.
 
-**Cost.** `content-visibility: auto` keeps the band from being laid out until it nears the viewport, so its two fonts (18.8 KB and 21.8 KB) load only then. Lighthouse saw neither font during page load, and the Performance score stayed the same (`docs/qa-checklist.md`).
+**Layout.** Below 48rem the text and the button are stacked (the button full width up to 30rem); from 48rem they sit side by side, which they do with room to spare in both languages. The switch is a fixed width rather than a wrap, so the section's height can be known in advance (next paragraph). Arabic is mirrored, and the button's arrow points the reading way.
 
-**The floating buttons.** While they show, the assistant's launcher and the install button set `--floating-clearance` on `<html>`. The band adds it to its bottom padding, so at the end of a page they never cover it. This room used to be under the footer.
+**Cost.** `content-visibility: auto` keeps the section from being laid out until it nears the viewport, so its two fonts (18.8 KB and 21.8 KB) load only then. Until then the browser reserves its height (`contain-intrinsic-block-size`), computed in CSS from the same values the layout uses: the panel's padding, the name's size, the line heights, and the gap and button when stacked (the `--credit-*` values in the component). Where the name and the English label line wrap (344 and 337 px wide viewports, measured with the studio's fonts), the height adds their second lines. It matches the laid-out height at every width from 320 to 1920 px in both languages, so the footer does not move when the section appears. Lighthouse saw neither font during page load, and the Performance score and CLS stayed the same (`docs/qa-checklist.md`).
 
-**The site header.** With the band, the dark footer can now scroll under the condensed header on wide screens. The header's paper share went from 92 % to 96 %, so the small brass "AXIOM" keeps 4.5:1 (axe measured 4.4:1 before).
+**The floating buttons.** The footer keeps the room it always had for them at the end of a page. In the section, the button stays clear of them at 1280, 390 and 320 px.
 
-**Tests:** `tests/studio-credit.test.mjs` covers every page, the link, the identity and the clearance. The studio-credit block of `tests/e2e/app.mjs` covers the rest:
-- the fonts wait until the band nears the viewport;
-- the rendered colours, typefaces and focus ring are the studio's;
+**The site header.** At the end of Arabic pages on wide screens, the footer (917 px tall at 1280 × 800) fills the viewport under the condensed header. At 92 % paper, the small brass "AXIOM" measured 4.4:1 there, on `main` as well, so this predates the credit. The condensed header now uses 96 % paper, and axe passes.
+
+**Tests:** `tests/studio-credit.test.mjs` covers every page (the section after `</main>`, right before the footer, and not in it), its heading, the link, the identity and the footer's room for the floating buttons. The studio block of `tests/e2e/app.mjs` covers the rest:
+- its place, its heading, and the keyboard order (the page's content, the button, then the footer);
+- the reserved height equals the laid-out one, to a pixel, at 1280, 390 and 320 px;
+- the fonts wait until the section nears the viewport;
+- the rendered colours, typefaces, panel and focus ring are the studio's, and the studio's name stays in Montserrat inside the Arabic heading;
 - the button stays clear of the floating buttons in English and Arabic, at 320 px, and without JS.
 
 ## Deployment

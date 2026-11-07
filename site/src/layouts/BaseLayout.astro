@@ -15,6 +15,7 @@ import '@fontsource-variable/noto-naskh-arabic/index.css';
 import '../styles/global.css';
 import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
+import StudioCredit from '../components/layout/StudioCredit.astro';
 import SearchDialog from '../components/search/SearchDialog.astro';
 import ChatWidget from '../components/chat/ChatWidget.astro';
 import AppInstall from '../components/app/AppInstall.astro';
@@ -97,6 +98,7 @@ const ui = t(lang);
     <main id="main" tabindex="-1">
       <slot />
     </main>
+    <StudioCredit lang={lang} />
     <SiteFooter lang={lang} path={navPath} />
     <SearchDialog lang={lang} />
     <ChatWidget lang={lang} />

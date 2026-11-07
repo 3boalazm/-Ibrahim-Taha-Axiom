@@ -1,8 +1,8 @@
 ---
 /**
- * Studio credit (site/README.md#studio-credit): the last band of every page, inside the
- * site footer. It says the website was developed by Aboalazm OS Studio and links to the
- * studio's website.
+ * Studio credit (site/README.md#studio-credit): a section of its own on every page, after
+ * the page's content and right before the site footer (BaseLayout.astro). It says the
+ * website was developed by Aboalazm OS Studio and links to the studio's website.
  *
  * It wears the studio's identity, not the site's. The values are the studio's design
  * tokens (its "semantic monochrome" system):
@@ -10,12 +10,16 @@
  * - one text colour at fixed opacities, and the 8 % white "spec line";
  * - the studio accent #F5A623, which that system keeps for focus rings and critical calls
  *   to action: here, the one button;
+ * - the 24 px radius of its large panels;
  * - the studio's typefaces (Montserrat, JetBrains Mono for labels; IBM Plex Sans Arabic
  *   in Arabic) and its signature easing.
- * None of the site's colour or font tokens are used (tests/studio-credit.test.mjs).
+ * None of the site's colour, font, spacing or motion tokens are used
+ * (tests/studio-credit.test.mjs).
  *
- * content-visibility: auto keeps the band, and so its two web fonts, from being laid out
- * until it nears the viewport.
+ * content-visibility: auto keeps the section, and so its two web fonts, from being laid
+ * out until it nears the viewport. Until then the browser reserves the height computed by
+ * contain-intrinsic-block-size, from the same values the layout uses (the --credit-*
+ * values below), so the footer does not move when the section is laid out.
  */
 import '@fontsource/montserrat/latin-700.css';
 import '@fontsource/jetbrains-mono/latin-500.css';
@@ -30,22 +34,24 @@ const ui = t(lang);
 const STUDIO_URL = 'https://aboalazm-os.vercel.app/';
 ---
 
-<div class="studio-credit" data-studio-credit>
-  <div class="container studio-credit__inner">
-    <div>
-      <p class="studio-credit__by">
-        <span class="studio-credit__label">{ui.studioCreditLabel}</span>{' '}
-        <span class="studio-credit__name"><bdi lang="en">Aboalazm OS Studio</bdi></span>
-      </p>
-      <p class="studio-credit__meta">{ui.studioCreditMeta}</p>
+<section class="studio-credit" aria-labelledby="studio-credit-title" data-studio-credit data-pagefind-ignore>
+  <div class="container">
+    <div class="studio-credit__panel">
+      <div>
+        <h2 class="studio-credit__by" id="studio-credit-title">
+          <span class="studio-credit__label">{ui.studioCreditLabel}</span>{' '}
+          <span class="studio-credit__name"><bdi lang="en">Aboalazm OS Studio</bdi></span>
+        </h2>
+        <p class="studio-credit__meta">{ui.studioCreditMeta}</p>
+      </div>
+      <a class="studio-credit__cta" href={STUDIO_URL} target="_blank" rel="noopener">
+        <span>{ui.studioCreditCta}</span>
+        <svg class="icon-flip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8.5 7H17v8.5"></path></svg>
+        <span class="visually-hidden">{` ${ui.studioCreditNewTab}`}</span>
+      </a>
     </div>
-    <a class="studio-credit__cta" href={STUDIO_URL} target="_blank" rel="noopener">
-      <span>{ui.studioCreditCta}</span>
-      <svg class="icon-flip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8.5 7H17v8.5"></path></svg>
-      <span class="visually-hidden">{` ${ui.studioCreditNewTab}`}</span>
-    </a>
   </div>
-</div>
+</section>
 
 <style>
   .studio-credit {
@@ -56,32 +62,55 @@ const STUDIO_URL = 'https://aboalazm-os.vercel.app/';
     --os-text-2: rgb(248 248 250 / 0.68);
     --os-accent: #f5a623;
     --os-accent-hover: #f7b84f; /* the accent with 20 % white */
+    --os-radius-panel: 24px; /* the studio's large panels */
     --os-ease: cubic-bezier(0.16, 1, 0.3, 1); /* the studio's signature curve */
     --os-fast: 200ms;
     --os-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --os-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
     --os-arabic: 'IBM Plex Sans Arabic', system-ui, sans-serif;
 
+    /* This section's own layout values (not tokens). Its height, before it is laid out, is
+       computed from them: border, padding, label and meta lines, their margins, the name's
+       lines, and, when stacked, the gap and the button under the text. */
+    --credit-pad: clamp(1.75rem, 1rem + 3vw, 3rem);
+    --credit-name-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    --credit-label-line: 1.03125rem; /* 0.6875rem at line-height 1.5 */
+    --credit-name-lines: 1;
+    --credit-meta-lines: 1;
+    --credit-below: 4.5rem; /* the 1.5rem gap and the 3rem button, when stacked */
+
+    /* the page's content already ends with its own space, and the footer adds its margin below */
+    margin-block-start: clamp(2.5rem, 1.5rem + 2.5vw, 4rem);
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto
+      calc(
+        2px + 2 * var(--credit-pad) + (1 + var(--credit-meta-lines)) * var(--credit-label-line) + 1.2rem +
+          1.1 * var(--credit-name-size) * var(--credit-name-lines) + var(--credit-below)
+      );
+  }
+  .studio-credit:lang(ar) {
+    --credit-label-line: 1.21875rem; /* 0.8125rem at line-height 1.5 */
+  }
+  /* The text and the button: stacked, then side by side from 48rem, where they fit with room
+     to spare in both languages (a fixed point, so the reserved height above stays right). */
+  .studio-credit__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: var(--credit-pad);
+    border: 1px solid var(--os-line);
+    border-radius: var(--os-radius-panel);
     background: var(--os-obsidian);
     color: var(--os-text);
-    border-block-start: 1px solid var(--os-line);
     font-family: var(--os-sans);
-    /* The floating buttons (assistant, install) set --floating-clearance, so at the end of
-       the page they never cover the band. */
-    padding-block: 2.5rem calc(2.5rem + var(--floating-clearance, 0rem));
-    content-visibility: auto;
-    contain-intrinsic-size: auto 11rem;
   }
-  .studio-credit__inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem 2.5rem;
-  }
-  .studio-credit__by,
-  .studio-credit__meta {
+  /* a real heading for the section, without the site's heading styles */
+  .studio-credit__by {
     margin: 0;
+    font: inherit;
+    letter-spacing: normal;
+    color: inherit;
   }
   .studio-credit__label,
   .studio-credit__meta {
@@ -98,16 +127,20 @@ const STUDIO_URL = 'https://aboalazm-os.vercel.app/';
   }
   .studio-credit__name {
     display: block;
-    margin-block-start: 0.4rem;
+    margin-block-start: 0.45rem;
     font-family: var(--os-sans);
-    font-size: clamp(1.3rem, 1.05rem + 1vw, 1.65rem);
+    font-size: var(--credit-name-size);
     font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
     color: var(--os-text);
   }
+  /* the site gives Latin inside Arabic headings its serif (global.css); the studio's name keeps Montserrat */
+  .studio-credit__name bdi {
+    font-family: inherit;
+  }
   .studio-credit__meta {
-    margin-block-start: 0.65rem;
+    margin: 0.75rem 0 0;
   }
   .studio-credit__cta {
     display: inline-flex;
@@ -165,6 +198,30 @@ const STUDIO_URL = 'https://aboalazm-os.vercel.app/';
     .studio-credit__cta {
       inline-size: 100%;
       justify-content: center;
+    }
+  }
+  /* Where the name (249.5 px wide on one line) and then the English label line (243 px)
+     take two lines, measured with the studio's fonts: 344 px and 337 px wide viewports.
+     The e2e tests check that the reserved height matches the laid-out one. */
+  @media (max-width: 21.5rem) {
+    .studio-credit {
+      --credit-name-lines: 2;
+    }
+  }
+  @media (max-width: 21.0625rem) {
+    .studio-credit:lang(en) {
+      --credit-meta-lines: 2;
+    }
+  }
+  @media (min-width: 48rem) {
+    .studio-credit {
+      --credit-below: 0rem;
+    }
+    .studio-credit__panel {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2.5rem;
     }
   }
 </style>
