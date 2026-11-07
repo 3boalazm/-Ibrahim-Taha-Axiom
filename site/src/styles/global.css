@@ -258,9 +258,13 @@ main {
   --btn-line: var(--color-ink);
   box-shadow: var(--shadow-float);
 }
+/* The variants set `background` themselves on hover: `.button:hover` above sets it
+   directly, so changing only --btn-bg left solid and accent buttons light-on-light while
+   hovered (contrast 1.13:1, found by axe with the pointer on the assistant's launcher). */
 .button--solid:hover {
   --btn-bg: var(--color-accent-strong);
   --btn-line: var(--color-accent-strong);
+  background: var(--btn-bg);
   color: var(--color-paper);
   transform: translateY(-1px);
 }
@@ -280,6 +284,7 @@ main {
 .button--accent:hover {
   --btn-bg: var(--color-accent-strong);
   --btn-line: var(--color-accent-strong);
+  background: var(--btn-bg);
   color: var(--color-paper);
 }
 .button--lg {
