@@ -49,6 +49,17 @@ export const PROFILE_FIELDS = [
   'authorMatch',
 ] as const;
 
+/** Community spaces (profile.community[].kind): platform, then the kind of space. */
+export const COMMUNITY_KINDS = ['facebook-page', 'facebook-group', 'telegram-group', 'whatsapp-group'] as const;
+export type CommunityKind = (typeof COMMUNITY_KINDS)[number];
+/** The host each kind of link has to live on. */
+export const COMMUNITY_HOSTS: Record<CommunityKind, RegExp> = {
+  'facebook-page': /^(www\.)?facebook\.com$/,
+  'facebook-group': /^(www\.)?facebook\.com$/,
+  'telegram-group': /^t\.me$/,
+  'whatsapp-group': /^chat\.whatsapp\.com$/,
+};
+
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Use an ISO date (YYYY-MM-DD)' });
 /** Node references used by relationships: kind:id. */
 export const NODE_KINDS = ['publication', 'area', 'project', 'course', 'talk', 'method', 'dataset'] as const;
@@ -147,8 +158,20 @@ export const ProfileSchema = z.object({
       url: httpUrl,
     }),
   ),
-  /** Public community / outreach links (not academic identifiers). */
-  community: z.array(z.object({ label: RequiredLocalized, url: httpUrl })).default([]),
+  /**
+   * Public community / outreach links (not academic identifiers). `kind` names the
+   * platform and the kind of space; the home page labels each link with it, and the
+   * link has to live on that platform's host.
+   */
+  community: z
+    .array(
+      z
+        .object({ label: RequiredLocalized, url: httpUrl, kind: z.enum(COMMUNITY_KINDS) })
+        .refine((c) => COMMUNITY_HOSTS[c.kind].test(new URL(c.url).hostname), {
+          message: "community: the link's host does not match its kind",
+        }),
+    )
+    .default([]),
   /** Direct contact details. Shown only when 'contact' is an approved profile field. */
   contact: z
     .object({

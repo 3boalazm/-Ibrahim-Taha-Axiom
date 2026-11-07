@@ -55,9 +55,10 @@
     { "type": "GitHub", "value": "IbrahimTaha2018", "url": "https://github.com/IbrahimTaha2018" }
   ],
   "community": [
-    { "label": { "en": "Statistical Analysis – Egypt (Facebook page)", "ar": null }, "url": "https://www.facebook.com/share/1B3DbXjPh7/" },
-    { "label": { "en": "Statistical Analysis – Egypt (Facebook group)", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" },
-    { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (قناة تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt" }
+    { "label": { "en": "Statistical Analysis – Egypt (Facebook page)", "ar": null }, "url": "https://www.facebook.com/share/1bgFz5pT2C/", "kind": "facebook-page" },
+    { "label": { "en": "Statistical Analysis – Egypt (Facebook group)", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/", "kind": "facebook-group" },
+    { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (مجموعة تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt", "kind": "telegram-group" },
+    { "label": { "en": "Statistical Analysis – Egypt (WhatsApp group)", "ar": null }, "url": "https://chat.whatsapp.com/JPc3Xs3WTeXHnjdUYnHWXd", "kind": "whatsapp-group" }
   ],
   "contact": {
     "email": "ibrahimaboalazm@gmail.com",

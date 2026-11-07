@@ -103,6 +103,12 @@
       "status": "draft"
     },
     {
+      "ref": "profile.community[3].label",
+      "en": "Statistical Analysis – Egypt (WhatsApp group)",
+      "ar": "مجموعة Statistical Analysis – Egypt على واتساب",
+      "status": "draft"
+    },
+    {
       "ref": "profile.interests",
       "en": "Applied Statistics",
       "ar": "الإحصاء التطبيقي",
@@ -248,8 +254,8 @@
     },
     {
       "ref": "projects.statistical-analysis-egypt.summary",
-      "en": "An Arabic-language community for statistics education on Facebook and Telegram, founded to make advanced statistics accessible across the Arab world. The Telegram channel had 46,523 members on 5 November 2026.",
-      "ar": "مجتمع ناطق بالعربية لتعليم الإحصاء على فيسبوك وتيليجرام، أُسِّس لتيسير الإحصاء المتقدّم في أرجاء العالم العربي. بلغ عدد أعضاء قناة تيليجرام 46,523 عضوًا في 5 نوفمبر 2026.",
+      "en": "An Arabic-language community for statistics education on Facebook, Telegram and WhatsApp, founded to make advanced statistics accessible across the Arab world. The Telegram group had 46,523 members on 5 November 2026.",
+      "ar": "مجتمع ناطق بالعربية لتعليم الإحصاء على فيسبوك وتيليجرام وواتساب، أُسِّس لتيسير الإحصاء المتقدّم في أرجاء العالم العربي. بلغ عدد أعضاء مجموعة تيليجرام 46,523 عضوًا في 5 نوفمبر 2026.",
       "status": "draft"
     },
     {
@@ -262,6 +268,12 @@
       "ref": "projects.statistical-analysis-egypt.links[2]",
       "en": "Facebook group",
       "ar": "مجموعة فيسبوك",
+      "status": "draft"
+    },
+    {
+      "ref": "projects.statistical-analysis-egypt.links[3]",
+      "en": "WhatsApp group",
+      "ar": "مجموعة واتساب",
       "status": "draft"
     },
     {

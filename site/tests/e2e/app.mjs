@@ -16,6 +16,10 @@
  *   fonts wait until it nears the viewport; the studio's colours, typefaces, panel and focus
  *   ring; its button not covered by the floating buttons, in English, Arabic, at 320 px and
  *   without JS.
+ * - The home page's community section: the four links in one row on a desktop, one column
+ *   on an Arabic phone with each icon at the start and the host under the name; the names in
+ *   each language, the WhatsApp group, a visible focus ring, no overflow at 320 px, and the
+ *   section without JS.
  *
  *   CHROME_PATH=/usr/bin/google-chrome node tests/e2e/app.mjs
  *
@@ -473,6 +477,86 @@ const toCredit = async (p) => {
   await toCredit(p);
   const c = await credit(p);
   ok(c.inView && c.reachable && c.beforeFooter && c.href === 'https://aboalazm-os.vercel.app/', 'without JavaScript the section and its button are there too');
+  await p.close();
+}
+
+// --------------------------------------------- the home page's community section (D-23)
+/** The community section, measured once it is in the middle of the viewport. */
+const community = async (p) => {
+  await p.evaluate(() => document.querySelector('#community').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await new Promise((r) => setTimeout(r, 200));
+  return p.evaluate(() => {
+    const sec = document.querySelector('#community');
+    const box = (el) => {
+      const r = el.getBoundingClientRect();
+      return { left: r.left, right: r.right, top: r.top, height: r.height };
+    };
+    // where the text itself sits, not its box (a stretched box hides the text's alignment)
+    const ink = (el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return box(r);
+    };
+    return {
+      tiles: [...sec.querySelectorAll('.community__link')].map((a) => ({
+        a: box(a),
+        row: a.offsetTop, // layout position: the entrance animation's transforms do not move it
+        icon: box(a.querySelector('.community__icon')),
+        name: ink(a.querySelector('.community__name')),
+        host: ink(a.querySelector('.community__host')),
+        href: a.href,
+        text: a.textContent.replace(/\s+/g, ' ').trim(),
+      })),
+      dir: getComputedStyle(sec).direction,
+      headOpacity: getComputedStyle(sec.querySelector('.community__head')).opacity,
+      vw: document.documentElement.clientWidth,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+};
+{
+  const { page: p } = await open();
+  await go(p, '/');
+  const c = await community(p);
+  const rows = new Set(c.tiles.map((t) => t.row)).size;
+  ok(c.tiles.length === 4 && rows === 1 && c.tiles.every((t) => t.a.height >= 44), `desktop: the four community links in one row, each at least 44 px tall (${c.tiles.map((t) => Math.round(t.a.height)).join('/')} px)`);
+  const names = c.tiles.map((t) => t.text).join(' | ');
+  ok(names === 'Facebook page facebook.com | Facebook group facebook.com | Telegram group t.me | WhatsApp group chat.whatsapp.com', `each names its platform, its kind of space and its host (${names})`);
+  ok(c.tiles[3]?.href === 'https://chat.whatsapp.com/JPc3Xs3WTeXHnjdUYnHWXd', `the WhatsApp group is one of them (${c.tiles[3]?.href})`);
+  await p.evaluate(() => document.querySelector('.community__more').focus());
+  await p.keyboard.press('Tab');
+  await new Promise((r) => setTimeout(r, 400));
+  const f = await p.evaluate(() => {
+    const cs = getComputedStyle(document.activeElement);
+    return { kind: document.activeElement.dataset.kind, style: cs.outlineStyle, width: parseFloat(cs.outlineWidth) };
+  });
+  ok(f.kind === 'facebook-page' && f.style === 'solid' && f.width >= 2, `Tab goes from the project link to the first community link, with a visible focus ring (${f.kind}, ${f.style} ${f.width}px)`);
+  await p.close();
+}
+{
+  const { page: p } = await open({ width: 390, height: 844 });
+  await go(p, '/ar/');
+  const c = await community(p);
+  const columns = new Set(c.tiles.map((t) => Math.round(t.a.left))).size;
+  ok(c.dir === 'rtl' && columns === 1 && c.tiles.every((t) => t.icon.left > t.name.right), `Arabic phone: one column, each icon at the right of its name (${c.dir}, ${columns} column)`);
+  ok(c.tiles.every((t) => Math.abs(t.host.right - t.name.right) <= 1), `Arabic phone: the host reads under the name, from the right edge (Δ ${c.tiles.map((t) => (t.host.right - t.name.right).toFixed(1)).join('/')} px)`);
+  const names = c.tiles.map((t) => t.text.split(' ').slice(0, 2).join(' ')).join(' | ');
+  ok(names === 'صفحة فيسبوك | مجموعة فيسبوك | مجموعة تيليجرام | مجموعة واتساب', `Arabic names (${names})`);
+  await p.close();
+}
+for (const path of ['/', '/ar/']) {
+  const { page: p } = await open({ width: 320, height: 640 });
+  await go(p, path);
+  const c = await community(p);
+  ok(c.overflow <= 0 && c.tiles.every((t) => t.a.left >= 0 && t.a.right <= c.vw), `320 px ${path}: the community links fit without horizontal overflow (${c.overflow} px)`);
+  await p.close();
+}
+{
+  const p = await browser.newPage();
+  await p.setJavaScriptEnabled(false);
+  await p.goto(`${B}/ar/`, { waitUntil: 'networkidle0' });
+  const c = await community(p);
+  ok(c.tiles.length === 4 && c.headOpacity === '1', `without JavaScript the community section and its links show (${c.tiles.length} links, opacity ${c.headOpacity})`);
   await p.close();
 }
 

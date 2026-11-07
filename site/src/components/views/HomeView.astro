@@ -1,10 +1,13 @@
 ---
 /**
- * Home page — a living research profile:
+ * Home page — a living research profile, kept light:
  *   hero (identity, positioning, a normal-density figure) → academic identity
- *   (progressive disclosure) → research discovery (areas, graph teaser,
- *   projects) → selected publications → the lab → source-labelled metrics →
- *   site contents → an invitation to write.
+ *   (progressive disclosure) → research discovery (compact area tiles, graph
+ *   teaser) → selected publications (compact) → the lab → source-labelled
+ *   metrics → the community → an invitation to write.
+ * The full detail (area images and summaries, citations and abstracts,
+ * projects) lives on each section's own page; the header and footer carry the
+ * site's contents.
  * Every number on the page is derived from approved data at build time.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -13,20 +16,19 @@ import IdentityPanel from '../home/IdentityPanel.astro';
 import ResearchDiscovery from '../home/ResearchDiscovery.astro';
 import LabTeaser from '../home/LabTeaser.astro';
 import MetricCards from '../home/MetricCards.astro';
+import CommunitySection from '../home/CommunitySection.astro';
 import PublicationItem from '../publications/PublicationItem.astro';
 import DraftNote from '../shared/DraftNote.astro';
-import { PRIMARY, SECTION_ORDER, SECTION_PATHS, SITE_NAME, pageCopy, sectionCount, sectionNumber } from '../../config/site';
-import { arDraft, profile, researchAreas } from '../../utils/content';
+import { SITE_NAME, pageCopy } from '../../config/site';
+import { arDraft, profile, projects, researchAreas } from '../../utils/content';
 import { publications, selectedPublications } from '../../utils/publications';
 import { localePath } from '../../utils/paths';
-import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
 
 interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
-const ui = t(lang);
 const copy = await pageCopy('home', lang);
 const ar = lang === 'ar';
 
@@ -43,18 +45,12 @@ const contactPaths = ar
       { id: 'supervision', label: 'Supervision', note: "Master's and doctoral work" },
       { id: 'speaking', label: 'Lectures and workshops', note: 'Conferences and training' },
     ];
-const sections = await Promise.all(
-  SECTION_ORDER.filter((k) => PRIMARY.includes(k) || (sectionCount(k) ?? 0) > 0)
-    .filter((k) => k !== 'about' && k !== 'contact')
-    .map(async (key) => {
-      const c = await pageCopy(key, lang);
-      return { key, href: localePath(lang, SECTION_PATHS[key]), title: c.navLabel, n: sectionCount(key), number: sectionNumber(key) };
-    }),
-);
-// Arabic home shows unreviewed drafts (role, summary, areas…) — say so once.
+// Arabic home shows unreviewed drafts (role, summary, area titles, the
+// community's summary…) — say so once.
+const community = projects.find((p) => p.id === 'statistical-analysis-egypt');
 const usesDrafts =
   ar &&
-  [profile.role, profile.summary, ...profile.interests, ...researchAreas.flatMap((a) => [a.title, a.summary])].some((v) => v && !v.ar && !!arDraft(v.en));
+  [profile.role, profile.summary, ...profile.interests, ...researchAreas.map((a) => a.title), community?.summary].some((v) => v && !v.ar && !!arDraft(v.en));
 ---
 
 <BaseLayout lang={lang} path="/" title={SITE_NAME} description={copy.description}>
@@ -85,7 +81,7 @@ const usesDrafts =
         </div>
         <div class="home-works__list" data-stagger>
           {selectedPublications.slice(0, 3).map((p) => (
-            <PublicationItem pub={p} lang={lang} />
+            <PublicationItem pub={p} lang={lang} compact />
           ))}
         </div>
       </section>
@@ -95,22 +91,7 @@ const usesDrafts =
   <LabTeaser lang={lang} />
   <MetricCards lang={lang} />
 
-  <nav class="home-index container" aria-labelledby="index-heading">
-    <h2 id="index-heading" class="label">{ui.contents}</h2>
-    <ol class="home-index__list" role="list" data-stagger>
-      {
-        sections.map((s) => (
-          <li>
-            <a href={s.href}>
-              <span class="home-index__num ltr">{s.number}</span>
-              <span class="home-index__name">{s.title}</span>
-              <span class="home-index__meta">{s.key === 'lab' ? (ar ? 'تجربة تفاعلية' : 'interactive experiment') : s.n && s.n > 0 ? ui.entries(s.n) : ui.awaitingReview}</span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-  </nav>
+  <CommunitySection lang={lang} />
 
   <div class="container">
   <section class="home-cta" aria-labelledby="cta-heading" data-reveal>
@@ -164,47 +145,6 @@ const usesDrafts =
   }
   .home-works__list {
     border-block-start: var(--border-hairline);
-  }
-  .home-index {
-    padding-block: clamp(var(--space-6), 5vw, var(--space-8));
-  }
-  .home-index__list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
-    gap: 0 var(--space-5);
-    margin: var(--space-3) 0 0;
-    padding: 0;
-  }
-  .home-index__list a {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas: 'num name' 'num meta';
-    gap: 0 var(--space-3);
-    padding-block: var(--space-3);
-    border-block-end: var(--border-hairline);
-    color: var(--color-ink);
-    text-decoration: none;
-  }
-  .home-index__list a:hover .home-index__name {
-    color: var(--color-accent);
-  }
-  .home-index__num {
-    grid-area: num;
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    color: var(--color-brass-ink);
-    padding-block-start: 0.3rem;
-  }
-  .home-index__name {
-    grid-area: name;
-    font-family: var(--font-serif);
-    font-size: var(--step-1);
-  }
-  .home-index__meta {
-    grid-area: meta;
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
   }
   .home-cta {
     display: grid;

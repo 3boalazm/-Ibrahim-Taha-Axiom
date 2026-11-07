@@ -2,17 +2,19 @@
 
 > Counts are generated from `site/src/data/translations/ar.json` (prepared 2026-11-06) and the approved data files. Regenerate this page after any review.
 
-**Status: 81 Arabic drafts, 0 reviewed.** The drafts are AI-assisted Modern Standard Arabic. They were written for this site with standard statistical terminology, and **none has been reviewed by the researcher**. Approved Arabic, meaning text in the data files that the researcher supplied or approved (or, for two link labels, that the project owner gave verbatim), always takes precedence over a draft.
+**Status: 83 Arabic drafts, 0 reviewed.** The drafts are AI-assisted Modern Standard Arabic. They were written for this site with standard statistical terminology, and **none has been reviewed by the researcher**. Approved Arabic, meaning text in the data files that the researcher supplied or approved (or, for two link labels, that the project owner gave verbatim), always takes precedence over a draft.
 
 Two drafts were edited on 2026-11-06 to follow data changes the researcher decided: the first sentence of the biography (Tanta branch and Maadi campus, DQ-07) and the label of the GitHub data-repository link (CC BY 4.0, DQ-09). Both are still unreviewed drafts.
 
 On 2026-11-07 the summary draft of the two conference papers was rewritten to follow their reclassification: papers in the conference proceedings, with oral presentation by Ibrahim unconfirmed (DQ-13). It is still an unreviewed draft. The two source-link labels on that page, «وقائع المؤتمر (PDF)» and «النص الكامل (ResearchGate)», are not drafts: the project owner gave them verbatim, and they are stored as approved Arabic in `talks.json`.
 
+Also on 2026-11-07, the community changes (D-23) added two drafts: the WhatsApp group's label in the profile («مجموعة Statistical Analysis – Egypt على واتساب») and on the projects page («مجموعة واتساب»). They also edited the draft of the project's summary, which now names WhatsApp and calls the Telegram space a group («مجموعة»). All three are unreviewed drafts. The approved Arabic label of the Telegram link now reads «الإحصاء وتطبيقاته (مجموعة تيليجرام)» instead of «… (قناة تيليجرام)», because Telegram's public page describes a group.
+
 | Content | Approved Arabic fields | Drafts awaiting review | Reviewed drafts |
 | --- | --- | --- | --- |
-| profile | 4 | 26 | 0 |
+| profile | 4 | 27 | 0 |
 | research-areas | 2 | 10 | 0 |
-| projects | 1 | 10 | 0 |
+| projects | 1 | 11 | 0 |
 | courses | 0 | 11 | 0 |
 | talks (conference papers) | 2 | 1 | 0 |
 | cv | 5 | 11 | 0 |

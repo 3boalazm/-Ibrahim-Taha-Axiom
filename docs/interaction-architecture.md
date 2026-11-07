@@ -77,11 +77,12 @@ The home page is made of these sections:
   - On first view the figure draws itself once: axis, ticks, curve, then the area accumulates up to z and the marker settles. The readout is exact from the first frame.
   - After that nothing moves unless the reader moves z; the marker then glides, and every frame is exact.
 - **Identity panel:** the approved portrait, then tabs (ARIA tabs, added by JS only) for affiliations, education, interests, academic profiles and contact.
-- **Research discovery:** area cards with publication previews from verified links, a graph teaser and projects.
-- **Selected publications.**
+- **Research discovery:** one compact tile per area (its number, title and count of linked publications, from verified links) and the graph teaser. Area images, summaries and publication previews are on `/research/`, projects on `/projects/` (D-23).
+- **Selected publications:** three, compact: year, type, title, authors and venue. Citations, abstracts and links are on each publication's page.
 - **Lab teaser:** a chart drawn from the payload's computed spreads.
 - **Metric cards:** OpenAlex and ResearchGate, each with its own source, retrieval date and definitions, never combined.
-- **Contents index and contact paths.**
+- **Community:** the approved project's name and summary (in Arabic, its labelled draft), a link to the project, and one tile per community link in `profile.community`: the platform and the kind of space in the page language, the platform's mark and the host. The links open in the same tab, like the site's other external links (D-23).
+- **Contact paths.** The header and the footer carry the site's contents; the home page's own contents index was removed in D-23.
 
 ## Site assistant (corner launcher, every page)
 

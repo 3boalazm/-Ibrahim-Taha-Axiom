@@ -66,7 +66,7 @@ Year shown = citation year (print year when volume/issue is assigned, otherwise 
 ## Teaching, talks, outreach
 - **Teaching role (verified, ORCID):** Teaching Assistant, Mathematics, Statistics, and Insurance, Sadat Academy for Management Sciences (since 2017). No course titles or materials were found.
 - **Talks:** 2 possible conference presentations (candidate), linked to the 2018 and 2019 conference papers.
-- **Outreach:** Telegram channel "الإحصاء وتطبيقاته 🇵🇸" with 46,523 members observed on 2026-11-05. Facebook figures are self-reported only.
+- **Outreach:** Telegram group "الإحصاء وتطبيقاته 🇵🇸" with 46,523 members observed on 2026-11-05 (first recorded as a channel; its public page describes a group, D-23). Facebook figures are self-reported only. A WhatsApp group was added on 2026-11-07 from the project owner's link, with no member count.
 - **Self-published guides:** see the `self_published_material` rows above (ResearchGate-hosted per Google Scholar; type to be confirmed).
 
 ## Assets
