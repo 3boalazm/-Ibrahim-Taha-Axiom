@@ -1,6 +1,6 @@
 # Data-quality register
 
-> Generated from `site/src/data/review/open-issues.json` by `npm run dq:register` (updated 2026-11-06). That file is the source of truth: edit it, then regenerate this page. An issue is closed only by a recorded decision of its named owner (who, when, the answer as given, and what changed); the build rejects a resolved issue without one. Nothing here was resolved by guesswork.
+> Generated from `site/src/data/review/open-issues.json` by `npm run dq:register` (updated 2026-11-07). That file is the source of truth: edit it, then regenerate this page. An issue is closed only by a recorded decision of its named owner (who, when, the answer as given, and what changed); the build rejects a resolved issue without one. Nothing here was resolved by guesswork.
 
 **15 resolved, 1 open** (of 16).
 
@@ -164,11 +164,12 @@
 
 ## DQ-13 · classification · open
 
-**Question.** Were the 2018 and 2019 conference papers published in proceedings, and did the researcher present them?
+**Question.** Did Ibrahim personally present either of these papers orally?
 
+- **Question history** (2026-11-07, Project owner (project chat)): Narrowed from “Were the 2018 and 2019 conference papers published in proceedings, and did the researcher present them?” to the oral-presentation part only. Publication in the conference proceedings is now documented for both papers by the sources listed. Proceedings publication does not show who delivered a paper orally, and the researcher answered «not sure» on 2026-11-06, so that part stays open.
 - **Applies to:** `talk:conference-2018-nb-ridge`, `talk:conference-2019-zinb-liu`
-- **Shown now:** Listed as conference papers; the presenter is not stated
-- **Sources:** research/data-gaps-and-questions.md (question 9)
+- **Shown now:** Both papers are verified in the conference proceedings: the 53rd Annual Conference (Cairo University, 3–5 December 2018) and the 54th Annual Conference (Cairo University, 9–11 December 2019). Oral presentation by Ibrahim is unconfirmed, so the site lists them as conference papers and names no presenter.
+- **Sources:** research/data-gaps-and-questions.md (question 9); 2018, official proceedings (Institute of Statistical Studies and Research, Cairo University): https://issrconfrence.cu.edu.eg/Content/archive/2018/appliedStat2018.pdf (the paper is on pp. 49–66, as reported by the project owner); 2018, conference site: http://issrconfrence.cu.edu.eg/Content/Eng/indexeng.html (announces the 53rd conference, 3–5 December 2018); 2018, bibliographic reference from an independent publisher (Wiley): Akram et al. (2022), Concurrency and Computation: Practice and Experience, https://doi.org/10.1002/cpe.7045, reference 2, cites the paper in the “Proceedings of the 53rd Annual Conference on Statistics Computer Science and Operation Research; December 3-5 2018” (M. R. Abonazel, a co-author of the conference paper, is one of its authors); 2019, full-text proceedings paper, uploaded to ResearchGate by co-author Mohamed R. Abonazel: https://www.researchgate.net/publication/339943569_New_Shrinkage_Parameters_for_Liu-type_Zero_Inflated_Negative_Binomial_Estimator (running header “The 54th Annual Conference on Statistics, Computer Science, and Operations Research 9-11 Dec, 2019”; the paper starts on printed page 35); 2019, bibliographic reference from an independent publisher (Wiley): Algamal and Abonazel (2022), Concurrency and Computation: Practice and Experience, https://doi.org/10.1002/cpe.6685, reference 29, cites the paper in the “Proceedings of the 54th Annual Conference on Statistics Computer Science and Operation Research” (M. R. Abonazel, a co-author of the conference paper, is one of its authors). It gives the dates as 3–5 December 2019; the paper’s own header says 9–11 December 2019.
 - **Decides:** researcher
 - **Answer** (2026-11-06, Ibrahim Taha (researcher)): Not sure, for all four questions (2018 and 2019: published in proceedings? presented by the researcher?).
 - **Outcome:** the answer does not settle the question, so it stays open and the site keeps showing the value above.

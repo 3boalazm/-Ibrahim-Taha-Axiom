@@ -2,15 +2,27 @@
   {
     "id": "conference-2019-zinb-liu",
     "title": { "en": "New shrinkage parameters for Liu-type zero inflated negative binomial estimator", "ar": null },
-    "event": { "en": "54th Annual Conference on Statistics", "ar": null },
+    "event": { "en": "54th Annual Conference on Statistics, Computer Science, and Operations Research", "ar": null },
     "date": "2019",
-    "summary": { "en": "Conference paper with E. A. Rady and M. R. Abonazel.", "ar": null }
+    "summary": { "en": "Paper with E. A. Rady and M. R. Abonazel, published in the conference proceedings. Oral presentation by Ibrahim is not confirmed.", "ar": null },
+    "links": [
+      {
+        "label": { "en": "Full text (ResearchGate)", "ar": "النص الكامل (ResearchGate)" },
+        "url": "https://www.researchgate.net/publication/339943569_New_Shrinkage_Parameters_for_Liu-type_Zero_Inflated_Negative_Binomial_Estimator"
+      }
+    ]
   },
   {
     "id": "conference-2018-nb-ridge",
     "title": { "en": "Ridge estimators for the negative binomial regression model with application", "ar": null },
-    "event": { "en": "53rd Annual Conference on Statistics", "ar": null },
+    "event": { "en": "53rd Annual Conference on Statistics, Computer Science, and Operations Research", "ar": null },
     "date": "2018",
-    "summary": { "en": "Conference paper with E. A. Rady and M. R. Abonazel.", "ar": null }
+    "summary": { "en": "Paper with E. A. Rady and M. R. Abonazel, published in the conference proceedings. Oral presentation by Ibrahim is not confirmed.", "ar": null },
+    "links": [
+      {
+        "label": { "en": "Official proceedings (PDF)", "ar": "وقائع المؤتمر (PDF)" },
+        "url": "https://issrconfrence.cu.edu.eg/Content/archive/2018/appliedStat2018.pdf"
+      }
+    ]
   }
 ]

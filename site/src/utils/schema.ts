@@ -263,6 +263,8 @@ export const OpenIssuesSchema = z.object({
         status: z.enum(['open', 'resolved']),
         subjects: z.array(z.string().min(1)),
         question: z.string().min(1),
+        /** Changes to the question itself (e.g. narrowed after new evidence), oldest first. */
+        history: z.array(z.object({ date: isoDate, by: z.string().min(1), change: z.string().min(1) })).default([]),
         current: z.string().min(1),
         alternatives: z.array(z.string()).default([]),
         sources: z.array(z.string().min(1)).min(1),

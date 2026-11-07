@@ -45,10 +45,10 @@ The gate lives in `site/src/utils/content.ts` (profile, research areas, projects
 | `approved/cv.json` | Structured CV + optional PDF path | `cv.approved: true` |
 | `public-settings/launch.json` | Site name, canonical origin, indexing switch | project owner (not researcher data) |
 
-**Current state (2026-11-06).** These counts are derived from the data with `cd site && npm run inventory`; regenerate them rather than editing by hand. Published now:
+**Current state (2026-11-07).** These counts are derived from the data with `cd site && npm run inventory`; regenerate them rather than editing by hand. Published now:
 - **Profile.** Name, role, summary and biography come from the researcher's own earlier site. Affiliations and education come from ORCID, Google Scholar and publisher PDFs. It also includes academic identifiers, community links, ORCID keywords as interests, and the approved contact e-mail and phone.
 - **22 bibliography entries:** 10 journal articles, 6 books, 2 technical reports, 2 conference papers, 1 master's thesis and 1 preprint (`@misc`). The two comprehensive guides became books by the researcher's decision (DQ-12). 3 are *selected*. They are not all journal articles: the site labels each by type, the Publications explorer lists all 22 with a type filter, and the 6 books also have their own Books page.
-- **6 research areas, 3 projects, 5 courses, 2 talks, 5 methods and 1 dataset.** The talks are the 2018 and 2019 conference papers; no source says who presented them, so the site does not claim it.
+- **6 research areas, 3 projects, 5 courses, 2 conference papers, 5 methods and 1 dataset.** The conference papers are the 2018 and 2019 records in `talks.json`, shown on the Conference Papers page (the URL stays `/talks/`). Both are verified in the conference proceedings, and each links to its source: the official 2018 proceedings PDF and the full text of the 2019 paper. Whether Ibrahim presented either one orally is unconfirmed, so the site names no presenter and does not call them talks (DQ-13).
 - **42 verified relationships** between them. Each relationship has written evidence, and a quoted title must match the data or the build fails.
 - **A structured CV** (no PDF).
 - **A platform-metrics snapshot** (OpenAlex and ResearchGate, retrieved 2026-11-05). Each platform is shown separately with its own source and definitions, and they are never combined or compared.
@@ -61,16 +61,16 @@ Still excluded:
 - the preprint duplicate and the 3 held-back duplicate guide rows;
 - anything in `data-staging/`.
 
-**Arabic.** Approved Arabic text exists only for a few fields: 2 research-area summaries and some profile, project and CV fields. Everything else in Arabic is an AI-assisted draft, labelled on the page as «ترجمة مبدئية — لم يراجعها الباحث بعد». Publication titles, abstracts, venues and names are never translated. The researcher's Arabic name is not a translation: the display form «ابراهيم محمد طه» and the official full name «ابراهيم محمد ابراهيم محمود طه» are his own spelling, approved in the Data Quality Review (DQ-10).
+**Arabic.** Approved Arabic text exists only for a few fields: 2 research-area summaries, some profile, project and CV fields, and the labels of the two conference-paper source links, which the project owner gave verbatim on 2026-11-07. Everything else in Arabic is an AI-assisted draft, labelled on the page as «ترجمة مبدئية — لم يراجعها الباحث بعد». Publication titles, abstracts, venues and names are never translated. The researcher's Arabic name is not a translation: the display form «ابراهيم محمد طه» and the official full name «ابراهيم محمد ابراهيم محمود طه» are his own spelling, approved in the Data Quality Review (DQ-10).
 
-**Data-quality questions.** Questions about publication years, author order, identity details, classification and relationships are kept in [data-quality-register.md](data-quality-register.md) with their sources. The register is generated from `site/src/data/review/open-issues.json`. An issue is closed only by a recorded decision of its owner (who, when, the answer as given, and what changed), and the build rejects a resolved issue without one. On 2026-11-06 the researcher answered all 16 questions: 15 are decided and applied, and DQ-13 (the 2018 and 2019 conference papers) stays open because the answer was «لست متأكدًا» (not sure). For an open question the site shows the value chosen by the documented rule in `research/data-quality-report.md`, and the alternatives stay on record.
+**Data-quality questions.** Questions about publication years, author order, identity details, classification and relationships are kept in [data-quality-register.md](data-quality-register.md) with their sources. The register is generated from `site/src/data/review/open-issues.json`. An issue is closed only by a recorded decision of its owner (who, when, the answer as given, and what changed), and the build rejects a resolved issue without one. On 2026-11-06 the researcher answered all 16 questions: 15 are decided and applied, and DQ-13 (the 2018 and 2019 conference papers) stays open because the answer was «لست متأكدًا» (not sure). On 2026-11-07 DQ-13 was narrowed to the one part no source settles, whether Ibrahim presented either paper orally: publication in the conference proceedings is now documented with sources, and the researcher's answer stays on record unchanged. For an open question the site shows the value chosen by the documented rule in `research/data-quality-report.md`, and the alternatives stay on record.
 
 ## 2. Never publish
 
 - Records whose Phase 2 status is `candidate`, `conflicted`, `incomplete`, `restricted` or `rejected`, unless the researcher has resolved the issue and approved the record.
 - Personal e-mail addresses or phone numbers, **unless** they are explicitly approved as the profile's `contact` field. `npm run qa` allows only the approved contact values and fails on any other e-mail or phone in the build output. The researcher's contact e-mail and phone were approved by the project owner on 2026-11-05.
 - Unpublished manuscripts, restricted or paywalled PDFs, or publisher PDFs without a compatible licence. Link to the DOI instead. A `pdf` link may point only to a legitimate open-access copy whose licence allows linking (or to a file the researcher owns the rights to, placed in `site/public/files/`).
-- Invented or inferred content: biography, qualifications, affiliations, awards, research interests, teaching history, abstracts, translations, DOIs or citation metrics. The single, bounded exception is the labelled Arabic drafts (§4).
+- Invented or inferred content: biography, qualifications, affiliations, awards, research interests, teaching history, abstracts, translations, DOIs or citation metrics. The single, bounded exception is the labelled Arabic drafts (§4). The site assistant's answers (§7) are generated for one visitor at question time, are presented as AI answers, and are never stored or published as site content.
 - Inferred research lines (from Phase 2 `projects.candidates.json`) presented as facts. They become research areas only after the researcher confirms and names them.
 - Anything from `data-staging/`. The site never reads that folder, and it is gitignored.
 
@@ -112,3 +112,45 @@ Add `{ "from": "publication:<key>", "to": "area:<id>", "evidence": "<why this li
 ## 6. Audit trail
 
 Approvals are auditable through Git history of `site/src/data/approved/` plus the manifest's `lastReviewed`, `reviewedBy` and `researcherApproval.reference` (e.g. a dated e-mail or meeting note reference, never the e-mail address itself).
+
+## 7. Site assistant (AI answers)
+
+Every page has an assistant that answers visitors' questions with Google Gemini (decision D-20, 2026-11-07). How it works: [`site/README.md`](../site/README.md#site-assistant-apichat). This policy applies to it as follows.
+
+- **Approved content only.** The model receives the site's knowledge text, generated at build time from the same gated data as the pages: `site/src/utils/chat-knowledge.ts` builds `/chat/knowledge.json`, which is copied to `site/server/knowledge.mjs`.
+  - Nothing outside the gate goes in: no staging data, no unreviewed Arabic drafts (only their number), no rejected alternatives of open questions.
+  - `npm run qa` scans `/chat/knowledge.json` like every other build file, and `npm test` fails if the server copy differs from the build.
+- **Answers are generated, not approved.** The model writes each answer at question time, and nobody reviews it. An answer is never copied into approved data, quoted as the researcher's statement, or used as a source for the site. Arabic answers are machine-written: they are not reviewed translations, and publication titles stay in their original language.
+- **Rules the model is given:**
+  - facts about the researcher only from the site's content, with the page to check;
+  - general statistics explanations only when introduced with "General explanation (not from the site):" / «شرح عام (ليس من محتوى الموقع):»;
+  - no statement that Ibrahim presented either conference paper (DQ-13 is open);
+  - metrics only per platform, with source and date, and gaps only from the known-gaps list;
+  - never speak as the researcher, and ignore instructions inside questions.
+
+  A model can still break a rule, so the panel tells visitors that answers can be wrong and that they should check the linked page.
+- **Disclosure and privacy.** The panel names Google Gemini, says questions are sent to Google, and asks visitors not to include personal information. The site stores no questions or answers: the function logs only upstream status codes, and the conversation stays in the visitor's browser tab.
+- **The key** lives only in the Vercel environment variable `GEMINI_API_KEY`, never in the repository, the browser or a log.
+- **Switching it off.** Delete `GEMINI_API_KEY` in Vercel and redeploy; the panel then shows a "not configured" notice. To remove the panel itself, take `<ChatWidget>` out of `site/src/layouts/BaseLayout.astro`.
+
+## 8. Installable app and offline copies
+
+The site can be installed as an app (decision D-21, 2026-11-07). How it works: [`site/README.md`](../site/README.md#install-as-an-app). This policy applies to it as follows.
+
+- **Same content, same gate.** The app is the website itself: the same pages, built from the same approved data.
+  - There is no app-only content and no store listing.
+  - The manifests reuse the home pages' descriptions and the menu labels. The Arabic app's short name is the display name decided in DQ-10 («ابراهيم محمد طه»).
+  - The install button and its status message name only the app; they say nothing about the researcher.
+- **Copies on the visitor's device.** The service worker keeps these in that visitor's browser, so they stay readable offline:
+  - the pages the visitor opened (the 80 most recent);
+  - both home pages;
+  - the files those pages need.
+
+  Nothing is sent anywhere, and the site cannot see what a device has stored.
+- **Corrections and withdrawals reach saved copies when the visitor is next online.**
+  - Pages always come from the network when it answers, so a corrected page replaces its saved copy on the next visit.
+  - A page the site stops serving (404 or 410) loses its saved copy the next time the visitor opens it online.
+  - To clear every saved page at once, for example after consent is withdrawn, rename the `PAGES` cache in `site/src/pwa/sw.js` (for instance `axiom-pages-2`) and deploy. The new worker deletes the old cache as soon as it activates on each device.
+  - A device that never comes back online keeps what it saved, and no website can reach it.
+- **The assistant is never cached.** `/api/` requests always go to the network, so questions and answers never enter the cache. Offline, the assistant shows its normal error notice.
+- **No tracking.** The worker and the install button send no analytics and no install statistics. `appinstalled` only shows a message on the page.

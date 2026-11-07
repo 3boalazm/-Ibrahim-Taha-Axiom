@@ -20,11 +20,11 @@ const target = otherLang(lang);
 // Arabic translation status, counted from the drafts file (never claims a review).
 const draftCount = arDrafts.entries.filter((e) => e.status !== 'reviewed').length;
 const reviewedCount = arDrafts.entries.length - draftCount;
-// One link per platform: the researcher has two Scopus ids, which would read as a duplicate.
+// One link per platform, labelled by platform only. Scopus has a single Author ID
+// (57226774796) since the researcher's DQ-05 decision, so no label carries a count.
 const ids = profile.identifiers
   .filter((i) => ['ORCID', 'Google Scholar', 'Scopus', 'ResearchGate', 'LinkedIn', 'GitHub', 'OpenAlex'].includes(i.type))
-  .filter((i, _n, all) => all.findIndex((x) => x.type === i.type) === _n)
-  .map((i) => ({ ...i, type: i.type === 'Scopus' ? 'Scopus (2 ids)' : i.type }));
+  .filter((i, _n, all) => all.findIndex((x) => x.type === i.type) === _n);
 const headline =
   lang === 'ar'
     ? 'بحثٌ في الإحصاء التطبيقي والقياس الاقتصادي، يصنع أدواتٍ تُقاس.'

@@ -1,6 +1,6 @@
 # Interaction architecture (Phase 4, motion in Phase 5)
 
-The site is static-first Astro: every page is complete HTML at build time, and each interactive feature is a small inline script that enhances HTML already on the page. There is no framework runtime and no client-side routing. No interactive feature calls a server. All data comes from `site/src/data/approved/` through the same build-time utilities the pages use, so an interactive view can never show something a static page would not.
+The site is static-first Astro: every page is complete HTML at build time, and each interactive feature is a small inline script that enhances HTML already on the page. There is no framework runtime and no client-side routing. Only one feature calls a server: the site assistant sends a visitor's question to `POST /api/chat` ([below](#site-assistant-corner-launcher-every-page)). All data comes from `site/src/data/approved/` through the same build-time utilities the pages use, so an interactive view can never show something a static page would not. The assistant's answers are the one designed exception: they are generated per question and presented as AI answers.
 
 Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and the browser import it, and `node --test` tests it directly:
 
@@ -14,7 +14,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 
 ## Site search (header button, Ctrl/⌘ K, `/`)
 
-- **Index:** `src/pages/search-index/[lang].json.ts` emits `/search-index/en.json` and `/ar.json`. Each holds 54 records: publications, books, research areas, projects, methods, teaching, talks and pages. They are built from approved data only, and each language's titles are what that language's pages show. The index is fetched on first open (about 35 KB), never on page load.
+- **Index:** `src/pages/search-index/[lang].json.ts` emits `/search-index/en.json` and `/ar.json`. Each holds 54 records: publications, books, research areas, projects, methods, teaching, conference papers and pages. They are built from approved data only, and each language's titles are what that language's pages show. The index is fetched on first open (about 35 KB), never on page load.
 - **Matching:** every query term must match. Matches can be exact words, prefixes, or glossary equivalents (الحرف ↔ ridge, التعدد الخطي ↔ multicollinearity …). So Arabic, author-name and mixed queries work without machine translation.
 - **UI:** a native `<dialog>` holds a combobox input with `aria-activedescendant` over a listbox.
   - Results are grouped by category and highlighted.
@@ -42,7 +42,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 - **Layout:** three columns, computed at build time (`src/utils/graph.ts`):
   - areas and methods on the start side;
   - publications in the centre;
-  - projects, talks and the dataset on the end side.
+  - projects, conference papers and the dataset on the end side.
 - **Rendering:** nodes are HTML buttons over an SVG edge layer, and the columns mirror in Arabic. 41 edges are drawn. The project → dataset link joins two end-column nodes, so it appears in the panel and the list rather than as a line.
 - **Keyboard:** the graph is one Tab stop (roving tabindex). Arrow keys move within and between columns, Enter or Space selects, and Escape clears.
   - Hovering or focusing a node lights its edges as a preview, instantly.
@@ -53,7 +53,7 @@ Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and t
 
 ## Journey (`/about/`)
 
-Milestones are built only from dated approved records: education, roles, publications, talks and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن». In Arabic the " · " separator follows the page direction and only the numbers are isolated, so a range reads «التعليم · 2012–2015».
+Milestones are built only from dated approved records: education, roles, publications, conference papers and projects. Undated items are listed separately and never placed on the timeline. Each year is a `<details>` element; an "Expand all" button and links to related publications are provided. Periods are localised, and an ongoing period shows as "present" or «الآن». In Arabic the " · " separator follows the page direction and only the numbers are isolated, so a range reads «التعليم · 2012–2015».
 
 Motion: the timeline line draws when it first enters view and the years rise in sequence. While reading, the dated year at the middle of the viewport is highlighted (visual only; the undated group never is). Year groups open and close smoothly where the browser supports it.
 
@@ -83,6 +83,41 @@ The home page is made of these sections:
 - **Metric cards:** OpenAlex and ResearchGate, each with its own source, retrieval date and definitions, never combined.
 - **Contents index and contact paths.**
 
+## Site assistant (corner launcher, every page)
+
+- **What it is:** a launcher in the bottom inline-end corner opens a small chat panel. It is labelled "Ask about this site" / «اسأل عن الموقع», and below 40rem it becomes a round icon button that keeps its accessible name.
+  - Answers come from `POST /api/chat`, a Vercel Function that sends the question, the last 8 messages and the site's approved content to Google Gemini.
+  - Details: [`site/README.md`](../site/README.md#site-assistant-apichat). Content rules: [public-content-policy.md](public-content-policy.md#7-site-assistant-ai-answers) §7.
+- **UI:** a non-modal `<dialog>`, so the page behind stays usable.
+  - Opening moves focus to the question box. Enter sends, and Shift+Enter starts a new line. Escape or the close button closes the panel, and focus returns to the launcher.
+  - The conversation is a focusable `role="log"` region, so screen readers announce new messages.
+  - Four example questions are offered until the first question. "New chat" clears the conversation.
+- **Rendering:** answers are text with a small Markdown subset: paragraphs, "- " lists, bold, and links to site paths or https URLs.
+  - The script builds them with DOM nodes, never `innerHTML`, so HTML inside an answer shows as text.
+  - Links open in the same tab.
+- **State:** the conversation is kept in `sessionStorage` (`axiom-chat:en` / `axiom-chat:ar`, the last 30 messages), so it follows the visitor across pages in the same tab. Error notices are shown but not stored.
+- **Layout:** at every width the panel sits between the sticky site header and the launcher, so its title and close button are never covered. On phones it spans the width.
+  - In Arabic the layout mirrors: launcher and panel on the left.
+  - The footer gets extra bottom padding, so the launcher never covers its last line.
+- **Errors:** if the server is not configured, busy or unreachable, or the question is too long, the panel shows a clear notice, never an invented answer.
+- **Without JavaScript:** the widget is `hidden` in the HTML and appears only when its script runs, so there is no dead button.
+- **Motion:** none.
+
+## Install as an app (floating button, opposite the assistant)
+
+- **What it is:** the site installs from the browser as an app with its own window and icon: an English app starting at `/` and an Arabic one starting at `/ar/`. Pages already opened stay readable offline. Details: [`site/README.md`](../site/README.md#install-as-an-app); decision D-21.
+- **Where:** one floating "Install the app" / «ثبّت التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, at the same height and distance from the bottom. On screens up to 40rem it is a round icon button like the launcher, and its label stays for screen readers. The owner asked for it there on 2026-11-07, in place of the first version's footer and phone-menu buttons and written steps.
+- **When it shows:** only after a Chromium browser (Chrome, Edge) fires `beforeinstallprompt`, that is, when the browser itself can install the site. One press opens the browser's install prompt, and the button hides, since there is one prompt per event. The browser's own confirmation always remains: no site can install itself.
+  - Safari (iPhone, iPad, Mac) and Firefox give pages no install prompt, so they get no button. Installing there goes through the browser's own menu (Safari: Share, then "Add to Home Screen").
+  - Hidden inside the installed app (`display-mode: standalone` or `navigator.standalone`; the page then sets `html[data-app="standalone"]`), and without JavaScript, because the button is `hidden` in the HTML.
+- **Focus:** an ordinary button, after the assistant's launcher in the tab order. Nothing moves focus.
+- **Announcements:** after installing, a polite `role="status"` region says where to find the app.
+- **Offline:**
+  - An unsaved page shows an offline page in its own language and theme, with "Try again", a link home and the saved pages of that language.
+  - Saved pages open as usual.
+  - The assistant needs the network and shows its normal error notice offline; its requests are never answered from a cache.
+- **Motion:** none.
+
 ## Motion and accessibility rules
 
 - Motion follows [motion-system.md](motion-system.md):
@@ -95,4 +130,5 @@ The home page is made of these sections:
 - In Arabic, identifiers (DOIs, URLs, ORCID) and numbers are isolated left-to-right runs, while separators such as " · " stay outside the isolate in the page direction. SVG figures use `direction: ltr`, so mathematical axes are not mirrored.
 - JavaScript budget:
   - **Every page:** the search dialog script (about 6 KB, 2.5 KB gzip; its index is lazy-loaded) and the motion boot with the shared motion module (about 5 KB, 2.3 KB gzip, cached across pages and reused by the feature scripts). The motion module is new in Phase 5.
+  - **Every page, from this change on:** the assistant widget's inline script (about 3.9 KB, 1.7 KB gzip). It makes a network request only when a question is sent.
   - **Feature scripts:** each loads only on the pages that use it.

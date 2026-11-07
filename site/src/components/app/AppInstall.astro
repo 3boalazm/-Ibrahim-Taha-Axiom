@@ -1,0 +1,131 @@
+---
+/**
+ * Installable app (site/README.md#install-as-an-app), on every page:
+ * - registers the service worker (/sw.js, production builds only), which keeps the pages
+ *   you open readable offline;
+ * - "Install the app": a floating button in the bottom inline-start corner, opposite the
+ *   site assistant's launcher (bottom right in Arabic, bottom left in English). It appears
+ *   only when the browser can install the site itself (beforeinstallprompt, Chromium
+ *   browsers), and one press opens the browser's install prompt. Safari and Firefox give
+ *   pages no way to install, so there it never shows; nor without JS, nor inside the
+ *   installed app.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+---
+
+<button type="button" class="button button--accent app-install" data-app-install hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"></path></svg>
+  <span class="app-install__label">{ui.appInstall}</span>
+</button>
+<p class="visually-hidden" role="status" data-app-status data-installed={ui.appInstalled}></p>
+
+<script>
+  interface InstallPromptEvent extends Event {
+    prompt(): Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  }
+
+  const standalone = () =>
+    ['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (standalone()) document.documentElement.dataset.app = 'standalone';
+
+  // 1 · Offline copies. The worker keeps the pages you open; a page is always fetched fresh
+  //     when the network answers, and the saved copy is used only when it does not.
+  if ('serviceWorker' in navigator && !import.meta.env.DEV) {
+    const register = () => {
+      const firstVisit = !navigator.serviceWorker.controller;
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .then(() => navigator.serviceWorker.ready)
+        .then((registration) => {
+          if (!firstVisit) return;
+          // This page loaded before the worker ran, so it hands over what it used
+          // (the worker reads them from the HTTP cache instead of downloading them again).
+          const urls = [location.origin + location.pathname, ...performance.getEntriesByType('resource').map((e) => e.name)];
+          registration.active?.postMessage({ type: 'cache-urls', urls });
+        })
+        .catch(() => undefined);
+    };
+    if (document.readyState === 'complete') register();
+    else addEventListener('load', register, { once: true });
+  }
+
+  // 2 · The install button, only where the browser itself can install the site.
+  const button = document.querySelector<HTMLButtonElement>('[data-app-install]');
+  const status = document.querySelector<HTMLElement>('[data-app-status]');
+  let deferred: InstallPromptEvent | null = null;
+
+  addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault(); // the button opens the prompt, instead of a browser banner on top of it
+    if (standalone()) return;
+    deferred = event as InstallPromptEvent;
+    if (button) button.hidden = false;
+  });
+  addEventListener('appinstalled', () => {
+    deferred = null;
+    if (button) button.hidden = true;
+    if (status) status.textContent = status.dataset.installed ?? '';
+  });
+  button?.addEventListener('click', () => {
+    const event = deferred;
+    if (!event) return;
+    // one prompt per event; the browser sends a new event if the site can still be installed
+    deferred = null;
+    button.hidden = true;
+    event.prompt().catch(() => undefined);
+  });
+</script>
+
+<style>
+  /* Opposite the assistant's launcher (ChatWidget.astro): same height, same distance
+     from the bottom, the other corner. */
+  .app-install {
+    position: fixed;
+    inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+    inset-inline-start: var(--space-4);
+    z-index: 40;
+    min-block-size: 3rem;
+    box-shadow: var(--shadow-float);
+  }
+  /* .button sets display, which would otherwise override the hidden attribute */
+  .app-install[hidden] {
+    display: none;
+  }
+  .app-install svg {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  /* On narrow screens it is a round icon button, like the launcher; the label stays for screen readers. */
+  @media (max-width: 40rem) {
+    .app-install {
+      inline-size: 3rem;
+      padding: 0;
+    }
+    .app-install__label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+  /* Room under the footer so the button never covers its last line. */
+  :global(html:has(.app-install:not([hidden])) .site-footer) {
+    padding-block-end: 4.5rem;
+  }
+</style>

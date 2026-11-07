@@ -1,7 +1,7 @@
 ---
 /**
  * Academic journey: milestones derived ONLY from approved records — CV
- * periods (education, positions), courses, approved talks, publication years,
+ * periods (education, positions), courses, conference papers (talks.json), publication years,
  * project periods. Nothing is dated unless an approved record dates it;
  * undated items are listed separately. Each year expands and collapses
  * (native <details>), and links to that year in the publication explorer.
@@ -63,7 +63,8 @@ if (dated.length) {
     pubs: [],
   });
 }
-// Approved talks and the papers they presented.
+// Approved conference-paper records (talks.json) and their proceedings papers. They say
+// nothing about who presented a paper orally (DQ-13), so neither does the journey.
 for (const tk of talks) {
   push(startYear(tk.date), { kind: 'conference', text: tk.event, period: tk.date, href: `${localePath(lang, '/talks/')}#${tk.id}`, pubs: publicationsOfTalk(tk.id).flatMap((k) => pub(k) ?? []) });
 }
@@ -99,8 +100,8 @@ const latest = years[years.length - 1];
     <p class="journey__lead">
       {
         ar
-          ? 'محطات مأخوذة من السجلات المعتمدة فقط: السيرة الذاتية، والمواد الدراسية، والمحاضرات، وسنوات النشر، والمشروعات. ما ليس له تاريخ معتمد يظهر في مجموعة مستقلة.'
-          : 'Milestones taken only from approved records — the CV, courses, talks, publication years and projects. Anything without an approved date is listed separately.'
+          ? 'محطات مأخوذة من السجلات المعتمدة فقط: السيرة الذاتية، والمواد الدراسية، وأوراق المؤتمرات، وسنوات النشر، والمشروعات. ما ليس له تاريخ معتمد يظهر في مجموعة مستقلة.'
+          : 'Milestones taken only from approved records — the CV, courses, conference papers, publication years and projects. Anything without an approved date is listed separately.'
       }
     </p>
     <button type="button" class="button journey__toggle" data-journey-toggle data-open-label={ar ? 'فتح الكل' : 'Expand all'} data-close-label={ar ? 'طي الكل' : 'Collapse all'}>
