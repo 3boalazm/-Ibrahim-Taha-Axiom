@@ -112,9 +112,11 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     /* page-transition: the header is its own static layer (motion.css) */
     view-transition-name: site-header;
   }
+  /* 96 %: the small brass "AXIOM" keeps 4.5:1 even when a dark band (the footer, the studio
+     credit) is under the header; at 92 % it measured 4.4:1 over the footer (axe). */
   .site-header[data-condensed] {
     border-block-end-color: var(--color-rule);
-    background: color-mix(in srgb, var(--color-paper) 92%, transparent);
+    background: color-mix(in srgb, var(--color-paper) 96%, transparent);
   }
   .site-header__inner {
     display: flex;

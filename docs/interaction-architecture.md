@@ -118,6 +118,19 @@ The home page is made of these sections:
   - The assistant needs the network and shows its normal error notice offline; its requests are never answered from a cache.
 - **Motion:** none.
 
+## Studio credit (before the footer of every page)
+
+- **What it is:** a section of its own after the page's content, right before the footer, headed "Developed by Aboalazm OS Studio" / «من تطوير Aboalazm OS Studio» (an `<h2>` that labels the section), plus one button, "Visit the studio" / «زيارة الاستوديو». The button opens <https://aboalazm-os.vercel.app/> in a new tab; screen readers hear "(opens in a new tab)". Details: [`site/README.md`](../site/README.md#studio-credit); decision D-22.
+- **Look:** the studio's identity, not the site's: a rounded obsidian panel inside the page width. It keeps the same look in both of the site's themes.
+- **Layout:**
+  - from 48rem: text at the inline start, the button at the inline end;
+  - below 48rem: stacked, and up to 30rem the button is full width;
+  - Arabic: mirrored, and the arrow points the reading way.
+- **Focus:** the button comes after the page's content and before the footer links in the tab order. It shows the studio's amber ring at once, instead of the site's closing-in focus animation.
+- **No jump:** until it nears the viewport the section is not laid out, and the browser keeps exactly its height, so the footer below does not move when it appears.
+- **With the floating buttons:** the footer keeps its room for them at the end of a page, as before, and the section's button stays clear of them.
+- **Motion:** only a 200 ms background change on hover, with the studio's easing; none under reduced motion.
+
 ## Motion and accessibility rules
 
 - Motion follows [motion-system.md](motion-system.md):

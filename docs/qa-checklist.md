@@ -249,6 +249,43 @@ The same tree had passed in run `42330354600` on `3bcdb64`. The job could not be
 | `E2E_REQUIRED=1 npm run test:e2e` | 175 checks, all pass: keyboard 37, motion 41, chat 39, app 58. Page transition `ran`; language switch `none`. `motion.mjs` alone 3 more times: 41/41 each |
 | Not tested | Chrome 156 locally (CI covers it), Safari 18.2+ (the other browser with cross-document view transitions) |
 
+## Run for the studio credit (2026-11-07)
+
+The owner asked for a section at the end of the site saying it was developed by Aboalazm OS Studio, with a redirect button, in the studio's identity rather than the site's (decision D-22). Environment: the sandbox's Node 22 and Chromium 153, on the built site.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages, each ending its footer with the credit. `sw.js` VERSION `aa5606b109e1` |
+| `npm test` | 97 tests, all pass. 4 new in `studio-credit.test.mjs`: every page, the link (new tab, `noopener`), the identity, the floating-button clearance. With `var(--color-ink)` put in the band, the identity test fails and names it; restored byte-identical, it passes |
+| `npm run qa`, `npm run lab:verify` | Both pass. 152 files: 4 new, the two fonts in woff2 and woff. 31 external links: 1 new, the studio. The assistant's knowledge file is byte-identical |
+| `E2E_REQUIRED=1 npm run test:e2e` | 188 checks, all pass: keyboard 37, motion 41, chat 39, app 71. The 13 new ones:<br>- A long page (`/publications/`) fetched neither studio font before the band neared the viewport; both loaded at the end.<br>- Band `rgb(8, 7, 16)`, button `rgb(245, 166, 35)`, Montserrat and JetBrains Mono.<br>- With both floating buttons showing, neither covers the button.<br>- Tab from the footer reaches it with a solid amber ring.<br>- Arabic at 390 px: starts at the right, the button spans 353 of 390 px, the arrow is mirrored, no tracking.<br>- 320 px: overflow 0.<br>- No JS: the credit and its button are there. |
+| axe-core 4.14.0, first run | 22 runs at the end of pages (EN/AR × light/dark × 1280/390, 320 px, the button hovered and focused): **4 violations**, all `color-contrast` on the header's small brass "AXIOM" (`#7e632f` on `#e5e3dd`, 4.4:1), light theme at 1280 px. The band made the page long enough for the dark footer to scroll under the 92 % condensed header. With the band hidden, the same scroll positions passed |
+| Fix and re-run | The condensed header went from 92 % to 96 % paper. Then 22 runs, 0 violations, and the header probe passed in all three positions |
+| Contrast in the band | Label and line 8.75:1, name 18.89:1, button 9.88:1, hovered 11.38:1, focus ring against the band 9.88:1 (needs 3:1) |
+| Lighthouse 12.8.2 (`main` `8f02cc5` → this) | Medians of 3 alternating runs:<br>- `/`: 80 → 80; LCP 4.06 → 4.06 s, TBT 0 → 0, CLS 0.018 → 0.018.<br>- `/ar/`: 67 → 67; LCP 5.49 → 5.41 s, TBT 0 → 0, CLS 0.046 → 0.042.<br>- +4 KiB per page.<br>- Neither studio font was fetched during page load in any of the 12 runs. One `/ar/` branch run scored 93, an outlier from the hero image's usual LCP spread. |
+| Screenshots | 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/), all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
+
+### Follow-up: a section before the footer (2026-11-07)
+
+The owner asked to move it: «ليه تحت الفوتر انا عاوزها سيكشن جوا الصفحة عادي بس قبل الفوتر» ("why under the footer? I want it as a normal section inside the page, just before the footer"). The credit is now a section of its own between `</main>` and the footer: a rounded obsidian panel inside the page width, headed by an `<h2>`. The footer, the assistant's launcher and the install button are back to `main` byte for byte. Environment: the sandbox's Node 22 and Chromium 153, on the built site.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages; all 67 have the section after `</main>` with nothing between it and the footer, and none in the footer. `sw.js` VERSION `841fa583c88d` |
+| `npm test` | 98 tests, all pass. `studio-credit.test.mjs` now has 5: the place, the heading and search exclusion, the link, the identity, and the footer's room for the floating buttons |
+| `npm run qa`, `npm run lab:verify` | Both pass: 67 pages, 152 files, 31 external links. The assistant's knowledge file is byte-identical |
+| `E2E_REQUIRED=1 npm run test:e2e` | 194 checks, all pass: keyboard 37, motion 41, chat 39, app 77. New or changed in the studio block:<br>- after `<main>` and right before the footer (gaps 56 and 104 px at 1280); heading "Developed by Aboalazm OS Studio"; panel radius 24 px;<br>- Tab goes from the page's last link to the button (amber ring), then into the footer;<br>- in Arabic, the heading reads «من تطوير Aboalazm OS Studio» and the name stays in Montserrat;<br>- Arabic at 390 px: the text starts at the panel's right edge and the button spans the panel (295 of 295 px);<br>- the reserved height equals the laid-out one: 189.8, 214.6 and 251.5 px at 1280 (EN), 390 (AR) and 320 (EN) |
+| Reserved height, all widths | Before laying the section out, the browser keeps the height computed from its layout values. At 34 width × language pairs from 320 to 1920 px, it matched the laid-out height to 0.1 px |
+| What the test catches | With the stacked gap and button set to 4rem instead of 4.5rem, the two stacked checks fail (206.6 vs 214.6 px, 243.5 vs 251.5 px); restored, they pass |
+| What it fixed on the way | The first version reserved 13rem (208 px) at every width, while the real height runs from 158 to 251 px depending on the width and language. Jumping straight to the end of `/ar/research/` at 320 px then moved the footer by 33 px, and the existing check "the install button stays below the footer's last line" failed by 1 px. With the computed height it passes with 32 px to spare |
+| axe-core 4.14.0 | 22 runs, the section in the middle of the viewport and at the end of pages (EN/AR × light/dark × 1280/390, 320 px, the button hovered and keyboard-focused): 0 violations |
+| Contrast in the section | Unchanged: label and line 8.75:1, name 18.89:1, button 9.88:1, hovered 11.38:1, focus ring against the panel 9.88:1 |
+| The header, corrected | `main` (`8f02cc5`) itself fails at the end of Arabic pages at 1280 × 800 in the light theme: the 917 px footer fills the viewport under the 92 % header, and "AXIOM" measures 4.4:1 on `/ar/` and `/ar/research/`. English passes there. This branch with the header put back to 92 % fails the same way; at 96 % it passes. So the header change fixes an issue that predates the credit; the first run above put it down to the band |
+| Lighthouse 12.8.2 (`main` `8f02cc5` → this) | Medians of 3 alternating runs:<br>- `/`: 80 → 80; LCP 4.00 → 4.06 s, TBT 0 → 0, CLS 0.0183 → 0.0183.<br>- `/ar/`: 67 → 67; LCP 5.41 → 5.49 s, TBT 0 → 0, CLS 0.0460 → 0.0458.<br>- +5.3 KiB per page.<br>- Neither studio font was fetched during page load in any of the 12 runs |
+| Screenshots | The 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/) retaken with the section in the middle of the viewport, all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
