@@ -13,8 +13,9 @@
  *   .json (search index)    network first, saved copy offline
  *   other same-origin GETs  stale-while-revalidate (images, icons, manifests)
  *   never touched           other origins, non-GET requests, /api/ (the site assistant),
- *                           /_vercel/ (Vercel Web Analytics),
- *                           Range requests and this file
+ *                           scripts outside /_astro/ (Vercel Web Analytics, served from
+ *                           /_vercel/ or a per-project random path), Range requests and
+ *                           this file
  */
 const VERSION = '__VERSION__';
 const PRECACHE = /*__PRECACHE__*/ [];
@@ -34,8 +35,10 @@ const isArabic = (pathname) => pathname === '/ar/' || pathname.startsWith('/ar/'
 const pageKey = (url) => url.origin + url.pathname;
 const usable = (response) => Boolean(response) && response.ok && response.type === 'basic' && !response.redirected;
 const isHtml = (response) => (response.headers.get('content-type') || '').includes('text/html');
-const skipped = (url) =>
-  url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/_vercel/') || url.pathname === '/sw.js';
+const skipped = (url) => url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname === '/sw.js';
+/** The site's own scripts are all in /_astro/; any other script is Vercel's analytics. */
+const isOutsideScript = (request, url) =>
+  url.pathname.startsWith('/_vercel/') || (request.destination === 'script' && !url.pathname.startsWith('/_astro/'));
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -65,7 +68,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || request.headers.has('range')) return;
   const url = new URL(request.url);
-  if (skipped(url)) return;
+  if (skipped(url) || isOutsideScript(request, url)) return;
   if (request.mode === 'navigate') event.respondWith(page(event, url));
   else if (url.pathname.startsWith('/_astro/')) event.respondWith(cacheFirst(event, request));
   else if (url.pathname.endsWith('.json')) event.respondWith(networkFirst(event, request));
