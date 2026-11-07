@@ -9,8 +9,8 @@ Runs on every pull request and every push to `main` that touches `site/`:
 | Build | `npm run build` | Content schemas; every manifest relationship resolves and quoted evidence is found; 67 HTML files |
 | QA | `npm run qa` | One h1 per page, internal links, language switch, approved mailto/tel only, forbidden files (raw .bib, manifest, profile JSON) and client-side model code absent, lab payload, colour contrast of token pairs, sitemap (66 URLs) |
 | Lab | `npm run lab:verify` | Recomputes all 15 states × 100 replicates from the seed, checks convergence, and checks every number quoted in EN/AR text (see [lab-methodology.md](lab-methodology.md)) |
-| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`), the site assistant (`chat.test.mjs`: knowledge in sync with the build, secret scan, request handling against a fake Google endpoint) |
-| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. `chat.mjs`: the site assistant with `/api/chat` intercepted: keyboard and focus, rendering, persistence, error notices, Arabic layout, the panel clear of the sticky header, no JavaScript. No JS errors in any suite |
+| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`), the site assistant (`chat.test.mjs`: knowledge in sync with the build, secret scan, request handling against a fake Google endpoint), the installable app (`app.test.mjs`: manifests, icon sizes and the maskable safe zone, manifest links, hidden install controls, `sw.js` in step with the build and its routing) |
+| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. `chat.mjs`: the site assistant with `/api/chat` intercepted: keyboard and focus, rendering, persistence, error notices, Arabic layout, the panel clear of the sticky header, no JavaScript. `app.mjs`: Chrome's manifest and installability checks, the service worker, offline reading with the server stopped, a withdrawn page, the install button per browser, the steps dialog, the installed app and no JavaScript. No JS errors in any suite |
 
 ## Run during Phase 4 (2026-11-06)
 
@@ -165,6 +165,45 @@ Lighthouse 12.8.2, simulated mobile, median of 3 runs, against a local static se
 - **The `/talks/` shift** came with the longer conference-paper text. Lighthouse attributes it to a web-font swap on the page container. A direct trace in Chromium shows no shift, because the fonts arrive before the first paint. It is below the 0.1 "good" threshold and was not changed.
 
 **Not run:** a live request to Google (the sandbox cannot reach it, and the key belongs only in Vercel), real devices and screen readers.
+
+## Run for the installable app (2026-11-07)
+
+Run in the development sandbox (Node 22, headless Chromium 153) on the final tree of the change that makes the site installable ([site/README.md](../site/README.md#install-as-an-app)):
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 HTML files, unchanged, because the offline page is built inside the service worker.<br>New output:<br>- `/sw.js`: 15,408 bytes, `VERSION` `9d7edae83eea`. It precaches 16 files: `/`, `/ar/`, 5 CSS and 9 JS files;<br>- `/site.webmanifest` and `/ar/site.webmanifest`;<br>- two maskable icons.<br>Two builds of the same tree gave the same `VERSION` |
+| `npm run chat:knowledge` | Byte-identical to the committed copy; the assistant is unaffected |
+| `npm run qa` | All QA checks passed (67 pages, 148 files, 30 external links) |
+| `npm run lab:verify` | Unchanged: ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 92 tests, 92 pass, 0 fail (before: 83). The 9 new tests in `app.test.mjs` check:<br>1. one app per language (id, start, scope, direction; descriptions taken from the home pages);<br>2. icon sizes, read from the PNG headers;<br>3. the maskable icons' safe zone, measured pixel by pixel (37.6 % and 37.5 % of the width, limit 40 %);<br>4. shortcuts that are existing pages, named as in the menu;<br>5. every page linking its own language's manifest;<br>6. the install controls `hidden` in the HTML;<br>7. `sw.js` complete and in step with `dist`, with a `VERSION` that recomputes;<br>8. the offline strings in both languages;<br>9. the worker's routing, run in a sandbox |
+| Negative checks | Each of these failed its test, and the test passed again after the file was restored (`cmp` identical):<br>- the built worker without its `/api/` exclusion: the routing test failed at "GET /api/chat", and the `VERSION` test failed too;<br>- `icon-512.png` copied over the maskable icon: the safe-zone test;<br>- `hidden` removed from one install button on `/about/`: the hidden-controls test;<br>- `/ar/` removed from the precache list: 3 checks in `app.mjs`, including the Arabic home page offline;<br>- the worker without the 404 handling: the withdrawn-page check in `app.mjs` |
+| `E2E_REQUIRED=1 npm run test:e2e` | 217 checks, all pass, no JavaScript errors: `keyboard.mjs` 37, `motion.mjs` 41, `chat.mjs` 39, and the new `app.mjs` 100. The first three now run with the service worker controlling their pages. `app.mjs` checks:<br>- **Chrome's view:** for `/` and `/ar/publications/`, `Page.getAppManifest` reports no errors and `Page.getInstallabilityErrors` returns none. Chrome's parsed app ids are `/` and `/ar/`. (`Page.getAppId` returns nothing in Chrome 153, so it is not used.)<br>- **The worker:** it activates with navigation preload on and controls the page; the first visit's page is saved too.<br>- **Offline, with the server stopped:**<br>&nbsp;&nbsp;– a saved page opens styled;<br>&nbsp;&nbsp;– both home pages open although they were never visited;<br>&nbsp;&nbsp;– the offline page appears in each language, listing only that language's saved pages, and follows the dark theme;<br>&nbsp;&nbsp;– `/api/chat` fails instead of being answered from a cache.<br>- **Online again:** the network wins again, and a page answered 404 loses its saved copy.<br>- **The install button:**<br>&nbsp;&nbsp;– Chromium's prompt via a simulated `beforeinstallprompt`, in the footer and the phone menu;<br>&nbsp;&nbsp;– the steps dialog for iPhone (English, Arabic, 320 px), iPad, Mac Safari and Firefox for Android, each with focus in and out, Escape, the Close button and the backdrop;<br>&nbsp;&nbsp;– no button inside the installed app or without JavaScript |
+| axe-core 4.14.0 | 0 violations:<br>- the 24 page runs and 8 assistant runs of the previous run;<br>- 30 runs of states the page audit cannot see, because they stay hidden until JavaScript shows them:<br>&nbsp;&nbsp;– the footer install button, shown and hovered (`/`, `/ar/`, `/publications/`, `/ar/lab/` × light/dark);<br>&nbsp;&nbsp;– the phone menu with the button, and the steps dialog (iPhone, `/` and `/ar/` × light/dark);<br>&nbsp;&nbsp;– the Arabic dialog at 320 px;<br>&nbsp;&nbsp;– the offline page (English and Arabic × light/dark; the dark runs confirmed by the computed body colour) |
+| Overflow | 0 px at 320 and 375 px in the 24 page × width runs. The open dialog fits at 320, 390, 820 and 1280 px |
+| Footer button contrast | 14.83:1 in light and 14.9:1 in dark; hovered, 15.37:1 and 15.3:1 |
+| Lighthouse 12.8.2 | Table below |
+| Visual review | The six screenshots in [`screenshots/installable-app/`](screenshots/installable-app/README.md) were reviewed by eye. The review caught a mistake in the audit script, not the site: its first offline runs labelled "dark" were rendered light, because a helper pinned the light theme on every new document. The script was fixed and re-run; the dark offline page passes axe (above) |
+
+Lighthouse 12.8.2, simulated mobile, against a local static server with Brotli and Vercel-like caching. Storage is reset before each run, so every run is a first visit, including the new script. "Before" is `70f1b36`, this branch before the installable app.
+
+| Page | Performance before → after | LCP before → after | CLS before → after |
+| --- | --- | --- | --- |
+| `/` | 89 → 89 | 3.2 s → 3.2 s | 0.018 → 0.018 |
+| `/ar/` | 75 → 75 | 4.5 s → 4.5 s | 0.046 → 0.046 |
+| `/publications/` | 92 → 92 | 2.9 s → 2.9 s | 0 → 0 |
+| `/talks/` | 93 → 89 (3 runs); 91 → 93 (7 runs) | 2.7 s → 3.2 s; 2.9 s → 2.7 s | 0.017 → 0.017 |
+
+- **`/talks/`:** the 3-run median dropped 4 points, but the baseline itself ranged from 87 to 93. Seven alternating runs per build gave 91 before and 93 after, so the drop was noise.
+- **TBT, accessibility, SEO, Best Practices:** total blocking time is 0 ms everywhere, and accessibility and SEO score 100 in both builds. Best Practices is unchanged (96, 96, 96, 100).
+- **The page cost:** the script that registers the worker and drives the button is inlined into every page: 1,889 bytes, 937 gzipped. The worker itself is fetched after `load`.
+- **The last worker change** (removing saved copies of 404 pages) came after these measurements and affects only that case.
+- **No PWA category:** Lighthouse 12 removed it, so installability was checked through Chrome's protocol instead (above).
+
+**Not run:**
+- real devices: iPhone, iPad, Mac, Android;
+- a real installation (headless Chrome cannot install an app);
+- screen readers.
 
 ## Manual matrix (before a release)
 

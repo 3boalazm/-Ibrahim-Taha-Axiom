@@ -1,6 +1,7 @@
 ---
 import { arNoun } from '../../lib/text.mjs';
 import Wordmark from '../shared/Wordmark.astro';
+import InstallButton from '../app/InstallButton.astro';
 import { SECTION_PATHS, SITE_NAME, navKeys, pageCopy } from '../../config/site';
 import { arDrafts, manifest, profile, researchAreas, showArDrafts } from '../../utils/content';
 import { publications, selectedPublications } from '../../utils/publications';
@@ -41,6 +42,7 @@ const headline =
         {lang === 'ar' ? 'ابدأ محادثة' : 'Start a conversation'}
         <span class="button__arrow" aria-hidden="true">↗</span>
       </a>
+      <InstallButton lang={lang} class="button button--lg site-footer__install" />
     </div>
   </div>
 
@@ -170,6 +172,18 @@ const headline =
     --btn-bg: var(--color-invert-brass);
     --btn-line: var(--color-invert-brass);
     color: var(--color-invert-bg);
+  }
+  /* "Install the app" (InstallButton.astro, so :global): an outline pill on the inverted
+     panel. Its hover sets background and colour itself, because .button:hover would
+     otherwise paint the light surface behind light text. */
+  .site-footer :global(.site-footer__install) {
+    --btn-fg: var(--color-invert-fg);
+    --btn-line: color-mix(in srgb, var(--color-invert-fg) 45%, transparent);
+  }
+  .site-footer :global(.site-footer__install:hover) {
+    --btn-line: var(--color-invert-brass);
+    background: color-mix(in srgb, var(--color-invert-fg) 10%, transparent);
+    color: var(--color-invert-fg);
   }
   .site-footer__copy,
   .site-footer__counts {

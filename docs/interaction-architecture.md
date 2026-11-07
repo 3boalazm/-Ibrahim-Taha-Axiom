@@ -103,6 +103,22 @@ The home page is made of these sections:
 - **Without JavaScript:** the widget is `hidden` in the HTML and appears only when its script runs, so there is no dead button.
 - **Motion:** none.
 
+## Install as an app (footer, phone menu)
+
+- **What it is:** the site installs from the browser as an app with its own window and icon: an English app starting at `/` and an Arabic one starting at `/ar/`. Pages already opened stay readable offline. Details: [`site/README.md`](../site/README.md#install-as-an-app); decision D-21.
+- **Where:** an "Install the app" / «ثبّت التطبيق» button sits in the footer next to "Start a conversation", and at the end of the phone menu after a hairline. The wide-screen menu bar never shows it.
+- **When it shows:** only where installing is possible.
+  - Chromium browsers: after the browser fires `beforeinstallprompt`. The button opens the browser's own prompt and hides, since there is one prompt per event.
+  - Safari on iPhone, iPad and the Mac, and Firefox for Android: on load. The button opens a modal `<dialog>` with the steps for that browser. Escape, the Close button or a click on the backdrop closes it.
+  - Hidden inside the installed app (`display-mode: standalone` or `navigator.standalone`; the page then sets `html[data-app="standalone"]`), in browsers with neither option, and without JavaScript, because the buttons are `hidden` in the HTML.
+- **Focus:** the dialog is named by its heading and takes focus when it opens. On close, focus returns to the button. If the button was in the phone menu, which has closed by then, focus goes to the menu button.
+- **Announcements:** after installing, a polite `role="status"` region says where to find the app.
+- **Offline:**
+  - An unsaved page shows an offline page in its own language and theme, with "Try again", a link home and the saved pages of that language.
+  - Saved pages open as usual.
+  - The assistant needs the network and shows its normal error notice offline; its requests are never answered from a cache.
+- **Motion:** none.
+
 ## Motion and accessibility rules
 
 - Motion follows [motion-system.md](motion-system.md):

@@ -1,4 +1,5 @@
 ---
+import InstallButton from '../app/InstallButton.astro';
 import LanguageSwitcher from '../navigation/LanguageSwitcher.astro';
 import Mark from '../shared/Mark.astro';
 import ThemeToggle from '../navigation/ThemeToggle.astro';
@@ -43,6 +44,10 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
           ))
         }
       </ul>
+      <!-- phone menu only, and only once the app can be installed (AppInstall.astro) -->
+      <div class="site-nav__app" data-app-install-slot hidden>
+        <InstallButton lang={lang} class="button" />
+      </div>
     </nav>
 
     <div class="site-header__tools">
@@ -87,7 +92,7 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
       button?.focus();
     }
   });
-  header?.querySelectorAll('#site-nav a').forEach((a) => a.addEventListener('click', () => set(false)));
+  header?.querySelectorAll('#site-nav a, #site-nav [data-app-install]').forEach((a) => a.addEventListener('click', () => set(false)));
   window.matchMedia('(min-width: 60.01rem)').addEventListener('change', (m) => m.matches && set(false));
   // Show the platform's shortcut on the search button.
   if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
@@ -183,6 +188,10 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     border: var(--border-hairline);
     border-radius: var(--radius-pill);
     background: color-mix(in srgb, var(--color-surface-1) 70%, transparent);
+  }
+  /* the install button joins the phone menu only; on wide screens it lives in the footer */
+  .site-nav__app {
+    display: none;
   }
   .site-nav ul {
     display: flex;
@@ -405,6 +414,12 @@ const isCurrent = (key: string) => path === SECTION_PATHS[key as keyof typeof SE
     .site-nav a[aria-current='page'] {
       background: transparent;
       color: var(--color-accent);
+    }
+    .site-nav__app:not([hidden]) {
+      display: block;
+      margin-block-start: var(--space-2);
+      padding-block-start: var(--space-4);
+      border-block-start: var(--border-hairline);
     }
   }
   @media (max-width: 44rem) {

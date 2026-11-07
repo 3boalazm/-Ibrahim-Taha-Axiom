@@ -13,7 +13,7 @@
     "qa": "node scripts/qa.mjs",
     "lab:verify": "node scripts/lab-verify.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:e2e": "node tests/e2e/keyboard.mjs && node tests/e2e/motion.mjs && node tests/e2e/chat.mjs",
+    "test:e2e": "node tests/e2e/keyboard.mjs && node tests/e2e/motion.mjs && node tests/e2e/chat.mjs && node tests/e2e/app.mjs",
     "inventory": "node scripts/content-inventory.mjs",
     "dq:register": "node scripts/dq-register.mjs",
     "chat:knowledge": "node scripts/chat-knowledge.mjs"

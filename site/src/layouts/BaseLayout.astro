@@ -17,6 +17,7 @@ import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchDialog from '../components/search/SearchDialog.astro';
 import ChatWidget from '../components/chat/ChatWidget.astro';
+import AppInstall from '../components/app/AppInstall.astro';
 import Seo from '../components/layout/Seo.astro';
 // Validates every manifest relationship (both ends exist, quotes found verbatim) on each build.
 import '../utils/relations';
@@ -81,7 +82,9 @@ const ui = t(lang);
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <!-- each language installs as its own app (src/utils/app-manifest.ts) -->
+    <link rel="manifest" href={lang === 'ar' ? '/ar/site.webmanifest' : '/site.webmanifest'} />
+    <meta name="apple-mobile-web-app-title" content={ui.appShortName} />
     <meta name="theme-color" content="#f7f4ee" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0e1512" media="(prefers-color-scheme: dark)" />
   </head>
@@ -94,6 +97,7 @@ const ui = t(lang);
     <SiteFooter lang={lang} path={navPath} />
     <SearchDialog lang={lang} />
     <ChatWidget lang={lang} />
+    <AppInstall lang={lang} />
     <script>
       import { initMotion } from '../lib/motion.mjs';
       initMotion();

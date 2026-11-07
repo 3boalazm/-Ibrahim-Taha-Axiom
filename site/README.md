@@ -39,6 +39,7 @@ src/
 │   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
 │   ├── research/      KnowledgeGraph (verified relationships), EntryList
 │   ├── about/         Journey (dated milestones)
+│   ├── app/           AppInstall (service worker registration, install steps dialog), InstallButton
 │   ├── chat/          ChatWidget (site assistant: corner launcher + panel, every page)
 │   ├── contact/       ContactComposer (mailto, nothing sent from the site)
 │   ├── lab/           ShrinkageLab
@@ -56,11 +57,12 @@ src/
 ├── lab/               The lab's statistics (build time only)
 ├── layouts/           BaseLayout.astro
 ├── lib/               Framework-free logic shared by build, browser and tests: text, search, explorer, normal, motion
-├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, /search-index/[lang].json, /chat/knowledge.json (the assistant's content), 404, robots.txt
+├── pages/             Thin route files: / and /ar/ for every section, /publications/[key]/, /search-index/[lang].json, /chat/knowledge.json (the assistant's content), /site.webmanifest + /ar/site.webmanifest (one app per language), /sw.js (service worker), 404, robots.txt
+├── pwa/               sw.js: the service worker's source (finished at build time by scripts/service-worker.mjs)
 ├── styles/            tokens.css (design tokens) + global.css + motion.css (motion patterns)
-└── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), relations.ts, graph.ts, search-index.ts, chat-knowledge.ts (assistant content), format.ts, paths.ts
-scripts/               qa.mjs, lab-verify.mjs, content-inventory.mjs, chat-knowledge.mjs
-tests/                 node:test suites (+ e2e/keyboard.mjs, e2e/motion.mjs and e2e/chat.mjs, browser)
+└── utils/             schema.ts (zod), content.ts (gate), publications.ts (BibTeX → typed records), relations.ts, graph.ts, search-index.ts, chat-knowledge.ts (assistant content), app-manifest.ts (the two manifests), format.ts, paths.ts
+scripts/               qa.mjs, lab-verify.mjs, content-inventory.mjs, chat-knowledge.mjs, service-worker.mjs (build step), maskable-icons.py
+tests/                 node:test suites (+ e2e/keyboard.mjs, e2e/motion.mjs, e2e/chat.mjs and e2e/app.mjs, browser)
 api/chat.mjs           Vercel Function for the site assistant (POST /api/chat)
 server/                chat-core.mjs (the assistant's request handling) + knowledge.mjs (generated copy of the content)
 ```
@@ -107,13 +109,15 @@ The mark is a **normal-density curve on its axis, inside a brass ring** — the 
 
 - `site/src/components/shared/Mark.astro` renders it **inline**, with the curve on `currentColor` and the ring on `--mark-ring`. Header, footer and anything else uses this component; it never loads an image.
 - `public/images/mark.svg` is the same geometry as a standalone file (for `og`, social avatars, print), and `mark-inverse.svg` is the reversed version for dark surfaces.
-- Geometry lives in `.scratch/mark/build_mark.py` (`Mark` class: sigma, peak, taper, ring radius). Edit the numbers there, rerun it, and copy the regenerated path into `Mark.astro`. The script also regenerates every raster icon, so the vector and the icons cannot drift.
+- The geometry came from a script, `.scratch/mark/build_mark.py` (`Mark` class: sigma, peak, taper, ring radius), which also drew every raster icon. **That script was never committed to this repository**, so the files below are its output and cannot be regenerated from here. A change to the mark means editing `Mark.astro` and the SVGs and re-exporting the rasters by hand (or committing the script first).
+- The maskable icons are the exception: `scripts/maskable-icons.py` (Pillow) derives them from `icon-512.png`, so they follow whatever that icon shows. Run `python3 scripts/maskable-icons.py` (needs Pillow: `pip install pillow`) after changing it.
 
 | file | use |
 | --- | --- |
 | `favicon.ico`, `favicon-16/32/48.png` | browser tabs: **pine field, brass ring, bone curve**, with a heavier stroke and a wider taper than the big mark so it survives 16 px |
 | `apple-touch-icon.png` (180) | iOS home screen: pine field, mark inset so iOS corner rounding cannot clip the ring |
-| `icon-192.png`, `icon-512.png` + `site.webmanifest` | installable app, pine background and theme colour |
+| `icon-192.png`, `icon-512.png` | installable app (`purpose: any`), pine background and theme colour; listed in both manifests |
+| `icon-maskable-192.png`, `icon-maskable-512.png` | Android adaptive icons (`purpose: maskable`): the same mark scaled to 82 % on the pine field, so the whole ring stays inside the 40 % safe zone whatever shape the launcher cuts (`tests/app.test.mjs` measures it) |
 | `images/mark.svg`, `mark-inverse.svg` | standalone vector, for share images and anything outside the app |
 
 Rules: icons stay **opaque** (a transparent tab icon turns black in dark browser themes); the tab version is drawn for its smallest size rather than scaled down from the large one; below 44rem the header hides the wordmark and shows the mark alone, while the link keeps the full site name as its accessible name.
@@ -180,5 +184,71 @@ Every page has a small chat panel; its launcher sits in the bottom corner ("Ask 
 - `tests/e2e/chat.mjs` drives the widget in Chrome with `/api/chat` intercepted. It covers keyboard and focus, RTL, persistence across pages, error notices, safe rendering of answers, the panel's position below the sticky header, and the no-JS case.
 - No test calls Google, and the real call has not been made from the development sandbox. The first live check is on a deployment once the key is set.
 
+## Install as an app
+The site is an installable web app (PWA). The browser installs it, with no app store involved. Once installed it opens in its own window from its own icon, and the pages already opened stay readable offline.
+
+**Two apps, one per language** (`src/utils/app-manifest.ts`, served as `/site.webmanifest` and `/ar/site.webmanifest`):
+- **English** starts at `/`. Its `id` is `/`, so installs made from the earlier static manifest keep their identity.
+- **Arabic** starts at `/ar/`, with `lang: ar` and `dir: rtl`. Its short name is «ابراهيم محمد طه» (DQ-10).
+- **Both** have scope `/`, so the language switcher stays inside the app. Both use `display: standalone` on the pine colour `#101e19`, the same icons and four shortcuts: publications, research, lab and contact, named as in the menu.
+- **Each page** links the manifest of its own language and sets `apple-mobile-web-app-title`.
+
+**The install button** (`src/components/app/`): `InstallButton` sits in the footer and in the phone menu. It is `hidden` in the HTML, and `AppInstall`'s script shows it only where installing is possible.
+
+| browser | what the button does |
+| --- | --- |
+| Chrome, Edge and other Chromium browsers | opens the browser's own install prompt (`beforeinstallprompt`; the page takes the event so the browser's mini-infobar does not compete with the button) |
+| Safari on iPhone and iPad | opens a dialog with the steps: Share (in the ⋯ menu on iOS 26), "Add to Home Screen", keep "Open as Web App" on. iPadOS reports itself as a Mac; touch support tells them apart |
+| Safari 17 or later on the Mac | dialog: File, then "Add to Dock" |
+| Firefox for Android | dialog: browser menu, then "Add app to Home screen" |
+| any other browser, inside the installed app, or without JS | no button |
+
+Safari and Firefox have no prompt that a page can open, so for them the written steps are the whole feature. After `appinstalled` a status message, announced by screen readers, says where to find the app.
+
+**Offline: the service worker** (`src/pwa/sw.js`, served as `/sw.js`, scope `/`). It is registered after `load`, in production builds only; `astro dev` has none. It is built in two steps:
+1. `src/pages/sw.js.ts` fills in the offline page's strings from `src/i18n/ui.ts`.
+2. After the build, `scripts/service-worker.mjs` (the `axiom-service-worker` integration in `astro.config.mjs`) adds three things:
+   - the precache list: `/`, `/ar/` and every CSS and JS file in `/_astro/`;
+   - the brand mark, taken from `dist/images/mark.svg`;
+   - `VERSION`, a hash of the worker and of every precached file.
+
+A deploy that changes any of those changes `sw.js`, so browsers install the new worker. It replaces the precache and deletes the old caches.
+
+| request | strategy | cache (most recent entries kept) |
+| --- | --- | --- |
+| a page | **network first**, with navigation preload. The saved copy is used only when the network fails; without one, an offline page in the page's language lists the saved pages of that language. A page the server reports gone (404, 410) loses its saved copy | `axiom-pages` (80) |
+| `/_astro/*` (hashed names) | cache first | `axiom-shell-<VERSION>`, then `axiom-assets` (120) |
+| `*.json` (search index, the assistant's knowledge) | network first | `axiom-files` (80) |
+| other same-origin files (images, icons, manifests) | stale-while-revalidate | `axiom-files` |
+| `/api/*` (the assistant), non-GET, `Range`, other origins, `/sw.js` | never touched | none |
+
+Further details:
+- **Pages are never served from the cache while the network answers**, so a saved copy cannot hide an update.
+- **On the first visit** the page loaded before the worker existed, so it hands the worker its own URL and the files it used (`cache-urls`, at most 120). The worker fetches them with `cache: 'force-cache'`, so it takes them from the HTTP cache where possible instead of downloading them again.
+- **The offline page is built inside the worker**, so the counts of 67 pages and 66 routes are unchanged. It uses system fonts and follows the visitor's theme. It is answered with status 200, `Cache-Control: no-store` and `X-Axiom-Offline: 1`.
+- **Nothing leaves the device:** the saved copies stay in the visitor's browser (see `docs/public-content-policy.md`).
+
+**Trying it locally:** run `npm run build && npx astro preview --host`. `localhost` counts as a secure origin. In Chrome, DevTools, Application shows the manifest, the worker and the caches, and offers "Clear site data" to start over.
+
+**Tests.**
+- `tests/app.test.mjs` checks the built output:
+  - the manifests' fields, and icon sizes read from the PNG headers;
+  - that the maskable icons stay within the safe zone, measured pixel by pixel;
+  - that every page links its own language's manifest, with the install controls `hidden`;
+  - that `sw.js` has no placeholders, a precache list matching `dist`, a `VERSION` that recomputes and strings in both languages;
+  - its routing, run in a sandbox, which leaves `/api/`, other origins, non-GET and Range requests alone.
+- `tests/e2e/app.mjs` runs Chrome against a local server:
+  - Chrome reports no manifest or installability errors, and the app ids are `/` and `/ar/`;
+  - the worker activates and controls the page;
+  - offline (the server stopped): a saved page, the unvisited home pages, the offline page in both languages and in the dark theme, and `/api/` failing instead of being answered from a cache;
+  - back online, the network wins again;
+  - a withdrawn page (the server answers 404) shows the 404 and loses its saved copy;
+  - the install button: a simulated `beforeinstallprompt`; iPhone, iPad, Mac Safari and Firefox user agents; the phone menu; the installed-app and no-JS cases.
+- **Not covered:** no real phone, tablet or Mac was used. Browsers decide when to offer installation, so the first check on real devices is on the deployed site.
+
+**Not included:**
+- **Google Play:** an app could be published from this PWA later, as a Trusted Web Activity built with PWABuilder or Bubblewrap. It needs a Play developer account in the owner's name and a `/.well-known/assetlinks.json` file on the site.
+- **App Store:** Apple's review guideline 4.2 (minimum functionality) rejects apps that are only a repackaged website. On iPhone and iPad the Home Screen web app is the way in.
+
 ## Deployment
-Vercel project `ibrahim-taha-axiom`, Root Directory `site/`, Node 26.x. `vercel.json` skips builds when a commit does not touch `site/`. Everything is static except one Vercel Function, `api/chat.mjs` (30 s maximum duration, set in `vercel.json`), which needs `GEMINI_API_KEY` (see the site assistant above). See [`../docs/deployment.md`](../docs/deployment.md).
+Vercel project `ibrahim-taha-axiom`, Root Directory `site/`, Node 26.x. `vercel.json` skips builds when a commit does not touch `site/`. Everything is static except one Vercel Function, `api/chat.mjs` (30 s maximum duration, set in `vercel.json`), which needs `GEMINI_API_KEY` (see the site assistant above). The service worker `/sw.js` and the two manifests are static files written by the build, and need no setting (see "Install as an app" above). See [`../docs/deployment.md`](../docs/deployment.md).

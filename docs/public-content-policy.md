@@ -132,3 +132,25 @@ Every page has an assistant that answers visitors' questions with Google Gemini 
 - **Disclosure and privacy.** The panel names Google Gemini, says questions are sent to Google, and asks visitors not to include personal information. The site stores no questions or answers: the function logs only upstream status codes, and the conversation stays in the visitor's browser tab.
 - **The key** lives only in the Vercel environment variable `GEMINI_API_KEY`, never in the repository, the browser or a log.
 - **Switching it off.** Delete `GEMINI_API_KEY` in Vercel and redeploy; the panel then shows a "not configured" notice. To remove the panel itself, take `<ChatWidget>` out of `site/src/layouts/BaseLayout.astro`.
+
+## 8. Installable app and offline copies
+
+The site can be installed as an app (decision D-21, 2026-11-07). How it works: [`site/README.md`](../site/README.md#install-as-an-app). This policy applies to it as follows.
+
+- **Same content, same gate.** The app is the website itself: the same pages, built from the same approved data.
+  - There is no app-only content and no store listing.
+  - The manifests reuse the home pages' descriptions and the menu labels. The Arabic app's short name is the display name decided in DQ-10 («ابراهيم محمد طه»).
+  - The install steps describe browsers, not the researcher.
+- **Copies on the visitor's device.** The service worker keeps these in that visitor's browser, so they stay readable offline:
+  - the pages the visitor opened (the 80 most recent);
+  - both home pages;
+  - the files those pages need.
+
+  Nothing is sent anywhere, and the site cannot see what a device has stored.
+- **Corrections and withdrawals reach saved copies when the visitor is next online.**
+  - Pages always come from the network when it answers, so a corrected page replaces its saved copy on the next visit.
+  - A page the site stops serving (404 or 410) loses its saved copy the next time the visitor opens it online.
+  - To clear every saved page at once, for example after consent is withdrawn, rename the `PAGES` cache in `site/src/pwa/sw.js` (for instance `axiom-pages-2`) and deploy. The new worker deletes the old cache as soon as it activates on each device.
+  - A device that never comes back online keeps what it saved, and no website can reach it.
+- **The assistant is never cached.** `/api/` requests always go to the network, so questions and answers never enter the cache. Offline, the assistant shows its normal error notice.
+- **No tracking.** The worker and the install button send no analytics and no install statistics. `appinstalled` only shows a message on the page.

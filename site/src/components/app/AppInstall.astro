@@ -1,0 +1,194 @@
+---
+/**
+ * Installable app (site/README.md#install-as-an-app), on every page:
+ * - registers the service worker (/sw.js, production builds only), which keeps the pages
+ *   you open readable offline;
+ * - drives the "Install the app" buttons (InstallButton.astro, in the footer and the
+ *   phone menu). Chromium browsers offer their own install prompt, which the button
+ *   opens; Safari (iPhone, iPad, Mac) and Firefox for Android have no prompt a page can
+ *   open, so there the button opens this dialog with the steps for that browser.
+ * The buttons stay hidden without JS, in an installed app, and where neither applies.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const platforms = [
+  { key: 'ios', steps: ui.appStepsIos },
+  { key: 'mac', steps: ui.appStepsMac },
+  { key: 'firefox', steps: ui.appStepsFirefox },
+];
+---
+
+<dialog class="app-help" aria-labelledby="app-help-title" data-app-help>
+  <div class="app-help__body">
+    <h2 class="app-help__title" id="app-help-title">{ui.appHelpTitle}</h2>
+    <p class="app-help__intro">{ui.appHelpIntro}</p>
+    {
+      platforms.map((p) => (
+        <ol class="app-help__steps" data-steps={p.key} hidden>
+          {p.steps.map((step) => (
+            <li>{step}</li>
+          ))}
+        </ol>
+      ))
+    }
+    <form method="dialog" class="app-help__actions">
+      <button class="button button--solid" type="submit">{ui.appHelpClose}</button>
+    </form>
+  </div>
+</dialog>
+<p class="visually-hidden" role="status" data-app-status data-installed={ui.appInstalled}></p>
+
+<script>
+  interface InstallPromptEvent extends Event {
+    prompt(): Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  }
+  type Mode = 'prompt' | 'ios' | 'mac' | 'firefox';
+
+  const standalone = () =>
+    ['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (standalone()) document.documentElement.dataset.app = 'standalone';
+
+  // 1 · Offline copies. The worker keeps the pages you open; a page is always fetched fresh
+  //     when the network answers, and the saved copy is used only when it does not.
+  if ('serviceWorker' in navigator && !import.meta.env.DEV) {
+    const register = () => {
+      const firstVisit = !navigator.serviceWorker.controller;
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .then(() => navigator.serviceWorker.ready)
+        .then((registration) => {
+          if (!firstVisit) return;
+          // This page loaded before the worker ran, so it hands over what it used
+          // (the worker reads them from the HTTP cache instead of downloading them again).
+          const urls = [location.origin + location.pathname, ...performance.getEntriesByType('resource').map((e) => e.name)];
+          registration.active?.postMessage({ type: 'cache-urls', urls });
+        })
+        .catch(() => undefined);
+    };
+    if (document.readyState === 'complete') register();
+    else addEventListener('load', register, { once: true });
+  }
+
+  // 2 · The install buttons.
+  const controls = [...document.querySelectorAll<HTMLElement>('[data-app-install], [data-app-install-slot]')];
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-app-install]')];
+  const help = document.querySelector<HTMLDialogElement>('[data-app-help]');
+  const status = document.querySelector<HTMLElement>('[data-app-status]');
+  let mode: Mode | null = null;
+  let deferred: InstallPromptEvent | null = null;
+  let trigger: HTMLElement | null = null;
+  const show = (next: Mode | null) => {
+    mode = next;
+    controls.forEach((el) => (el.hidden = !next));
+  };
+
+  const ua = navigator.userAgent;
+  // iPadOS reports itself as a Mac; touch support tells them apart
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const safariVersion = Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0);
+  const macSafari = !ios && /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua) && safariVersion >= 17;
+  const firefoxAndroid = /Android/.test(ua) && /Firefox\//.test(ua);
+  if (!standalone()) show(ios ? 'ios' : macSafari ? 'mac' : firefoxAndroid ? 'firefox' : null);
+
+  addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault(); // the site's own button opens the prompt, instead of a banner
+    deferred = event as InstallPromptEvent;
+    if (!standalone()) show('prompt');
+  });
+  addEventListener('appinstalled', () => {
+    deferred = null;
+    show(null);
+    if (status) status.textContent = status.dataset.installed ?? '';
+  });
+
+  buttons.forEach((button) =>
+    button.addEventListener('click', () => {
+      if (mode === 'prompt' && deferred) {
+        // one prompt per event; the browser fires a new event if it can still install
+        const event = deferred;
+        deferred = null;
+        show(null);
+        event.prompt().catch(() => undefined);
+        return;
+      }
+      if (!help || !mode || mode === 'prompt') return;
+      help.querySelectorAll<HTMLElement>('[data-steps]').forEach((list) => (list.hidden = list.dataset.steps !== mode));
+      trigger = button;
+      help.showModal();
+    }),
+  );
+  // a click on the backdrop closes the dialog (the body fills the box, so only the backdrop hits it)
+  help?.addEventListener('click', (event) => {
+    if (event.target === help) help.close();
+  });
+  help?.addEventListener('close', () => {
+    // a button inside the phone menu is gone once the menu closes: the menu button takes focus instead
+    const target = trigger?.isConnected && trigger.offsetParent !== null ? trigger : document.querySelector<HTMLElement>('[data-menu-button]');
+    target?.focus();
+    trigger = null;
+  });
+</script>
+
+<style>
+  .app-help {
+    inline-size: min(30rem, calc(100vw - 2rem));
+    max-block-size: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-float);
+  }
+  .app-help::backdrop {
+    background: rgb(12 22 18 / 0.45);
+  }
+  :global(html:has(dialog.app-help[open])) {
+    overflow: hidden;
+  }
+  .app-help__body {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+  .app-help__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.2;
+  }
+  .app-help__intro {
+    margin: 0;
+    color: var(--color-ink-2);
+  }
+  .app-help__steps {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding-inline-start: 1.4em;
+  }
+  .app-help__steps[hidden] {
+    display: none;
+  }
+  .app-help__steps li {
+    padding-inline-start: 0.25em;
+  }
+  .app-help__steps li::marker {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .app-help__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+  }
+</style>

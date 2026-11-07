@@ -37,9 +37,13 @@ Only `site/` is deployed. Everything else in the repository is outside the Verce
 - **Now:** static output (`astro build` → `dist/`), served by Vercel's CDN with the Astro preset, plus one Vercel Function: `site/api/chat.mjs`, the site assistant (`POST /api/chat`).
   - It uses the Node.js runtime, with `maxDuration` 30 s in `vercel.json`, and its logic lives in `site/server/`.
   - Vercel builds the files in the Root Directory's `api/` folder as functions alongside the framework output, so no Astro adapter is needed. `robots.txt` and the sitemap are generated at build time from `site/src/data/public-settings/launch.json`.
+- **Installable app (D-21):** the service worker `dist/sw.js` and the manifests `dist/site.webmanifest` and `dist/ar/site.webmanifest` are static build output. `vercel.json` needs no change for them.
+  - **Updates:** browsers check `sw.js` for changes on navigation and bypass the HTTP cache for that check. Vercel also serves static files with `max-age=0, must-revalidate` by default. A deploy that changes any precached file changes `sw.js` (its `VERSION`), so visitors get the new worker on their next visit. No extra cache header and no manual purge are needed.
+  - **Do not** add a long `Cache-Control` to `/sw.js` or rename it: the registration in `site/src/components/app/AppInstall.astro` points at `/sw.js` with scope `/`.
+  - **Turning it off:** replace `site/src/pwa/sw.js` with a worker that unregisters itself (`self.registration.unregister()` on `activate`) and deploy, then remove the registration. Simply deleting `sw.js` leaves existing installs running the last worker until the browser drops it.
 - **Later (D-08):** when the contact channel is decided, add `@astrojs/vercel` and opt only the contact endpoint out of prerendering (`export const prerender = false`). It must never report success without actually delivering the message.
 - Bilingual routing (D-03, D-03a: English unprefixed, Arabic under `/ar/`) is handled by Astro at build time, not by Vercel rewrites.
-- Research metrics, if approved, are produced by a scheduled job into versioned JSON in the repository and read at build time. No API keys are needed for the metrics. The website's only runtime secret is the assistant's `GEMINI_API_KEY`.
+- Research metrics, if approved, are produced by a scheduled job into versioned JSON in the repository and read at build time. No API keys are needed for the metrics. The website's only runtime secret is the assistant's `GEMINI_API_KEY`; the installable app needs none.
 - `PUBLIC_SITE_URL` (optional Vercel env var) overrides the canonical origin. Otherwise `launch.json` → `canonicalOrigin` is used, falling back to `https://ibrahim-taha-axiom.vercel.app`.
 
 ## Release procedure
