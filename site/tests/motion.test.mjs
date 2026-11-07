@@ -101,6 +101,24 @@ test('the head script gates motion on JS + no reduced-motion, with a watchdog', 
   }
 });
 
+test('page transitions opt in inline in <head>, before any stylesheet, with the reduced-motion opt-out', () => {
+  // Only in an external stylesheet, the opt-in arrived too late whenever that file was slow:
+  // Chromium then skipped the transition and reported an InvalidStateError (CI on main,
+  // run 42330599704; reproduced with a 150-400 ms delay on CSS).
+  for (const r of routes()) {
+    const head = page(r).split('</head>')[0];
+    const at = head.indexOf('@view-transition{navigation:auto}');
+    assert.ok(at > 0, `${r}: inline opt-in`);
+    assert.match(head, /@media \(prefers-reduced-motion:\s?reduce\)\{@view-transition\{navigation:none\}\}/, `${r}: reduced-motion opt-out`);
+    const firstSheet = head.search(/<link[^>]*rel="?stylesheet/);
+    assert.ok(firstSheet === -1 || at < firstSheet, `${r}: before the first stylesheet`);
+  }
+  // one place only: the bundled CSS does not set it again
+  const dir = join(DIST, '_astro');
+  const bundled = readdirSync(dir).filter((f) => f.endsWith('.css')).map((f) => readFileSync(join(dir, f), 'utf8'));
+  assert.doesNotMatch(bundled.join('\n'), /@view-transition/);
+});
+
 test('above-the-fold copy never starts invisible (transform-only keyframes on the hero copy)', () => {
   const css = shippedCss();
   const settle = css.match(/@keyframes motion-settle\{[^}]*\}\}?/);

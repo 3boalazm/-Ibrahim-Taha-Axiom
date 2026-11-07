@@ -84,9 +84,10 @@
    navigate). The old page steps back quickly, the new one settles in. The header
    is its own static layer, so it never fades or jumps; only the current-page pill
    slides from the old section to the new one. */
-@view-transition {
-  navigation: auto;
-}
+/* The opt-in itself (@view-transition { navigation: auto }, and none under reduced
+   motion) is inline in BaseLayout.astro's <head>, so it is in place before any
+   stylesheet arrives. When it lived only here, a slow stylesheet made Chromium skip
+   the transition and report an InvalidStateError ("ViewTransition opt-in disabled"). */
 ::view-transition-old(root) {
   animation: motion-fade-out var(--motion-fast) var(--ease-exit) both;
 }

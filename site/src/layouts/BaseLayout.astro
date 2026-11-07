@@ -47,6 +47,9 @@ const ui = t(lang);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Page transitions opt in here, before any stylesheet: Chromium checks a new page's
+         opt-in early, so a rule that arrived with a slow stylesheet skipped the transition. -->
+    <style is:inline>@view-transition{navigation:auto}@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}</style>
     <script is:inline>
       (() => {
         // Marks that scripts run, so JS-only controls (e.g. the search button) can show.
