@@ -142,14 +142,15 @@ test('every page links the manifest of its language and names the app for iOS', 
   assert.ok(all.length >= 67);
 });
 
-test('install controls are hidden in the HTML: without JS nothing shows', () => {
+test('one install button per page, hidden in the HTML: without JS nothing shows', () => {
   for (const route of routes()) {
     const html = page(route);
     const buttons = html.match(/<button[^>]*\bdata-app-install\b[^>]*>/g) ?? [];
-    assert.equal(buttons.length, 2, `${route}: footer and phone-menu buttons`);
-    for (const b of buttons) assert.match(b, /\shidden[\s>]/, `${route}: ${b}`);
-    assert.match(html.match(/<div[^>]*data-app-install-slot[^>]*>/)?.[0] ?? '', /\shidden[\s>]/, `${route}: menu slot`);
-    assert.equal((html.match(/<dialog[^>]*data-app-help/g) ?? []).length, 1, `${route}: one steps dialog`);
+    assert.equal(buttons.length, 1, `${route}: the floating button only`);
+    assert.match(buttons[0], /\shidden[\s>]/, `${route}: ${buttons[0]}`);
+    assert.match(buttons[0], /class="[^"]*\bapp-install\b/, `${route}: styled as the floating button`);
+    // the owner asked for one press to install: no instructions dialog, no menu or footer copies
+    assert.ok(!/data-app-help|data-app-install-slot|site-footer__install/.test(html), `${route}: leftover install UI`);
   }
 });
 

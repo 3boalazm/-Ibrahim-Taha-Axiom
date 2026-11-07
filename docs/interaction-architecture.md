@@ -103,15 +103,14 @@ The home page is made of these sections:
 - **Without JavaScript:** the widget is `hidden` in the HTML and appears only when its script runs, so there is no dead button.
 - **Motion:** none.
 
-## Install as an app (footer, phone menu)
+## Install as an app (floating button, opposite the assistant)
 
 - **What it is:** the site installs from the browser as an app with its own window and icon: an English app starting at `/` and an Arabic one starting at `/ar/`. Pages already opened stay readable offline. Details: [`site/README.md`](../site/README.md#install-as-an-app); decision D-21.
-- **Where:** an "Install the app" / «ثبّت التطبيق» button sits in the footer next to "Start a conversation", and at the end of the phone menu after a hairline. The wide-screen menu bar never shows it.
-- **When it shows:** only where installing is possible.
-  - Chromium browsers: after the browser fires `beforeinstallprompt`. The button opens the browser's own prompt and hides, since there is one prompt per event.
-  - Safari on iPhone, iPad and the Mac, and Firefox for Android: on load. The button opens a modal `<dialog>` with the steps for that browser. Escape, the Close button or a click on the backdrop closes it.
-  - Hidden inside the installed app (`display-mode: standalone` or `navigator.standalone`; the page then sets `html[data-app="standalone"]`), in browsers with neither option, and without JavaScript, because the buttons are `hidden` in the HTML.
-- **Focus:** the dialog is named by its heading and takes focus when it opens. On close, focus returns to the button. If the button was in the phone menu, which has closed by then, focus goes to the menu button.
+- **Where:** one floating "Install the app" / «ثبّت التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, at the same height and distance from the bottom. On screens up to 40rem it is a round icon button like the launcher, and its label stays for screen readers. The owner asked for it there on 2026-11-07, in place of the first version's footer and phone-menu buttons and written steps.
+- **When it shows:** only after a Chromium browser (Chrome, Edge) fires `beforeinstallprompt`, that is, when the browser itself can install the site. One press opens the browser's install prompt, and the button hides, since there is one prompt per event. The browser's own confirmation always remains: no site can install itself.
+  - Safari (iPhone, iPad, Mac) and Firefox give pages no install prompt, so they get no button. Installing there goes through the browser's own menu (Safari: Share, then "Add to Home Screen").
+  - Hidden inside the installed app (`display-mode: standalone` or `navigator.standalone`; the page then sets `html[data-app="standalone"]`), and without JavaScript, because the button is `hidden` in the HTML.
+- **Focus:** an ordinary button, after the assistant's launcher in the tab order. Nothing moves focus.
 - **Announcements:** after installing, a polite `role="status"` region says where to find the app.
 - **Offline:**
   - An unsaved page shows an offline page in its own language and theme, with "Try again", a link home and the saved pages of that language.

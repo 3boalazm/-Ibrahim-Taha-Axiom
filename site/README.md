@@ -39,7 +39,7 @@ src/
 │   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
 │   ├── research/      KnowledgeGraph (verified relationships), EntryList
 │   ├── about/         Journey (dated milestones)
-│   ├── app/           AppInstall (service worker registration, install steps dialog), InstallButton
+│   ├── app/           AppInstall (service worker registration, the floating install button)
 │   ├── chat/          ChatWidget (site assistant: corner launcher + panel, every page)
 │   ├── contact/       ContactComposer (mailto, nothing sent from the site)
 │   ├── lab/           ShrinkageLab
@@ -193,17 +193,15 @@ The site is an installable web app (PWA). The browser installs it, with no app s
 - **Both** have scope `/`, so the language switcher stays inside the app. Both use `display: standalone` on the pine colour `#101e19`, the same icons and four shortcuts: publications, research, lab and contact, named as in the menu.
 - **Each page** links the manifest of its own language and sets `apple-mobile-web-app-title`.
 
-**The install button** (`src/components/app/`): `InstallButton` sits in the footer and in the phone menu. It is `hidden` in the HTML, and `AppInstall`'s script shows it only where installing is possible.
+**The install button** (`src/components/app/AppInstall.astro`): one floating "Install the app" / «ثبّت التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, level with it. On screens up to 40rem both are round icon buttons, and the label stays for screen readers. It is `hidden` in the HTML and shows only when the browser can install the site.
 
-| browser | what the button does |
+| browser | what happens |
 | --- | --- |
-| Chrome, Edge and other Chromium browsers | opens the browser's own install prompt (`beforeinstallprompt`; the page takes the event so the browser's mini-infobar does not compete with the button) |
-| Safari on iPhone and iPad | opens a dialog with the steps: Share (in the ⋯ menu on iOS 26), "Add to Home Screen", keep "Open as Web App" on. iPadOS reports itself as a Mac; touch support tells them apart |
-| Safari 17 or later on the Mac | dialog: File, then "Add to Dock" |
-| Firefox for Android | dialog: browser menu, then "Add app to Home screen" |
-| any other browser, inside the installed app, or without JS | no button |
+| Chrome, Edge and other Chromium browsers | when the site can be installed the browser sends `beforeinstallprompt`. The button appears, and one press opens the browser's install prompt. The page takes the event, so the browser's mini-infobar does not compete with the button |
+| Safari (iPhone, iPad, Mac) and Firefox | no button: these browsers give pages no install prompt. Installing still works from the browser's own menu (Safari: Share, then "Add to Home Screen") |
+| inside the installed app, or without JS | no button |
 
-Safari and Firefox have no prompt that a page can open, so for them the written steps are the whole feature. After `appinstalled` a status message, announced by screen readers, says where to find the app.
+The browser's confirmation step always remains; no site can install itself without it. After `appinstalled` a status message, announced by screen readers, says where to find the app. The owner chose this design on 2026-11-07. It replaced the first version's footer and phone-menu buttons and its written steps for Safari and Firefox.
 
 **Offline: the service worker** (`src/pwa/sw.js`, served as `/sw.js`, scope `/`). It is registered after `load`, in production builds only; `astro dev` has none. It is built in two steps:
 1. `src/pages/sw.js.ts` fills in the offline page's strings from `src/i18n/ui.ts`.
@@ -243,7 +241,11 @@ Further details:
   - offline (the server stopped): a saved page, the unvisited home pages, the offline page in both languages and in the dark theme, and `/api/` failing instead of being answered from a cache;
   - back online, the network wins again;
   - a withdrawn page (the server answers 404) shows the 404 and loses its saved copy;
-  - the install button: a simulated `beforeinstallprompt`; iPhone, iPad, Mac Safari and Firefox user agents; the phone menu; the installed-app and no-JS cases.
+  - the install button, after a simulated `beforeinstallprompt`:
+    - it sits opposite the assistant's launcher in both languages, at 1280, 390 and 320 px;
+    - it never touches the launcher and never covers the footer's last line;
+    - one press opens one prompt, by mouse or by keyboard;
+    - there is no button for iPhone, iPad, Mac Safari and Firefox user agents, in the installed app, or without JS.
   - **Real prompts are held back.** Whether a browser sends a real `beforeinstallprompt` depends on its own heuristics: headless Chrome 156 in CI does, and Chromium 153 does not. So every test page holds real events back, as Safari and Firefox never send one, except one probe. When the browser does send one, the probe checks that the button appears and reports it as a CI notice.
 - **Not covered:** no real phone, tablet or Mac was used. Browsers decide when to offer installation, so the first check on real devices is on the deployed site.
 

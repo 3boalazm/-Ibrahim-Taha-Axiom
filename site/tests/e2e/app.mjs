@@ -8,9 +8,10 @@
  *   visited, an unvisited page gets the offline page in its language listing the saved
  *   pages of that language, /api/ requests fail instead of being answered from a cache,
  *   and once the server is back pages come from the network again;
- * - "Install the app": Chromium's prompt (a simulated beforeinstallprompt), written steps
- *   on iPhone, iPad, Safari on the Mac and Firefox for Android; hidden in an installed app,
- *   where nothing applies, and without JS.
+ * - "Install the app": a floating button opposite the assistant's launcher (bottom left in
+ *   English, bottom right in Arabic). One press opens the browser's install prompt (a
+ *   simulated beforeinstallprompt, plus a probe for a real one); no button in Safari or
+ *   Firefox, which give pages no way to install, in the installed app, or without JS.
  *
  *   CHROME_PATH=/usr/bin/google-chrome node tests/e2e/app.mjs
  *
@@ -117,10 +118,6 @@ const fakePrompt = (page) =>
     window.dispatchEvent(e);
     return e.defaultPrevented;
   });
-const clickCentered = async (page, sel) => {
-  await page.$eval(sel, (el) => el.scrollIntoView({ block: 'center' }));
-  await page.click(sel);
-};
 
 // ------------------------------------------------- service worker, first visit
 const { page, cdp } = await open();
@@ -232,7 +229,7 @@ await page.close();
   await p.evaluateOnNewDocument(() => addEventListener('beforeinstallprompt', (e) => e.isTrusted && (window.__realPrompt = true), true));
   await go(p, '/');
   if (await until(p, () => window.__realPrompt === true, undefined, 5000)) {
-    ok((await shown(p, '.site-footer [data-app-install]'))[0] === true, 'this browser sent a real beforeinstallprompt, and the footer button appeared');
+    ok((await shown(p, '[data-app-install]'))[0] === true, 'this browser sent a real beforeinstallprompt, and the install button appeared');
     if (process.env.GITHUB_ACTIONS === 'true') console.log('::notice title=e2e app::the browser sent a real beforeinstallprompt for the site, and the install button appeared');
   } else {
     console.log('ℹ this browser sent no real beforeinstallprompt (it depends on its install heuristics); the simulated one below stands in');
@@ -241,99 +238,95 @@ await page.close();
   await p.close();
 }
 
-// --------------------------------------------------- install: Chromium's prompt
+// ----------------------------------- install: the floating button, opposite the assistant
+/** Where the install button and the assistant's launcher sit, and whether they touch. */
+const corners = (p) =>
+  p.evaluate(() => {
+    const button = document.querySelector('[data-app-install]');
+    const b = button.getBoundingClientRect();
+    const c = document.querySelector('[data-chat-toggle]').getBoundingClientRect();
+    return {
+      b: { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width },
+      c: { left: c.left, right: c.right, bottom: c.bottom },
+      vw: document.documentElement.clientWidth,
+      vh: innerHeight,
+      touching: !(b.right <= c.left || c.right <= b.left || b.bottom <= c.top || c.bottom <= b.top),
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      label: button.textContent.trim(),
+      fixed: getComputedStyle(button).position === 'fixed',
+    };
+  });
+const px = (n) => Math.round(n);
+
 {
   const { page: p } = await open();
   await go(p, '/');
-  ok((await shown(p, '[data-app-install]')).every((v) => !v), 'desktop Chrome: no button until the browser says the app can be installed');
+  ok((await shown(p, '[data-app-install]'))[0] === false, 'desktop Chrome: no button until the browser says the site can be installed');
   ok(await fakePrompt(p), 'the page takes over beforeinstallprompt (no browser banner on top of the button)');
-  ok((await shown(p, '.site-footer [data-app-install]'))[0] === true, 'then "Install the app" appears in the footer');
-  ok((await shown(p, '#site-nav [data-app-install]'))[0] === false, 'but not in the wide-screen menu bar');
-  await clickCentered(p, '.site-footer [data-app-install]');
-  ok((await p.evaluate(() => window.__prompted)) === 1, 'the button opens the browser’s install prompt');
-  ok((await shown(p, '[data-app-install]')).every((v) => !v), 'and hides: one prompt per event');
+  ok((await shown(p, '[data-app-install]'))[0] === true, 'then the floating "Install the app" button appears');
+  const at = await corners(p);
+  ok(at.fixed && at.b.left < at.vw / 2 && at.c.left > at.vw / 2, `English: bottom left, opposite the assistant at the bottom right (button ${px(at.b.left)}–${px(at.b.right)} px, assistant ${px(at.c.left)}–${px(at.c.right)} px)`);
+  ok(Math.abs(at.b.bottom - at.c.bottom) <= 1 && at.vh - at.b.bottom >= 15, `level with the assistant's launcher, ${px(at.vh - at.b.bottom)} px from the bottom`);
+  ok(at.label === 'Install the app' && at.b.width > 100, `a labelled pill on wide screens ("${at.label}", ${px(at.b.width)} px)`);
+  await p.click('[data-app-install]');
+  ok((await p.evaluate(() => window.__prompted)) === 1, 'one press opens the browser’s install prompt');
+  ok((await shown(p, '[data-app-install]'))[0] === false, 'and the button hides: one prompt per event');
   await p.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
   ok((await p.$eval('[data-app-status]', (s) => s.textContent)) === 'The app is installed. Open it from your home screen or app list.', 'after installing, a status message says where to find the app');
+  await fakePrompt(p);
+  await p.focus('[data-app-install]');
+  await p.keyboard.press('Enter');
+  ok((await p.evaluate(() => window.__prompted)) === 1, 'the keyboard works too (Enter on the focused button)');
   await p.close();
 }
 {
   const { page: p } = await open({ width: 390, height: 844 });
   await go(p, '/ar/');
   await fakePrompt(p);
-  await p.click('[data-menu-button]');
-  ok((await shown(p, '#site-nav [data-app-install]'))[0] === true, 'phone (Arabic): the button is in the menu');
-  ok((await p.$eval('#site-nav [data-app-install]', (b) => b.textContent.trim())) === 'ثبّت التطبيق', 'with its Arabic label');
-  await p.click('#site-nav [data-app-install]');
-  ok((await p.evaluate(() => window.__prompted)) === 1 && !(await p.$eval('[data-site-header]', (h) => h.hasAttribute('data-open'))), 'and opens the prompt, closing the menu');
+  const at = await corners(p);
+  ok(at.b.left > at.vw / 2 && at.c.right < at.vw / 2, `Arabic phone: bottom right, opposite the assistant at the bottom left (button ${px(at.b.left)}–${px(at.b.right)} px of ${at.vw})`);
+  ok(at.b.width <= 50 && Math.abs(at.b.bottom - at.c.bottom) <= 1 && !at.touching, `a round icon button level with the launcher (${px(at.b.width)} px), not touching it`);
+  ok(at.label === 'ثبّت التطبيق', 'it keeps its Arabic name for screen readers');
+  await p.click('[data-app-install]');
+  ok((await p.evaluate(() => window.__prompted)) === 1, 'one tap opens the install prompt');
   await p.close();
 }
-
-// ----------------------------------------------- install: written steps elsewhere
-const stepsCase = async ({ label, ua, touchPoints = 0, path = '/', expect, width = 390, height = 844, title = 'Install this site as an app' }) => {
-  const { page: p } = await open({ ua, touchPoints, width, height });
-  await go(p, path);
-  ok((await shown(p, '.site-footer [data-app-install]'))[0] === true, `${label}: "Install the app" shows without any browser event`);
-  await clickCentered(p, '.site-footer [data-app-install]');
-  const state = await p.evaluate(() => {
-    const d = document.querySelector('[data-app-help]');
-    const lists = [...d.querySelectorAll('[data-steps]')];
-    const r = d.getBoundingClientRect();
-    return {
-      open: d.open,
-      title: d.querySelector('h2')?.textContent,
-      labelled: document.getElementById(d.getAttribute('aria-labelledby'))?.textContent,
-      visible: lists.filter((l) => !l.hidden && getComputedStyle(l).display !== 'none').map((l) => l.dataset.steps),
-      steps: d.querySelectorAll('[data-steps]:not([hidden]) li').length,
-      dir: getComputedStyle(d).direction,
-      fits: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
-      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      focusInside: d.contains(document.activeElement),
-    };
+{
+  const { page: p } = await open({ width: 320, height: 640 });
+  await go(p, '/ar/research/');
+  await fakePrompt(p);
+  const at = await corners(p);
+  ok(at.b.left >= 0 && at.b.right <= at.vw && !at.touching && at.overflow <= 0, `320 px: both round buttons fit without touching (overflow ${at.overflow} px)`);
+  await p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  const end = await p.evaluate(() => {
+    const top = document.querySelector('[data-app-install]').getBoundingClientRect().top;
+    const texts = [...document.querySelectorAll('.site-footer *')].filter((el) => !el.children.length && el.textContent.trim() && el.getClientRects().length);
+    return { lowest: Math.round(Math.max(...texts.map((el) => el.getBoundingClientRect().bottom))), top: Math.round(top) };
   });
-  ok(state.focusInside, `${label}: focus moves into the dialog`);
-  ok(state.open && state.title === title && state.labelled === title, `${label}: the button opens the steps dialog, named "${state.title}"`);
-  ok(state.visible.length === 1 && state.visible[0] === expect && state.steps >= 2, `${label}: only the ${expect} steps show (${state.visible.join(',')}; ${state.steps} steps)`);
-  ok(state.fits && state.overflow <= 0, `${label}: the dialog fits the ${width}px screen`);
-  await p.keyboard.press('Escape');
-  ok(!(await p.$eval('[data-app-help]', (d) => d.open)), `${label}: Escape closes it`);
-  // the close event, which moves focus, is queued after the dialog closes: wait for it
-  const backOnButton = () => until(p, () => document.activeElement?.matches('.site-footer [data-app-install]'), undefined, 3000);
-  ok(await backOnButton(), `${label}: focus returns to the button`);
-  await clickCentered(p, '.site-footer [data-app-install]');
-  await p.click('[data-app-help] form[method="dialog"] button');
-  ok(!(await p.$eval('[data-app-help]', (d) => d.open)) && (await backOnButton()), `${label}: the Close button closes it too, focus back on the button`);
-  return { p, state };
-};
+  ok(end.lowest <= end.top, `at the end of the page the button stays below the footer's last line (text ends at ${end.lowest} px, button starts at ${end.top} px)`);
+  await p.close();
+}
 
-{
-  const { p } = await stepsCase({ label: 'iPhone', ua: UA.iphone, expect: 'ios' });
-  // the phone menu: the button sits in the menu, which closes when it is used
-  await p.evaluate(() => scrollTo(0, 0));
-  await p.click('[data-menu-button]');
-  await p.click('#site-nav [data-app-install]');
-  ok(await p.$eval('[data-app-help]', (d) => d.open), 'iPhone: the menu button also opens the steps');
-  await p.mouse.click(4, 4); // the backdrop
-  ok(!(await p.$eval('[data-app-help]', (d) => d.open)), 'iPhone: a tap on the backdrop closes the dialog');
-  // the browser first tries the hidden menu item, then the queued close event moves focus
-  ok(await until(p, () => document.activeElement?.matches('[data-menu-button]'), undefined, 3000), 'iPhone: with the menu closed, focus goes to the menu button');
+// ------------------------------------- no button where the browser cannot install the site
+for (const [label, ua, touchPoints] of [
+  ['iPhone', UA.iphone, 0],
+  ['iPad', UA.ipad, 5],
+  ['Safari on the Mac', UA.macSafari, 0],
+  ['Firefox for Android', UA.firefoxAndroid, 0],
+]) {
+  const { page: p } = await open({ ua, touchPoints, width: 390, height: 844 });
+  await go(p, '/');
+  await new Promise((r) => setTimeout(r, 300));
+  ok((await shown(p, '[data-app-install]'))[0] === false && !(await p.$('dialog[data-app-help]')), `${label}: no button and no instructions dialog (the browser gives pages no way to install)`);
   await p.close();
 }
-{
-  const { p, state } = await stepsCase({ label: 'iPhone, Arabic', ua: UA.iphone, path: '/ar/', expect: 'ios', title: 'ثبّت الموقع كتطبيق' });
-  ok(state.dir === 'rtl', 'iPhone, Arabic: the dialog reads right to left');
-  await p.close();
-}
-await (await stepsCase({ label: 'iPhone, 320 px', ua: UA.iphone, path: '/ar/research/', expect: 'ios', width: 320, height: 640, title: 'ثبّت الموقع كتطبيق' })).p.close();
-await (await stepsCase({ label: 'iPad', ua: UA.ipad, touchPoints: 5, expect: 'ios', width: 820, height: 1180 })).p.close();
-await (await stepsCase({ label: 'Safari on the Mac', ua: UA.macSafari, expect: 'mac', width: 1280, height: 900 })).p.close();
-await (await stepsCase({ label: 'Firefox for Android', ua: UA.firefoxAndroid, expect: 'firefox' })).p.close();
 
 // ------------------------------------------------- hidden where nothing applies
 {
-  const { page: p } = await open({ ua: UA.iphone, width: 390, height: 844, standalone: true });
+  const { page: p } = await open({ width: 390, height: 844, standalone: true });
   await go(p, '/');
   await fakePrompt(p);
-  ok((await shown(p, '[data-app-install]')).every((v) => !v), 'inside the installed app the button never shows');
+  ok((await shown(p, '[data-app-install]'))[0] === false, 'inside the installed app the button never shows');
   ok((await p.evaluate(() => document.documentElement.dataset.app)) === 'standalone', 'and the page knows it runs as an app (html[data-app="standalone"])');
   await p.close();
 }
@@ -341,7 +334,7 @@ await (await stepsCase({ label: 'Firefox for Android', ua: UA.firefoxAndroid, ex
   const p = await browser.newPage();
   await p.setJavaScriptEnabled(false);
   await p.goto(`${B}/`, { waitUntil: 'networkidle0' });
-  ok((await shown(p, '[data-app-install]')).every((v) => !v), 'without JavaScript there is no install button');
+  ok((await shown(p, '[data-app-install]'))[0] === false, 'without JavaScript there is no install button');
   await p.close();
 }
 

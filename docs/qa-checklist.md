@@ -10,7 +10,7 @@ Runs on every pull request and every push to `main` that touches `site/`:
 | QA | `npm run qa` | One h1 per page, internal links, language switch, approved mailto/tel only, forbidden files (raw .bib, manifest, profile JSON) and client-side model code absent, lab payload, colour contrast of token pairs, sitemap (66 URLs) |
 | Lab | `npm run lab:verify` | Recomputes all 15 states × 100 replicates from the seed, checks convergence, and checks every number quoted in EN/AR text (see [lab-methodology.md](lab-methodology.md)) |
 | Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`), the site assistant (`chat.test.mjs`: knowledge in sync with the build, secret scan, request handling against a fake Google endpoint), the installable app (`app.test.mjs`: manifests, icon sizes and the maskable safe zone, manifest links, hidden install controls, `sw.js` in step with the build and its routing) |
-| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. `chat.mjs`: the site assistant with `/api/chat` intercepted: keyboard and focus, rendering, persistence, error notices, Arabic layout, the panel clear of the sticky header, no JavaScript. `app.mjs`: Chrome's manifest and installability checks, the service worker, offline reading with the server stopped, a withdrawn page, the install button per browser, the steps dialog, the installed app and no JavaScript. No JS errors in any suite |
+| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. `chat.mjs`: the site assistant with `/api/chat` intercepted: keyboard and focus, rendering, persistence, error notices, Arabic layout, the panel clear of the sticky header, no JavaScript. `app.mjs`: Chrome's manifest and installability checks, the service worker, offline reading with the server stopped, a withdrawn page, the floating install button (its corner opposite the assistant, one press, one prompt), no button in Safari or Firefox, the installed app and no JavaScript. No JS errors in any suite |
 
 ## Run during Phase 4 (2026-11-06)
 
@@ -206,6 +206,23 @@ Lighthouse 12.8.2, simulated mobile, against a local static server with Brotli a
 - real devices: iPhone, iPad, Mac, Android;
 - a real installation (headless Chrome cannot install an app);
 - screen readers.
+
+## Run for the floating install button (2026-11-07)
+
+The owner asked for one button opposite the assistant that installs in one press, instead of the written steps: «مش عاوز دا انا عاوز يبقا زرار قصاد الشات بوت عاليمين ادوس عليه يتثبت علطول». Same environment as the run above: the sandbox's Node 22 and Chromium 153, on the built site.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages. `sw.js` VERSION `b2e15a510940`, 16 files precached; the same VERSION after a rebuild |
+| `npm test` | 92 tests, all pass. The install test now requires exactly one hidden button per page and no dialog, menu or footer copies |
+| `npm run qa`, `npm run lab:verify` | Both pass. The assistant's knowledge file is byte-identical after `npm run chat:knowledge` |
+| `E2E_REQUIRED=1 npm run test:e2e` | 175 checks, all pass, no JavaScript errors: `keyboard.mjs` 37, `motion.mjs` 41, `chat.mjs` 39, `app.mjs` 58. The steps-dialog and menu cases are gone. Measured:<br>- English, 1280 px: the button at 16–174 px and the assistant at 1081–1264 px, both 16 px from the bottom.<br>- Arabic, 390 px: a 48 px round button at 326–374 px of 390, opposite the assistant.<br>- 320 px: both fit, overflow 0.<br>- At the end of a page, the footer text ends at 544 px and the button starts at 576 px. |
+| The other suites with the button showing | CI's Chrome 156 sends a real `beforeinstallprompt`, so there the button shows on every page. Keyboard, motion and chat were run against a build with the button visible on all 67 pages: 37, 41 and 39 checks, all pass. After a rebuild, the button is `hidden` on all 67 pages again |
+| axe-core 4.14.0 | 30 runs, 0 violations: the button shown and hovered on 4 pages in both themes, 390 px with and without the assistant's panel open, 320 px Arabic, and the offline page |
+| Contrast | Light 9.01:1, hovered 13.93:1. Dark 10.69:1, hovered 14.59:1 |
+| Phone layout | With the assistant's panel open, the panel ends 8 px above the install button, in both languages and themes |
+| Screenshots | 3 new ones in [`screenshots/installable-app/`](screenshots/installable-app/), all viewed. The 4 of the steps dialog, menu and footer were removed |
+| Not tested | Real devices, a real install, the Safari and Firefox engines (only their user agents), screen readers |
 
 ## Manual matrix (before a release)
 

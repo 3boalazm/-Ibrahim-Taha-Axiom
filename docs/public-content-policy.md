@@ -140,7 +140,7 @@ The site can be installed as an app (decision D-21, 2026-11-07). How it works: [
 - **Same content, same gate.** The app is the website itself: the same pages, built from the same approved data.
   - There is no app-only content and no store listing.
   - The manifests reuse the home pages' descriptions and the menu labels. The Arabic app's short name is the display name decided in DQ-10 («ابراهيم محمد طه»).
-  - The install steps describe browsers, not the researcher.
+  - The install button and its status message name only the app; they say nothing about the researcher.
 - **Copies on the visitor's device.** The service worker keeps these in that visitor's browser, so they stay readable offline:
   - the pages the visitor opened (the 80 most recent);
   - both home pages;

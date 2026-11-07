@@ -3,11 +3,12 @@
  * Installable app (site/README.md#install-as-an-app), on every page:
  * - registers the service worker (/sw.js, production builds only), which keeps the pages
  *   you open readable offline;
- * - drives the "Install the app" buttons (InstallButton.astro, in the footer and the
- *   phone menu). Chromium browsers offer their own install prompt, which the button
- *   opens; Safari (iPhone, iPad, Mac) and Firefox for Android have no prompt a page can
- *   open, so there the button opens this dialog with the steps for that browser.
- * The buttons stay hidden without JS, in an installed app, and where neither applies.
+ * - "Install the app": a floating button in the bottom inline-start corner, opposite the
+ *   site assistant's launcher (bottom right in Arabic, bottom left in English). It appears
+ *   only when the browser can install the site itself (beforeinstallprompt, Chromium
+ *   browsers), and one press opens the browser's install prompt. Safari and Firefox give
+ *   pages no way to install, so there it never shows; nor without JS, nor inside the
+ *   installed app.
  */
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -17,31 +18,12 @@ interface Props {
 }
 const { lang } = Astro.props;
 const ui = t(lang);
-const platforms = [
-  { key: 'ios', steps: ui.appStepsIos },
-  { key: 'mac', steps: ui.appStepsMac },
-  { key: 'firefox', steps: ui.appStepsFirefox },
-];
 ---
 
-<dialog class="app-help" aria-labelledby="app-help-title" data-app-help>
-  <div class="app-help__body">
-    <h2 class="app-help__title" id="app-help-title">{ui.appHelpTitle}</h2>
-    <p class="app-help__intro">{ui.appHelpIntro}</p>
-    {
-      platforms.map((p) => (
-        <ol class="app-help__steps" data-steps={p.key} hidden>
-          {p.steps.map((step) => (
-            <li>{step}</li>
-          ))}
-        </ol>
-      ))
-    }
-    <form method="dialog" class="app-help__actions">
-      <button class="button button--solid" type="submit">{ui.appHelpClose}</button>
-    </form>
-  </div>
-</dialog>
+<button type="button" class="button button--accent app-install" data-app-install hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"></path></svg>
+  <span class="app-install__label">{ui.appInstall}</span>
+</button>
 <p class="visually-hidden" role="status" data-app-status data-installed={ui.appInstalled}></p>
 
 <script>
@@ -49,7 +31,6 @@ const platforms = [
     prompt(): Promise<void>;
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
   }
-  type Mode = 'prompt' | 'ios' | 'mac' | 'firefox';
 
   const standalone = () =>
     ['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) ||
@@ -77,118 +58,74 @@ const platforms = [
     else addEventListener('load', register, { once: true });
   }
 
-  // 2 · The install buttons.
-  const controls = [...document.querySelectorAll<HTMLElement>('[data-app-install], [data-app-install-slot]')];
-  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-app-install]')];
-  const help = document.querySelector<HTMLDialogElement>('[data-app-help]');
+  // 2 · The install button, only where the browser itself can install the site.
+  const button = document.querySelector<HTMLButtonElement>('[data-app-install]');
   const status = document.querySelector<HTMLElement>('[data-app-status]');
-  let mode: Mode | null = null;
   let deferred: InstallPromptEvent | null = null;
-  let trigger: HTMLElement | null = null;
-  const show = (next: Mode | null) => {
-    mode = next;
-    controls.forEach((el) => (el.hidden = !next));
-  };
-
-  const ua = navigator.userAgent;
-  // iPadOS reports itself as a Mac; touch support tells them apart
-  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const safariVersion = Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0);
-  const macSafari = !ios && /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua) && safariVersion >= 17;
-  const firefoxAndroid = /Android/.test(ua) && /Firefox\//.test(ua);
-  if (!standalone()) show(ios ? 'ios' : macSafari ? 'mac' : firefoxAndroid ? 'firefox' : null);
 
   addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault(); // the site's own button opens the prompt, instead of a banner
+    event.preventDefault(); // the button opens the prompt, instead of a browser banner on top of it
+    if (standalone()) return;
     deferred = event as InstallPromptEvent;
-    if (!standalone()) show('prompt');
+    if (button) button.hidden = false;
   });
   addEventListener('appinstalled', () => {
     deferred = null;
-    show(null);
+    if (button) button.hidden = true;
     if (status) status.textContent = status.dataset.installed ?? '';
   });
-
-  buttons.forEach((button) =>
-    button.addEventListener('click', () => {
-      if (mode === 'prompt' && deferred) {
-        // one prompt per event; the browser fires a new event if it can still install
-        const event = deferred;
-        deferred = null;
-        show(null);
-        event.prompt().catch(() => undefined);
-        return;
-      }
-      if (!help || !mode || mode === 'prompt') return;
-      help.querySelectorAll<HTMLElement>('[data-steps]').forEach((list) => (list.hidden = list.dataset.steps !== mode));
-      trigger = button;
-      help.showModal();
-    }),
-  );
-  // a click on the backdrop closes the dialog (the body fills the box, so only the backdrop hits it)
-  help?.addEventListener('click', (event) => {
-    if (event.target === help) help.close();
-  });
-  help?.addEventListener('close', () => {
-    // a button inside the phone menu is gone once the menu closes: the menu button takes focus instead
-    const target = trigger?.isConnected && trigger.offsetParent !== null ? trigger : document.querySelector<HTMLElement>('[data-menu-button]');
-    target?.focus();
-    trigger = null;
+  button?.addEventListener('click', () => {
+    const event = deferred;
+    if (!event) return;
+    // one prompt per event; the browser sends a new event if the site can still be installed
+    deferred = null;
+    button.hidden = true;
+    event.prompt().catch(() => undefined);
   });
 </script>
 
 <style>
-  .app-help {
-    inline-size: min(30rem, calc(100vw - 2rem));
-    max-block-size: calc(100dvh - 2rem);
-    margin: auto;
-    padding: 0;
-    border: var(--border-hairline);
-    border-radius: var(--radius-3);
-    background: var(--color-paper);
-    color: var(--color-ink);
+  /* Opposite the assistant's launcher (ChatWidget.astro): same height, same distance
+     from the bottom, the other corner. */
+  .app-install {
+    position: fixed;
+    inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+    inset-inline-start: var(--space-4);
+    z-index: 40;
+    min-block-size: 3rem;
     box-shadow: var(--shadow-float);
   }
-  .app-help::backdrop {
-    background: rgb(12 22 18 / 0.45);
-  }
-  :global(html:has(dialog.app-help[open])) {
-    overflow: hidden;
-  }
-  .app-help__body {
-    display: grid;
-    gap: var(--space-4);
-    padding: var(--space-5);
-  }
-  .app-help__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--step-2);
-    line-height: 1.2;
-  }
-  .app-help__intro {
-    margin: 0;
-    color: var(--color-ink-2);
-  }
-  .app-help__steps {
-    display: grid;
-    gap: var(--space-3);
-    margin: 0;
-    padding-inline-start: 1.4em;
-  }
-  .app-help__steps[hidden] {
+  /* .button sets display, which would otherwise override the hidden attribute */
+  .app-install[hidden] {
     display: none;
   }
-  .app-help__steps li {
-    padding-inline-start: 0.25em;
+  .app-install svg {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
-  .app-help__steps li::marker {
-    color: var(--color-accent);
-    font-weight: 600;
+  /* On narrow screens it is a round icon button, like the launcher; the label stays for screen readers. */
+  @media (max-width: 40rem) {
+    .app-install {
+      inline-size: 3rem;
+      padding: 0;
+    }
+    .app-install__label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
-  .app-help__actions {
-    display: flex;
-    justify-content: flex-end;
-    margin: 0;
+  /* Room under the footer so the button never covers its last line. */
+  :global(html:has(.app-install:not([hidden])) .site-footer) {
+    padding-block-end: 4.5rem;
   }
 </style>
