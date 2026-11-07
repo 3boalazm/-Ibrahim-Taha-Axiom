@@ -476,9 +476,7 @@ main {
   ::view-transition-new(*) {
     animation: none !important;
   }
-  @view-transition {
-    navigation: none;
-  }
+  /* the reduced-motion opt-out of page transitions is inline in BaseLayout.astro's <head> */
 }
 
 /* chips that are buttons (filters) share the chip look but stay real buttons */

@@ -224,6 +224,31 @@ The owner asked for one button opposite the assistant that installs in one press
 | Screenshots | 3 new ones in [`screenshots/installable-app/`](screenshots/installable-app/), all viewed. The 4 of the steps dialog, menu and footer were removed |
 | Not tested | Real devices, a real install, the Safari and Firefox engines (only their user agents), screen readers |
 
+## Run for the page-transition fix (2026-11-07)
+
+**What happened.** CI on `main` after merging PR #9 (run `42330599704`, merge commit `07528d1`) failed 2 checks in `motion.mjs`:
+- "navigating Research → Publications runs a view transition" read `none`;
+- the page reported `InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled`.
+
+The same tree had passed in run `42330354600` on `3bcdb64`. The job could not be re-run from here: the GitHub token lacks `actions: write` (HTTP 403).
+
+**Cause, found with a probe** (`Research → Publications`, sandbox Chromium 153):
+- Under normal conditions, 2 of 72 navigations failed the same way, both early in the run.
+- Delaying CSS on the local server (service worker bypassed, HTTP cache off) made it frequent: **5 of 10** failed at 150 ms and **8 of 10** at 400 ms.
+- The rejection came from the new page. The opt-in, `@view-transition { navigation: auto }`, lived only in the bundled stylesheet; when that file was slow, Chromium checked the new page before it had the rule.
+- The install button and the service worker were ruled out. Before the fix, install events fired inside or just after `pageswap` or 0–80 ms after the click, and an unrelated DOM change after `pageswap`, failed no more often than no event at all: 1 in 36 navigations, against 1 in 6 for the control. With the service worker bypassed, the CSS delay alone caused the failures.
+
+**Fix.** The opt-in and its reduced-motion opt-out moved to an inline `<style>` at the top of `<head>` in `BaseLayout.astro`, before any stylesheet. `motion.css` and `global.css` no longer set it.
+
+| Check | Result |
+| --- | --- |
+| The probe after the fix | 150 ms CSS delay: 10/10 transitions ran. 400 ms: 10/10 ran. Normal conditions, all 7 cases including the install events: 70/70 ran. Reduced motion with a 400 ms delay: 5/5 no transition, no errors |
+| `npm run build` | 67 pages, the inline opt-in in all 67, before the first stylesheet; no bundled CSS sets `@view-transition`. `sw.js` VERSION `f22bc52f1a67` |
+| `npm test` | 93 tests, all pass. New: "page transitions opt in inline in `<head>`…". With the inline rule removed from the built pages it fails ("`/`: inline opt-in"), and it passes again after a rebuild |
+| `npm run qa`, `npm run lab:verify` | Both pass. The assistant's knowledge file is byte-identical |
+| `E2E_REQUIRED=1 npm run test:e2e` | 175 checks, all pass: keyboard 37, motion 41, chat 39, app 58. Page transition `ran`; language switch `none`. `motion.mjs` alone 3 more times: 41/41 each |
+| Not tested | Chrome 156 locally (CI covers it), Safari 18.2+ (the other browser with cross-document view transitions) |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
