@@ -296,10 +296,12 @@ const stepsCase = async ({ label, ua, touchPoints = 0, path = '/', expect, width
   ok(state.fits && state.overflow <= 0, `${label}: the dialog fits the ${width}px screen`);
   await p.keyboard.press('Escape');
   ok(!(await p.$eval('[data-app-help]', (d) => d.open)), `${label}: Escape closes it`);
-  ok(await p.evaluate(() => document.activeElement?.matches('.site-footer [data-app-install]')), `${label}: focus returns to the button`);
+  // the close event, which moves focus, is queued after the dialog closes: wait for it
+  const backOnButton = () => until(p, () => document.activeElement?.matches('.site-footer [data-app-install]'), undefined, 3000);
+  ok(await backOnButton(), `${label}: focus returns to the button`);
   await clickCentered(p, '.site-footer [data-app-install]');
   await p.click('[data-app-help] form[method="dialog"] button');
-  ok(!(await p.$eval('[data-app-help]', (d) => d.open)) && (await p.evaluate(() => document.activeElement?.matches('.site-footer [data-app-install]'))), `${label}: the Close button closes it too, focus back on the button`);
+  ok(!(await p.$eval('[data-app-help]', (d) => d.open)) && (await backOnButton()), `${label}: the Close button closes it too, focus back on the button`);
   return { p, state };
 };
 
@@ -312,7 +314,8 @@ const stepsCase = async ({ label, ua, touchPoints = 0, path = '/', expect, width
   ok(await p.$eval('[data-app-help]', (d) => d.open), 'iPhone: the menu button also opens the steps');
   await p.mouse.click(4, 4); // the backdrop
   ok(!(await p.$eval('[data-app-help]', (d) => d.open)), 'iPhone: a tap on the backdrop closes the dialog');
-  ok(await p.evaluate(() => document.activeElement?.matches('[data-menu-button]')), 'iPhone: with the menu closed, focus goes to the menu button');
+  // the browser first tries the hidden menu item, then the queued close event moves focus
+  ok(await until(p, () => document.activeElement?.matches('[data-menu-button]'), undefined, 3000), 'iPhone: with the menu closed, focus goes to the menu button');
   await p.close();
 }
 {
