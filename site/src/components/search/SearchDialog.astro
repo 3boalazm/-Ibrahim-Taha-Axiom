@@ -7,6 +7,7 @@
  */
 import { t } from '../../i18n/ui';
 import { localePath } from '../../utils/paths';
+import { pendingArDrafts } from '../../utils/content';
 import type { Lang } from '../../utils/schema';
 
 interface Props {
@@ -21,7 +22,7 @@ const i18n = {
   recent: ui.searchRecent,
   loading: ui.searchLoading,
   error: ui.searchError,
-  draft: ui.draftBadge,
+  draft: pendingArDrafts ? ui.draftBadge : '',
   count: {
     one: ui.searchCount(1),
     two: ui.searchCount(2),

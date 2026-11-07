@@ -8,8 +8,9 @@
  *   visited, an unvisited page gets the offline page in its language listing the saved
  *   pages of that language, /api/ requests fail instead of being answered from a cache,
  *   and once the server is back pages come from the network again;
- * - "Install the app": a floating button opposite the assistant's launcher (bottom left in
- *   English, bottom right in Arabic). One press opens the browser's install prompt (a
+ * - "Download the app" / «حمّل التطبيق»: a floating button opposite the assistant's launcher
+ *   (bottom left in English, bottom right in Arabic), its label next to the icon on phones
+ *   too (D-24). One press opens the browser's install prompt (a
  *   simulated beforeinstallprompt, plus a probe for a real one); no button in Safari or
  *   Firefox, which give pages no way to install, in the installed app, or without JS.
  * - The studio section right before the footer of every page: its place and heading; its
@@ -261,6 +262,10 @@ const corners = (p) =>
       touching: !(b.right <= c.left || c.right <= b.left || b.bottom <= c.top || c.bottom <= b.top),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       label: button.textContent.trim(),
+      labelShown: (() => {
+        const l = button.querySelector('.app-install__label');
+        return l.getBoundingClientRect().width > 20 && getComputedStyle(l).clipPath === 'none';
+      })(),
       fixed: getComputedStyle(button).position === 'fixed',
     };
   });
@@ -271,11 +276,11 @@ const px = (n) => Math.round(n);
   await go(p, '/');
   ok((await shown(p, '[data-app-install]'))[0] === false, 'desktop Chrome: no button until the browser says the site can be installed');
   ok(await fakePrompt(p), 'the page takes over beforeinstallprompt (no browser banner on top of the button)');
-  ok((await shown(p, '[data-app-install]'))[0] === true, 'then the floating "Install the app" button appears');
+  ok((await shown(p, '[data-app-install]'))[0] === true, 'then the floating "Download the app" button appears');
   const at = await corners(p);
   ok(at.fixed && at.b.left < at.vw / 2 && at.c.left > at.vw / 2, `English: bottom left, opposite the assistant at the bottom right (button ${px(at.b.left)}–${px(at.b.right)} px, assistant ${px(at.c.left)}–${px(at.c.right)} px)`);
   ok(Math.abs(at.b.bottom - at.c.bottom) <= 1 && at.vh - at.b.bottom >= 15, `level with the assistant's launcher, ${px(at.vh - at.b.bottom)} px from the bottom`);
-  ok(at.label === 'Install the app' && at.b.width > 100, `a labelled pill on wide screens ("${at.label}", ${px(at.b.width)} px)`);
+  ok(at.label === 'Download the app' && at.labelShown && at.b.width > 100, `a labelled pill on wide screens ("${at.label}", ${px(at.b.width)} px)`);
   await p.click('[data-app-install]');
   ok((await p.evaluate(() => window.__prompted)) === 1, 'one press opens the browser’s install prompt');
   ok((await shown(p, '[data-app-install]'))[0] === false, 'and the button hides: one prompt per event');
@@ -293,8 +298,8 @@ const px = (n) => Math.round(n);
   await fakePrompt(p);
   const at = await corners(p);
   ok(at.b.left > at.vw / 2 && at.c.right < at.vw / 2, `Arabic phone: bottom right, opposite the assistant at the bottom left (button ${px(at.b.left)}–${px(at.b.right)} px of ${at.vw})`);
-  ok(at.b.width <= 50 && Math.abs(at.b.bottom - at.c.bottom) <= 1 && !at.touching, `a round icon button level with the launcher (${px(at.b.width)} px), not touching it`);
-  ok(at.label === 'ثبّت التطبيق', 'it keeps its Arabic name for screen readers');
+  ok(at.labelShown && at.b.width > 100 && Math.abs(at.b.bottom - at.c.bottom) <= 1 && !at.touching, `on phones too the label shows next to the icon (${px(at.b.width)} px), level with the launcher, not touching it`);
+  ok(at.label === 'حمّل التطبيق', '«حمّل التطبيق», the words the owner asked for, which are also its name');
   await p.click('[data-app-install]');
   ok((await p.evaluate(() => window.__prompted)) === 1, 'one tap opens the install prompt');
   await p.close();
@@ -304,7 +309,7 @@ const px = (n) => Math.round(n);
   await go(p, '/ar/research/');
   await fakePrompt(p);
   const at = await corners(p);
-  ok(at.b.left >= 0 && at.b.right <= at.vw && !at.touching && at.overflow <= 0, `320 px: both round buttons fit without touching (overflow ${at.overflow} px)`);
+  ok(at.labelShown && at.b.left >= 0 && at.b.right <= at.vw && !at.touching && at.overflow <= 0, `320 px: the labelled button and the round launcher fit without touching (overflow ${at.overflow} px)`);
   await p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
   const end = await p.evaluate(() => {
     const top = document.querySelector('[data-app-install]').getBoundingClientRect().top;

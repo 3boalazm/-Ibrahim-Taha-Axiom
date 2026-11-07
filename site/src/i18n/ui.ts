@@ -97,6 +97,7 @@ const en = {
   draftBadge: 'Draft translation',
   draftBody: 'Not yet reviewed by the researcher.',
   draftFooter: '',
+  originalLanguage: '',
   translationStatus: 'Translation status',
   // site search
   searchOpen: 'Search',
@@ -134,7 +135,7 @@ const en = {
   },
   // Installable app (site/README.md#install-as-an-app). The offline page is built inside sw.js.
   appShortName: 'Ibrahim Taha',
-  appInstall: 'Install the app',
+  appInstall: 'Download the app',
   appInstalled: 'The app is installed. Open it from your home screen or app list.',
   studioCreditLabel: 'Developed by',
   studioCreditMeta: '[Brand & web · Cairo / Remote]',
@@ -292,7 +293,8 @@ const ar: typeof en = {
   // حالة الترجمة
   draftBadge: 'ترجمة مبدئية',
   draftBody: 'لم يراجعها الباحث بعد.',
-  draftFooter: 'النصوص العربية الموسومة «ترجمة مبدئية» صِيغت بمساعدة الذكاء الاصطناعي ولم يراجعها الباحث بعد. عناوين المنشورات وأسماء الدوريات والأشخاص تبقى بلغتها الأصلية.',
+  draftFooter: 'النصوص العربية الموسومة «ترجمة مبدئية» صِيغت بمساعدة الذكاء الاصطناعي ولم يراجعها الباحث بعد.',
+  originalLanguage: 'عناوين المنشورات وأسماء الدوريات والأشخاص تبقى بلغتها الأصلية.',
   translationStatus: 'حالة الترجمة',
   // البحث في الموقع
   searchOpen: 'بحث',
@@ -329,7 +331,7 @@ const ar: typeof en = {
     generic: 'تعذّر على المساعد الإجابة هذه المرة. حاول مجددًا.',
   },
   appShortName: 'ابراهيم محمد طه',
-  appInstall: 'ثبّت التطبيق',
+  appInstall: 'حمّل التطبيق',
   appInstalled: 'تم تثبيت التطبيق. افتحه من الشاشة الرئيسية أو من قائمة التطبيقات.',
   studioCreditLabel: 'من تطوير',
   studioCreditMeta: '[هوية بصرية وويب · القاهرة / عن بُعد]',

@@ -63,7 +63,7 @@ test('DQ-07: Tanta branch appointment, teaching at the main campus in Maadi', ()
   const bio = drafts.find((d) => d.ref === 'profile.biography');
   assert.equal(bio.en, profile.biography.en, 'the Arabic draft is keyed to the current English text');
   assert.match(bio.ar, /فرع طنطا/);
-  assert.equal(bio.status, 'draft', 'an edited draft is still a draft');
+  assert.equal(bio.status, 'reviewed', 'reviewed with the rest of the site (D-24)');
 });
 
 test('DQ-09: the GitHub data repository is labelled CC BY 4.0; SVM_New is not shown', () => {
@@ -71,7 +71,7 @@ test('DQ-09: the GitHub data repository is labelled CC BY 4.0; SVM_New is not sh
   assert.equal(link.label.en, 'Data repository (GitHub, CC BY 4.0)');
   const label = drafts.find((d) => d.en === link.label.en);
   assert.ok(label, 'the label has an Arabic draft keyed to the new text');
-  assert.equal(label.status, 'draft');
+  assert.equal(label.status, 'reviewed', 'reviewed with the rest of the site (D-24)');
   assert.ok(!approvedText.includes('SVM_New'));
 });
 
@@ -187,7 +187,7 @@ test('both conference papers carry their source links, in English and Arabic, on
     assert.ok(manifest.relationships.some((r) => r.to === `talk:${t.id}`), `${t.id} keeps its graph links`);
     const draft = drafts.find((d) => d.en === t.summary.en);
     assert.ok(draft, `${t.id}: the Arabic summary draft is keyed to the new English text`);
-    assert.equal(draft.status, 'draft', 'an edited draft is still a draft');
+    assert.equal(draft.status, 'reviewed', 'reviewed with the rest of the site (D-24)');
   }
   for (const [route, lang] of [['/talks/', 'en'], ['/ar/talks/', 'ar']]) {
     const html = page(route);

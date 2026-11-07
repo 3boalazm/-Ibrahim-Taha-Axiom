@@ -113,14 +113,20 @@ const headline =
   </div>
 
   {
-    lang === 'ar' && showArDrafts && (
+    /* Arabic pages say that titles and names keep their original language. While some Arabic
+       text is still an unreviewed draft, the line also says so and gives the count (D-24). */
+    lang === 'ar' && (
       <div class="container site-footer__translation">
-        <p>
-          <span class="label">{ui.translationStatus}</span> {ui.draftFooter}{' '}
-          <span>
-            ({draftCount} نصًّا مبدئيًا بانتظار المراجعة{reviewedCount > 0 ? `، و${reviewedCount} نصًّا رُوجع` : ''}.)
-          </span>
-        </p>
+        {showArDrafts && draftCount > 0 ? (
+          <p>
+            <span class="label">{ui.translationStatus}</span> {ui.draftFooter} {ui.originalLanguage}{' '}
+            <span>
+              ({draftCount} نصًّا مبدئيًا بانتظار المراجعة{reviewedCount > 0 ? `، و${reviewedCount} نصًّا رُوجع` : ''}.)
+            </span>
+          </p>
+        ) : (
+          <p>{ui.originalLanguage}</p>
+        )}
       </div>
     )
   }

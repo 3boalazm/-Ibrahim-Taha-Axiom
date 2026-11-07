@@ -45,12 +45,12 @@ const contactPaths = ar
       { id: 'supervision', label: 'Supervision', note: "Master's and doctoral work" },
       { id: 'speaking', label: 'Lectures and workshops', note: 'Conferences and training' },
     ];
-// Arabic home shows unreviewed drafts (role, summary, area titles, the
-// community's summary…) — say so once.
+// While the Arabic home shows an unreviewed draft (role, summary, area titles,
+// the community's summary…), it says so once. Reviewed text carries no label.
 const community = projects.find((p) => p.id === 'statistical-analysis-egypt');
 const usesDrafts =
   ar &&
-  [profile.role, profile.summary, ...profile.interests, ...researchAreas.map((a) => a.title), community?.summary].some((v) => v && !v.ar && !!arDraft(v.en));
+  [profile.role, profile.summary, ...profile.interests, ...researchAreas.map((a) => a.title), community?.summary].some((v) => v && !v.ar && !!arDraft(v.en)?.draft);
 ---
 
 <BaseLayout lang={lang} path="/" title={SITE_NAME} description={copy.description}>
@@ -62,6 +62,7 @@ const usesDrafts =
       </div>
     )
   }
+  <CommunitySection lang={lang} />
   <IdentityPanel lang={lang} />
   <ResearchDiscovery lang={lang} />
 
@@ -90,8 +91,6 @@ const usesDrafts =
 
   <LabTeaser lang={lang} />
   <MetricCards lang={lang} />
-
-  <CommunitySection lang={lang} />
 
   <div class="container">
   <section class="home-cta" aria-labelledby="cta-heading" data-reveal>

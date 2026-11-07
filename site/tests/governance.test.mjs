@@ -52,6 +52,15 @@ test('Arabic drafts carry a status, and a reviewed entry names its reviewer', ()
     assert.ok(['draft', 'reviewed'].includes(e.status));
     if (e.status === 'reviewed') assert.ok(t.reviewedBy, 'a reviewed entry needs a reviewer');
   }
+  // D-24: on 2026-11-07 the project owner confirmed that the whole site has been reviewed. Every
+  // entry is marked reviewed; the record quotes the owner and names no reviewer it was not given.
+  assert.equal(t.status, 'reviewed');
+  assert.ok(t.entries.every((e) => e.status === 'reviewed'), 'every entry reviewed');
+  assert.match(t.reviewedBy, /project owner/);
+  assert.match(t.reviewedBy, /الموقع اتراجع كله بالفعل/);
+  assert.match(t.reviewedBy, /The reviewer was not named\./);
+  const record = manifest.approvalHistory.find((h) => h.status === 'Arabic translations marked reviewed');
+  assert.ok(record && record.date === '2026-11-07' && record.note.includes('The reviewer was not named.'), 'the review is on the audit trail');
 });
 
 test('data-quality issues: nothing resolved silently, every answer on record', () => {

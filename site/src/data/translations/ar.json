@@ -1,508 +1,508 @@
 {
   "schemaVersion": 1,
   "language": "ar",
-  "status": "draft",
+  "status": "reviewed",
   "prepared": "2026-11-06",
-  "method": "AI-assisted drafts in Modern Standard Arabic, written for this site with standard Arabic statistical terminology. Publication titles, journal names, conference names and personal names are kept in their original form. Not reviewed by the researcher.",
-  "reviewedBy": null,
+  "method": "AI-assisted drafts in Modern Standard Arabic, written for this site with standard Arabic statistical terminology. Publication titles, journal names, conference names and personal names are kept in their original form. Marked reviewed on 2026-11-07, when the project owner confirmed that the whole site has been reviewed (see reviewedBy, and the approval history in public-content.manifest.json).",
+  "reviewedBy": "Confirmed by the project owner (GitHub: 3boalazm) in the project chat on 2026-11-07: «الموقع اتراجع كله بالفعل» (the whole site has already been reviewed). The reviewer was not named.",
   "entries": [
     {
       "ref": "profile.role",
       "en": "Statistician & Academic Researcher",
       "ar": "إحصائي وباحث أكاديمي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.summary",
       "en": "Turning complex data into clear, rigorous, publishable insights — and making advanced statistics accessible across the Arab world.",
       "ar": "تحويل البيانات المعقّدة إلى نتائج واضحة ورصينة قابلة للنشر، وتيسير الإحصاء المتقدّم في أرجاء العالم العربي.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.biography",
       "en": "I serve as a Teaching Assistant at the Sadat Academy for Management Sciences, appointed to its Tanta branch and teaching at the main campus in Maadi, Cairo, and as a Research Assistant at the Faculty of Graduate Studies for Statistical Research, Cairo University, where I am also pursuing my PhD in Applied Statistics and Econometrics.\n\nMy research specializes in penalized estimators in count regression models — Ridge, Liu-type, and Beta regression methods for handling multicollinearity and high-dimensional data — and extends to panel-data and cointegration models, panel and logistic regression in R, and the reporting standards behind model-fit and normality testing. My work has been published in journals including Communications in Statistics, Frontiers in Applied Mathematics & Statistics, and Statistics, Optimization & Information Computing.\n\nBeyond academia, I have completed over 450 statistical analysis reports for theses and papers, and founded the Statistical Analysis – Egypt community across Facebook and Telegram with over 550,000 combined members — making advanced statistics accessible across the Arab world.",
       "ar": "أعمل معيدًا في أكاديمية السادات للعلوم الإدارية، معيَّنًا في فرع طنطا وأُدرِّس في المقر الرئيسي بالمعادي في القاهرة، ومساعدَ باحث في كلية الدراسات العليا للبحوث الإحصائية بجامعة القاهرة، حيث أُعِدّ أيضًا رسالة الدكتوراه في الإحصاء التطبيقي والاقتصاد القياسي.\n\nيتخصّص بحثي في المقدِّرات الجزائية (المعاقَبة) لنماذج انحدار بيانات العدّ — طرق الحَرْف (Ridge) والمقدِّرات من نوع ليو (Liu-type) وانحدار بيتا — لمعالجة التعدد الخطي والبيانات عالية الأبعاد، ويمتد إلى نماذج بيانات البانل والتكامل المشترك، وانحدار البانل والانحدار اللوجستي بلغة R، ومعايير الإفصاح التي تقوم عليها اختبارات جودة المطابقة والتوزيع الطبيعي. نُشرت أعمالي في دوريات منها Communications in Statistics وFrontiers in Applied Mathematics & Statistics وStatistics, Optimization & Information Computing.\n\nوخارج الإطار الأكاديمي، أنجزتُ أكثر من 450 تقريرًا للتحليل الإحصائي لرسائل علمية وأوراق بحثية، وأسّستُ مجتمع Statistical Analysis – Egypt على فيسبوك وتيليجرام الذي يضم أكثر من 550 ألف عضو مجتمعين، سعيًا إلى تيسير الإحصاء المتقدّم في أرجاء العالم العربي.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[0].organization",
       "en": "Sadat Academy for Management Sciences",
       "ar": "أكاديمية السادات للعلوم الإدارية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[0].department",
       "en": "Department of Mathematics, Statistics and Insurance",
       "ar": "قسم الرياضيات والإحصاء والتأمين",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[0].role",
       "en": "Teaching Assistant",
       "ar": "معيد",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[1].organization",
       "en": "Faculty of Graduate Studies for Statistical Research, Cairo University",
       "ar": "كلية الدراسات العليا للبحوث الإحصائية، جامعة القاهرة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[1].department",
       "en": "Department of Applied Statistics and Econometrics",
       "ar": "قسم الإحصاء التطبيقي والاقتصاد القياسي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.affiliations[1].role",
       "en": "PhD researcher",
       "ar": "باحث دكتوراه",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.education[0].degree",
       "en": "PhD in Applied Statistics and Econometrics (in progress)",
       "ar": "الدكتوراه في الإحصاء التطبيقي والاقتصاد القياسي (قيد الإعداد)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.education[1].degree",
       "en": "Master's degree. Thesis: Handling Multicollinearity Problem in Generalized Linear Models",
       "ar": "درجة الماجستير. عنوان الرسالة: Handling Multicollinearity Problem in Generalized Linear Models",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.education[1].institution",
       "en": "Cairo University",
       "ar": "جامعة القاهرة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.education[2].degree",
       "en": "BSc in Statistics",
       "ar": "بكالوريوس الإحصاء",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.education[2].institution",
       "en": "Al-Azhar University",
       "ar": "جامعة الأزهر",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.community[0].label",
       "en": "Statistical Analysis – Egypt (Facebook page)",
       "ar": "صفحة Statistical Analysis – Egypt على فيسبوك",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.community[1].label",
       "en": "Statistical Analysis – Egypt (Facebook group)",
       "ar": "مجموعة Statistical Analysis – Egypt على فيسبوك",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.community[3].label",
       "en": "Statistical Analysis – Egypt (WhatsApp group)",
       "ar": "مجموعة Statistical Analysis – Egypt على واتساب",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Applied Statistics",
       "ar": "الإحصاء التطبيقي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Econometrics",
       "ar": "الاقتصاد القياسي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Regression",
       "ar": "تحليل الانحدار",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Generalized Linear Models",
       "ar": "النماذج الخطية المعمَّمة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Multicollinearity",
       "ar": "التعدد الخطي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "Structural Equation Modeling",
       "ar": "نمذجة المعادلات البنائية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "SPSS",
       "ar": "SPSS",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "AMOS",
       "ar": "AMOS",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "SmartPLS",
       "ar": "SmartPLS",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "profile.interests",
       "en": "R Programming",
       "ar": "البرمجة بلغة R",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.penalized-count-regression.title",
       "en": "Penalized and shrinkage estimation for count regression",
       "ar": "التقدير الجزائي والانكماشي لنماذج انحدار بيانات العدّ",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.penalized-count-regression.summary",
       "en": "Ridge, Liu-type, biased, LASSO and elastic-net estimators for negative binomial, zero-inflated and Conway–Maxwell–Poisson regression under multicollinearity and high dimensionality, studied through simulation and real-data applications.",
       "ar": "مقدِّرات الحَرْف (Ridge) ومقدِّرات ليو (Liu-type) والمقدِّرات المتحيِّزة ومقدِّرات LASSO والشبكة المرنة (elastic net) لنماذج انحدار ذي الحدين السالب والنماذج المتضخّمة بالأصفار ونموذج كونواي–ماكسويل–بواسون في ظل التعدد الخطي والأبعاد العالية، تُدرَس بالمحاكاة وبالتطبيق على بيانات حقيقية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.beta-regression.title",
       "en": "Shrinkage estimators for beta regression",
       "ar": "مقدِّرات الانكماش لانحدار بيتا",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.beta-regression.summary",
       "en": "Ridge and two-parameter estimators for beta regression models with bounded responses, compared by simulation and applied to real data.",
       "ar": "مقدِّرات الحَرْف (Ridge) والمقدِّرات ثنائية المعلمة لنماذج انحدار بيتا ذات المتغير التابع المحدود، تُقارَن بالمحاكاة وتُطبَّق على بيانات حقيقية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.bayesian-estimation.title",
       "en": "Bayesian estimation",
       "ar": "التقدير البيزي",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.bayesian-estimation.summary",
       "en": "Prior selection in Bayesian estimation.",
       "ar": "اختيار التوزيع القبلي في التقدير البيزي.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.applied-quantitative-studies.title",
       "en": "Applied quantitative studies in management and education",
       "ar": "دراسات كمية تطبيقية في الإدارة والتعليم",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.applied-quantitative-studies.summary",
       "en": "Structural equation modelling (PLS-SEM) and related methods applied to technology acceptance, green creativity, cybersecurity behaviour in e-learning, and green human resource management.",
       "ar": "نمذجة المعادلات البنائية بالمربعات الصغرى الجزئية (PLS-SEM) وأساليب مرتبطة بها، مطبَّقةً على تقبّل التكنولوجيا، والإبداع الأخضر، وسلوك الأمن السيبراني في التعلّم الإلكتروني، وإدارة الموارد البشرية الخضراء.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.panel-data-and-cointegration.title",
       "en": "Panel data and cointegration analysis",
       "ar": "تحليل بيانات البانل والتكامل المشترك",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "research-areas.statistical-reporting-and-software.title",
       "en": "Statistical reporting, model fit and R",
       "ar": "الإفصاح الإحصائي وجودة مطابقة النماذج ولغة R",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.com-poisson-penalized-estimation.title",
       "en": "Penalized estimation for Conway–Maxwell–Poisson regression",
       "ar": "التقدير الجزائي لانحدار كونواي–ماكسويل–بواسون",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.com-poisson-penalized-estimation.summary",
       "en": "LASSO, adaptive LASSO and correlation-weighted elastic-net estimators for dispersed count data with multicollinear and high-dimensional predictors, published in 2026 with an openly licensed (CC BY 4.0) supplementary dataset.",
       "ar": "مقدِّرات LASSO وLASSO التكيُّفي (adaptive LASSO) والشبكة المرنة المرجَّحة بالارتباط (correlation-weighted elastic net) لبيانات العدّ المشتّتة ذات المتغيرات التفسيرية المتعددة الخطية وعالية الأبعاد، نُشرت عام 2026 مع مجموعة بيانات تكميلية مفتوحة الترخيص (CC BY 4.0).",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.com-poisson-penalized-estimation.links[0]",
       "en": "Dataset (Zenodo, CC BY 4.0)",
       "ar": "مجموعة البيانات (Zenodo، ترخيص CC BY 4.0)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.com-poisson-penalized-estimation.links[1]",
       "en": "Data repository (GitHub, CC BY 4.0)",
       "ar": "مستودع البيانات (GitHub، ترخيص CC BY 4.0)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-analysis-egypt.summary",
       "en": "An Arabic-language community for statistics education on Facebook, Telegram and WhatsApp, founded to make advanced statistics accessible across the Arab world. The Telegram group had 46,523 members on 5 November 2026.",
       "ar": "مجتمع ناطق بالعربية لتعليم الإحصاء على فيسبوك وتيليجرام وواتساب، أُسِّس لتيسير الإحصاء المتقدّم في أرجاء العالم العربي. بلغ عدد أعضاء مجموعة تيليجرام 46,523 عضوًا في 5 نوفمبر 2026.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-analysis-egypt.links[1]",
       "en": "Facebook page",
       "ar": "صفحة فيسبوك",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-analysis-egypt.links[2]",
       "en": "Facebook group",
       "ar": "مجموعة فيسبوك",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-analysis-egypt.links[3]",
       "en": "WhatsApp group",
       "ar": "مجموعة واتساب",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-guides.title",
       "en": "Open statistical guides",
       "ar": "أدلة إحصائية مفتوحة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-guides.summary",
       "en": "Self-published guides on regression and econometric methods, shared on ResearchGate: ridge regression, the ARDL bounds testing approach, sample size calculation, and a regression handbook covering more than 250 models.",
       "ar": "أدلة منشورة ذاتيًا في أساليب الانحدار والاقتصاد القياسي، متاحة على ResearchGate: انحدار الحَرْف (Ridge)، ومنهج اختبار الحدود ARDL، وحساب حجم العينة، ودليل للانحدار يغطي أكثر من 250 نموذجًا.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "projects.statistical-guides.links[0]",
       "en": "ResearchGate profile",
       "ar": "الملف الشخصي على ResearchGate",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.mathematics-1.title",
       "en": "Mathematics 1",
       "ar": "رياضيات 1",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.mathematics-1.summary",
       "en": "Undergraduate mathematics: functions, limits, differentiation and its applications.",
       "ar": "رياضيات المرحلة الجامعية الأولى: الدوال والنهايات والتفاضل وتطبيقاته.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.*.level",
       "en": "Undergraduate",
       "ar": "المرحلة الجامعية الأولى",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-1.title",
       "en": "Statistics 1",
       "ar": "إحصاء 1",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-1.summary",
       "en": "Descriptive statistics and probability: summarising data, distributions and the foundations of inference.",
       "ar": "الإحصاء الوصفي والاحتمالات: تلخيص البيانات والتوزيعات وأسس الاستدلال الإحصائي.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-2.title",
       "en": "Statistics 2",
       "ar": "إحصاء 2",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-2.summary",
       "en": "Estimation, hypothesis testing, and regression analysis for applied management problems.",
       "ar": "التقدير واختبار الفرضيات وتحليل الانحدار في مسائل إدارية تطبيقية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.operations-research.title",
       "en": "Operations Research",
       "ar": "بحوث العمليات",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.operations-research.summary",
       "en": "Linear programming, modelling and optimisation methods for managerial decisions.",
       "ar": "البرمجة الخطية والنمذجة وأساليب الأمثلية لدعم القرارات الإدارية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-training.title",
       "en": "Statistics and statistical-software workshops",
       "ar": "ورش الإحصاء والبرمجيات الإحصائية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "courses.statistics-training.summary",
       "en": "One-to-one and group training in statistics, econometrics and statistical software, in Arabic and English: R programming and statistical computing, SPSS, Stata and EViews workshops, and statistical inference and probability.",
       "ar": "تدريب فردي وجماعي في الإحصاء والاقتصاد القياسي والبرمجيات الإحصائية، بالعربية والإنجليزية: البرمجة بلغة R والحوسبة الإحصائية، وورش SPSS وStata وEViews، والاستدلال الإحصائي والاحتمالات.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "talks.*.summary",
       "en": "Paper with E. A. Rady and M. R. Abonazel, published in the conference proceedings. Oral presentation by Ibrahim is not confirmed.",
       "ar": "ورقة بالاشتراك مع E. A. Rady وM. R. Abonazel، منشورة في وقائع المؤتمر. أما تقديم ابراهيم لها شفهيًا فغير مؤكَّد.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.positions[0]",
       "en": "Research Assistant, Faculty of Graduate Studies for Statistical Research, Cairo University",
       "ar": "مساعد باحث، كلية الدراسات العليا للبحوث الإحصائية، جامعة القاهرة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.positions[1]",
       "en": "Teaching Assistant, Department of Mathematics, Statistics and Insurance, Sadat Academy for Management Sciences",
       "ar": "معيد، قسم الرياضيات والإحصاء والتأمين، أكاديمية السادات للعلوم الإدارية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.education[0]",
       "en": "PhD in Applied Statistics and Econometrics, Faculty of Graduate Studies for Statistical Research, Cairo University",
       "ar": "الدكتوراه في الإحصاء التطبيقي والاقتصاد القياسي، كلية الدراسات العليا للبحوث الإحصائية، جامعة القاهرة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.education[1]",
       "en": "Master's degree (Statistics), Cairo University. Thesis: Handling Multicollinearity Problem in Generalized Linear Models",
       "ar": "الماجستير في الإحصاء، جامعة القاهرة. عنوان الرسالة: Handling Multicollinearity Problem in Generalized Linear Models",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.education[2]",
       "en": "BSc in Statistics, Al-Azhar University",
       "ar": "بكالوريوس الإحصاء، جامعة الأزهر",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.research[0]",
       "en": "Applied statistics, econometrics, regression and generalized linear models, multicollinearity, penalized and shrinkage estimation, Bayesian estimation, structural equation modelling",
       "ar": "الإحصاء التطبيقي، والاقتصاد القياسي، والانحدار والنماذج الخطية المعمَّمة، والتعدد الخطي، والتقدير الجزائي والانكماشي، والتقدير البيزي، ونمذجة المعادلات البنائية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.teaching.heading",
       "en": "Teaching",
       "ar": "التدريس",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.teaching[0]",
       "en": "Undergraduate Mathematics 1, Statistics 1, Statistics 2 and Operations Research, Sadat Academy for Management Sciences, since 2017 — see the Teaching page for the full list",
       "ar": "مقررات المرحلة الجامعية الأولى: رياضيات 1، وإحصاء 1، وإحصاء 2، وبحوث العمليات، في أكاديمية السادات للعلوم الإدارية منذ عام 2017 — انظر صفحة التدريس للقائمة الكاملة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.service[0]",
       "en": "Founder of the Statistical Analysis – Egypt community on Facebook and Telegram",
       "ar": "مؤسس مجتمع Statistical Analysis – Egypt على فيسبوك وتيليجرام",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.service[1]",
       "en": "Statistical consulting: over 450 statistical analysis reports for theses and papers",
       "ar": "استشارات إحصائية: أكثر من 450 تقريرًا للتحليل الإحصائي لرسائل علمية وأوراق بحثية",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "cv.software[0]",
       "en": "R, SPSS, Stata, EViews, AMOS, SmartPLS",
       "ar": "R وSPSS وStata وEViews وAMOS وSmartPLS",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.ridge-estimation.title",
       "en": "Ridge estimation",
       "ar": "تقدير الحَرْف (Ridge)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.ridge-estimation.summary",
       "en": "An L2 penalty on the coefficients that stabilises estimates when predictors are strongly correlated, at the cost of some bias.",
       "ar": "عقوبة من النوع L2 على المعاملات تُثبِّت التقديرات عندما تكون المتغيرات التفسيرية شديدة الارتباط، على حساب قدر من التحيّز.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.liu-type-estimation.title",
       "en": "Liu-type estimation",
       "ar": "التقدير من نوع ليو (Liu-type)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.liu-type-estimation.summary",
       "en": "A family of biased shrinkage estimators introduced by Liu, used as an alternative to ridge under multicollinearity.",
       "ar": "عائلة من مقدِّرات الانكماش المتحيِّزة قدّمها ليو (Liu)، تُستخدم بديلًا عن الحَرْف في ظل التعدد الخطي.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.lasso-elastic-net.title",
       "en": "LASSO and elastic net",
       "ar": "LASSO والشبكة المرنة",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.lasso-elastic-net.summary",
       "en": "L1 and combined L1/L2 penalties that shrink coefficients and can set some exactly to zero, for variable selection in high dimensions.",
       "ar": "عقوبات من النوع L1 أو مزيج من L1 وL2 تُقلِّص المعاملات وقد تجعل بعضها صفرًا تمامًا، لاختيار المتغيرات في الأبعاد العالية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.pls-sem.title",
       "en": "PLS-SEM",
       "ar": "نمذجة المعادلات البنائية بالمربعات الصغرى الجزئية (PLS-SEM)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.pls-sem.summary",
       "en": "Partial least squares structural equation modelling, which estimates relationships between latent constructs.",
       "ar": "أسلوب يقدّر العلاقات بين المتغيرات الكامنة بطريقة المربعات الصغرى الجزئية.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.monte-carlo-simulation.title",
       "en": "Monte Carlo simulation",
       "ar": "محاكاة مونت كارلو",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "methods.monte-carlo-simulation.summary",
       "en": "Repeated simulated samples used to compare the bias and variability of estimators.",
       "ar": "عيّنات مُحاكاة متكرّرة تُستخدم لمقارنة تحيّز المقدِّرات وتباينها.",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "datasets.zenodo-23120962.title",
       "en": "Supplementary dataset (Zenodo)",
       "ar": "مجموعة البيانات التكميلية (Zenodo)",
-      "status": "draft"
+      "status": "reviewed"
     },
     {
       "ref": "datasets.zenodo-23120962.summary",
       "en": "Openly licensed supplementary data for the 2026 penalized COM-Poisson work, as recorded in the approved project entry and the publication record.",
       "ar": "بيانات تكميلية مفتوحة الترخيص لأعمال 2026 في انحدار COM-Poisson الجزائي، كما سُجِّلت في بيانات المشروع المعتمدة وفي سجل المنشور.",
-      "status": "draft"
+      "status": "reviewed"
     }
   ]
 }

@@ -12,6 +12,7 @@
  * and without JavaScript.
  */
 import { buildGraph, GEOMETRY, type GraphNode } from '../../utils/graph';
+import { pendingArDrafts } from '../../utils/content';
 import { localePath } from '../../utils/paths';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
@@ -59,7 +60,7 @@ const payload = {
     open: ui.openRecord,
     clear: ui.graphClear,
     none: ui.graphNone,
-    draft: ui.draftBadge,
+    draft: pendingArDrafts ? ui.draftBadge : '',
     evidenceLang: ar ? 'en' : null,
   },
 };

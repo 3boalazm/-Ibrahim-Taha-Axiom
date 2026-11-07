@@ -106,11 +106,25 @@ test('the knowledge graph renders every manifest relationship and a list alterna
   assert.match(html, /class="graph__list"/);
 });
 
-test('Arabic draft text is labelled and the translation status is visible', () => {
-  const home = page('/ar/');
-  assert.match(home, /ترجمة مبدئية/);
-  assert.match(home, /حالة الترجمة/);
-  assert.doesNotMatch(page('/'), /ترجمة مبدئية/, 'English pages carry no Arabic draft label');
+test('no page says its text is unreviewed: no draft note, label, badge or footer line (D-24)', () => {
+  // The owner confirmed on 2026-11-07 that the whole site has been reviewed. A new entry with
+  // status "draft" in translations/ar.json would bring the labels back, and fail this test.
+  const words = /ترجمة مبدئية|لم يراجع|بانتظار المراجعة|حالة الترجمة|Draft translation|not yet reviewed/i;
+  // every built page (the 404 page too), and the data the pages load: the search index and
+  // the assistant's knowledge
+  const files = readdirSync(DIST, { recursive: true }).map(String);
+  const htmls = files.filter((f) => f.endsWith('.html'));
+  const jsons = files.filter((f) => f.endsWith('.json'));
+  assert.ok(htmls.length >= 67 && jsons.length >= 3, `checked ${htmls.length} pages and ${jsons.length} JSON files`);
+  for (const f of htmls) {
+    const html = readFileSync(join(DIST, f), 'utf8');
+    assert.doesNotMatch(html, words, `${f}: unreviewed wording`);
+    assert.doesNotMatch(html, /\bdata-draft\b|class="[^"]*\bis-draft\b|class="draft-note/, `${f}: draft markup`);
+  }
+  // What stays: the Arabic footer still says that titles and names keep their original language.
+  assert.match(page('/ar/'), /site-footer__translation[^>]*>\s*<p[^>]*>عناوين المنشورات وأسماء الدوريات والأشخاص تبقى بلغتها الأصلية\.<\/p>/);
+  assert.doesNotMatch(page('/'), /site-footer__translation/, 'English pages have no such line');
+  for (const f of jsons) assert.doesNotMatch(readFileSync(join(DIST, f), 'utf8'), words, `${f}: unreviewed wording`);
 });
 
 test('the contact page sends nothing from the site: mailto only, no form endpoint', () => {
