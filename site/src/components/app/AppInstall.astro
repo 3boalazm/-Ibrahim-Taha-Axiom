@@ -3,8 +3,9 @@
  * Installable app (site/README.md#install-as-an-app), on every page:
  * - registers the service worker (/sw.js, production builds only), which keeps the pages
  *   you open readable offline;
- * - "Install the app": a floating button in the bottom inline-start corner, opposite the
- *   site assistant's launcher (bottom right in Arabic, bottom left in English). It appears
+ * - "Download the app" / «حمّل التطبيق»: a floating button in the bottom inline-start corner,
+ *   opposite the site assistant's launcher (bottom right in Arabic, bottom left in English).
+ *   The label sits next to the icon on every screen size, phones included. It appears
  *   only when the browser can install the site itself (beforeinstallprompt, Chromium
  *   browsers), and one press opens the browser's install prompt. Safari and Firefox give
  *   pages no way to install, so there it never shows; nor without JS, nor inside the
@@ -109,19 +110,14 @@ const ui = t(lang);
     stroke-linejoin: round;
     stroke-linecap: round;
   }
-  /* On narrow screens it is a round icon button, like the launcher; the label stays for screen readers. */
+  /* The label stays next to the icon on every screen (the owner asked for «حمّل التطبيق»
+     beside it); phones get a slightly tighter pill. The launcher opposite is a round icon. */
+  .app-install {
+    white-space: nowrap;
+  }
   @media (max-width: 40rem) {
     .app-install {
-      inline-size: 3rem;
-      padding: 0;
-    }
-    .app-install__label {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
+      padding-inline: 1em;
     }
   }
   /* Room under the footer so the button never covers its last line. */

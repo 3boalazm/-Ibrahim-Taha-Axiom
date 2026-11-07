@@ -26,7 +26,7 @@ The site shows **only** what is approved. A researcher-specific item appears onl
 - the CV, and a dated metrics snapshot;
 - 42 evidence-backed relationships.
 
-Run `npm run inventory` for the current figures rather than trusting this paragraph. Arabic: 83 AI-assisted drafts, none reviewed yet, each shown with a visible draft label ([`../docs/translation-status.md`](../docs/translation-status.md)). Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
+Run `npm run inventory` for the current figures rather than trusting this paragraph. Arabic: 83 AI-assisted translations, all marked reviewed on 2026-11-07 on the project owner's confirmation (D-24), so none carries a draft label; a draft added later is labelled again ([`../docs/translation-status.md`](../docs/translation-status.md)). Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
 
 ## Structure
 
@@ -50,7 +50,7 @@ src/
 ├── content/{en,ar}/   Page copy per section (typed content collection; describes the site, never the researcher)
 ├── data/
 │   ├── approved/        Public-content manifest (approval, relationships) + approved data (BibTeX, profile, areas, projects, courses, talks, methods, datasets, CV, metrics)
-│   ├── translations/    ar.json: Arabic drafts (status per entry)
+│   ├── translations/    ar.json: Arabic translations (status per entry: draft or reviewed)
 │   ├── review/          open-issues.json: data questions (DQ-01…) and the decisions on them
 │   └── public-settings/ launch.json (site name, canonical origin, indexing switch)
 ├── i18n/ui.ts         Interface strings (EN/AR)
@@ -194,7 +194,7 @@ The site is an installable web app (PWA). The browser installs it, with no app s
 - **Both** have scope `/`, so the language switcher stays inside the app. Both use `display: standalone` on the pine colour `#101e19`, the same icons and four shortcuts: publications, research, lab and contact, named as in the menu.
 - **Each page** links the manifest of its own language and sets `apple-mobile-web-app-title`.
 
-**The install button** (`src/components/app/AppInstall.astro`): one floating "Install the app" / «ثبّت التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, level with it. On screens up to 40rem both are round icon buttons, and the label stays for screen readers. It is `hidden` in the HTML and shows only when the browser can install the site.
+**The install button** (`src/components/app/AppInstall.astro`): one floating "Download the app" / «حمّل التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, level with it. Its label shows next to the download icon at every width (D-24); on screens up to 40rem the launcher is a round icon. It is `hidden` in the HTML and shows only when the browser can install the site.
 
 | browser | what happens |
 | --- | --- |

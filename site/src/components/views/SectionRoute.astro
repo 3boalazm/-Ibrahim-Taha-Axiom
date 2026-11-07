@@ -57,7 +57,7 @@ const talkPapers = (id: string) =>
 const cui = t(cl);
 // Arabic pages that show unreviewed drafts say so once, near the top (never claiming review).
 type MaybeText = LocalizedText | null | undefined;
-const draftIn = (vs: MaybeText[]) => ar && vs.some((v) => !!v && !v.ar && !!arDraft(v.en));
+const draftIn = (vs: MaybeText[]) => ar && vs.some((v) => !!v && !v.ar && !!arDraft(v.en)?.draft);
 const pageDrafts =
   {
     about: () =>

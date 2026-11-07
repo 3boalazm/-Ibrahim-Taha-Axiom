@@ -60,6 +60,13 @@
       "by": "The project owner, in the project chat",
       "scope": "profile.community and projects.statistical-analysis-egypt.links: adds the community's WhatsApp group (https://chat.whatsapp.com/JPc3Xs3WTeXHnjdUYnHWXd); replaces the Facebook page link with the one the owner supplied (https://www.facebook.com/share/1bgFz5pT2C/, previously https://www.facebook.com/share/1B3DbXjPh7/); corrects the Telegram link from channel to group. The project summary now names WhatsApp and says group.",
       "note": "The owner sent the three links on 2026-11-07 and asked for a community section on the home page. Telegram's public preview of t.me/StatisticalAnalysisEgypt describes a group (\"هذه المجموعة\", members and online counts). The WhatsApp invite page refused an automated request (HTTP 403), so no name or member count is published for it. The Facebook group link is unchanged. See research/data-source-register.md and decision D-23."
+    },
+    {
+      "date": "2026-11-07",
+      "status": "Arabic translations marked reviewed",
+      "by": "The project owner, in the project chat",
+      "scope": "src/data/translations/ar.json: all 83 entries and the file itself set to status reviewed. The Arabic interface text of the lab is covered too. The site no longer shows the draft note, the inline draft labels or the footer's translation-status line, and the site assistant no longer describes the Arabic as unreviewed.",
+      "note": "The owner wrote «شيل انو اي نص في الموقع مش متراجع الموقع اتراجع كله بالفعل» (remove any statement that text on the site is unreviewed; the whole site has already been reviewed). The reviewer was not named. The translations remain AI-assisted in origin (the method field of ar.json). An entry added later with status draft would be labelled again. Decision D-24."
     }
   ],
   "profile": {
@@ -168,7 +175,7 @@
   "translations": {
     "ar": {
       "showDrafts": true,
-      "note": "AI-assisted Modern Standard Arabic drafts prepared on 2026-11-06 and not yet reviewed by the researcher. Each is shown with the label “ترجمة مبدئية — لم يراجعها الباحث بعد”. Set showDrafts to false to hide them; English fallbacks then return."
+      "note": "AI-assisted Modern Standard Arabic translations, prepared on 2026-11-06 (two added on 2026-11-07). On 2026-11-07 the project owner confirmed in the project chat that the whole site has been reviewed («الموقع اتراجع كله بالفعل») and asked that no text be shown as unreviewed, so every entry is marked reviewed and shown without a label. An entry added later with status draft is labelled “ترجمة مبدئية — لم يراجعها الباحث بعد”; set showDrafts to false to hide such drafts (English fallbacks then return)."
     }
   },
   "relationships": [

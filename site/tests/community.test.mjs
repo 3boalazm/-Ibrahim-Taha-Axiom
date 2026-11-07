@@ -2,7 +2,8 @@
 // profile.community is the single source of the community's links: the home page's community
 // section, the contact page and the site assistant all read it. The home page stays light:
 // compact research tiles and publications, no contents index; the full detail stays on each
-// section's own page.
+// section's own page. Since D-24 the section sits right after the hero, and the Arabic text of
+// the site is reviewed, so nothing in it carries a draft label.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { data, page, routes } from './helpers.mjs';
@@ -56,9 +57,10 @@ test('the community: its WhatsApp group, the Facebook page link the owner sent, 
   assert.match(project.summary.en, /on Facebook, Telegram and WhatsApp,/);
   assert.match(project.summary.en, /The Telegram group had 46,523 members on 5 November 2026\.$/);
   // The change is on the audit trail, after the earlier records (which stay as they were).
-  const last = manifest.approvalHistory.at(-1);
-  assert.equal(last.date, '2026-11-07');
-  assert.ok(last.scope.includes(WHATSAPP) && last.scope.includes(FB_PAGE) && last.scope.includes(FB_PAGE_SUPERSEDED));
+  const record = manifest.approvalHistory.find((h) => h.status === 'community links updated');
+  assert.ok(record, 'the community change is on the audit trail');
+  assert.equal(record.date, '2026-11-07');
+  assert.ok(record.scope.includes(WHATSAPP) && record.scope.includes(FB_PAGE) && record.scope.includes(FB_PAGE_SUPERSEDED));
 });
 
 test('both home pages have a community section with every community link, in order', () => {
@@ -82,17 +84,20 @@ test('both home pages have a community section with every community link, in ord
     assert.equal((sec.match(/class="community__name"[^>]*>[^<]+<\/span> <span class="community__host/g) ?? []).length, 4, `${route}: name and host apart`);
     // The approved project entry is one link away.
     assert.ok(sec.includes(`href="${base}/projects/#statistical-analysis-egypt"`), `${route}: project link`);
-    // After the metrics, before the invitation to write.
-    assert.ok(at(html, 'aria-labelledby="mcards-title"', route) < at(html, 'id="community"', route), `${route}: after the metrics`);
-    assert.ok(at(html, 'id="community"', route) < at(html, 'id="cta-heading"', route), `${route}: before the CTA`);
+    // Right after the hero, ahead of every other home section (D-24: the owner moved it up).
+    const community = at(html, 'id="community"', route);
+    assert.ok(at(html, 'aria-labelledby="hero-title"', route) < community, `${route}: after the hero`);
+    for (const next of ['aria-labelledby="idp-title"', 'aria-labelledby="disc-title"', 'aria-labelledby="selected-heading"', 'aria-labelledby="lteaser-title"', 'aria-labelledby="mcards-title"', 'id="cta-heading"']) {
+      assert.ok(community < at(html, next, route), `${route}: before ${next}`);
+    }
   }
 });
 
-test('the lead is the approved project summary; in Arabic, its labelled draft', () => {
+test('the lead is the approved project summary; in Arabic, its reviewed translation with no draft label', () => {
   assert.ok(communityOf(page('/')).includes(project.summary.en));
   const ar = page('/ar/');
-  assert.match(communityOf(ar), /<p data-draft[^>]*class="community__lead is-draft"[^>]*>[^<]*واتساب/);
-  assert.ok(ar.includes('ترجمة مبدئية'), 'the Arabic home says once that it shows unreviewed drafts');
+  assert.match(communityOf(ar), /<p[^>]*class="community__lead"[^>]*>[^<]*واتساب/);
+  assert.doesNotMatch(ar, /data-draft|is-draft|ترجمة مبدئية/, 'nothing on the Arabic home is labelled unreviewed (D-24)');
 });
 
 test('no page calls Telegram a channel or shows the superseded Facebook link; the contact page has WhatsApp', () => {

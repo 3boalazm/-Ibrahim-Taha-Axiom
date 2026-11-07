@@ -9,7 +9,6 @@
  * The figures are drawn by src/lab/draw.ts on the server for the first state
  * and redrawn in the browser from payload values; no model code ships.
  */
-import DraftNote from '../shared/DraftNote.astro';
 import { CLAIMS, DEFAULT_RHO, LAB_PAYLOAD, LAMBDA_GRID, PRESETS, REGIMES, STATES, TRUTH } from '../../lab/snapshots';
 import { coefDomain, coefSvg, cvSvg, fmtRho, mcSvg } from '../../lab/draw';
 import { getPublication } from '../../utils/publications';
@@ -236,7 +235,6 @@ const startRegime = regimeOf(start.rho);
     <h2 id="lab-heading" class="lab__title">{copy.title}</h2>
     <p class="lab__lead">{copy.lead}</p>
     <p class="lab__disclaimer" role="note" data-lab-disclaimer>{copy.disclaimer}</p>
-    {ar && <DraftNote lang={lang} />}
   </div>
 
   <div class="container lab__grid">

@@ -109,6 +109,12 @@ export const arDrafts = validate(TranslationFileSchema, arDraftsRaw, 'translatio
   if (dupes.length) throw new Error(`[content gate] translations/ar.json repeats English source texts: ${dupes.map((d) => d.ref).join(', ')}`);
 }
 export const showArDrafts = manifest.translations.ar.showDrafts;
+/**
+ * Arabic entries still awaiting review. The draft notes, the inline labels and the
+ * footer's translation line appear only while there is at least one; reviewed text
+ * carries no label.
+ */
+export const pendingArDrafts = arDrafts.entries.filter((e) => e.status !== 'reviewed').length;
 const draftMap = new Map(arDrafts.entries.map((e) => [e.en, e]));
 
 /** The Arabic draft for an exact English string, when drafts are shown. */

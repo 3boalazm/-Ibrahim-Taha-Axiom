@@ -40,7 +40,7 @@ export async function buildKnowledge(): Promise<ChatKnowledge> {
   out.push(
     `SITE: ${SITE_NAME}, the bilingual (English and Arabic) academic website of ${en(profile.name) || 'the researcher'}.`,
     launch.canonicalOrigin ? `Address: ${launch.canonicalOrigin}` : '',
-    'Every page also exists in Arabic under /ar/ (for example /ar/publications/). Arabic text that is not approved is an AI-assisted draft, labelled on the page as not yet reviewed by the researcher.',
+    'Every page also exists in Arabic under /ar/ (for example /ar/publications/).',
   );
 
   // ------------------------------------------------------------------ profile
@@ -170,7 +170,11 @@ export async function buildKnowledge(): Promise<ChatKnowledge> {
   if (noAbstract.length) out.push(`- ${noAbstract.length} publications have no abstract on the site.`);
   for (const i of openIssues.issues.filter((x) => x.status === 'open')) out.push(`- Open question ${i.id}: ${i.question} Current state: ${i.current}`);
   const drafts = arDrafts.entries.filter((e) => e.status !== 'reviewed').length;
-  out.push(`- Arabic: ${drafts} pieces of Arabic text are AI-assisted drafts not yet reviewed by the researcher; publication titles and abstracts are never translated.`);
+  out.push(
+    drafts
+      ? `- Arabic: ${drafts} pieces of Arabic text are AI-assisted drafts not yet reviewed by the researcher, labelled as such on the page; publication titles and abstracts are never translated.`
+      : '- Arabic: the Arabic text of the site has been reviewed. Publication titles and abstracts are never translated, and journal and personal names stay in their original form.',
+  );
   const sectionTitles = await Promise.all(SECTION_ORDER.map(async (key) => (await pageCopy(key, 'en')).title));
   out.push(`- The site's sections are exactly: ${sectionTitles.join(', ')}. There is no news, events or blog section.`);
 

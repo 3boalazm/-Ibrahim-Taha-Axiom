@@ -307,6 +307,31 @@ The work started from `main` at `fb9289f`. Meanwhile the owner's three commits f
 | Screenshots | 8 in [`screenshots/home-community/`](screenshots/home-community/), all viewed |
 | Not tested | Real devices, Safari and Firefox engines, screen readers. Also the Facebook and WhatsApp links themselves: Facebook is behind a login and is not fetched by policy, and the WhatsApp invite page refuses automated requests. Telegram's public preview was read once, on 2026-11-07 |
 
+## Run for the reviewed Arabic text, the community section and the install label (2026-11-07)
+
+The owner asked: «ارفع الكوميونتي تحت الترجمة وشيل انو اي نص في الموقع مش متراجع الموقع اتراجع كله بالفعل وزرار التحميل اللي تحت عالشمال دا اكتب مع الايقون حمل التطبيق» ("move the community up, under the translation [note], and remove [the notice] that any text on the site is unreviewed: the whole site has already been reviewed. And on the download button down on the left, write «حمّل التطبيق» with the icon"). Decision D-24. Environment: the sandbox's Node 22 and Chromium 153, on the built site. `main` is `5a574dd` (production), VERSION `56e28d9172c7`.
+
+What changed:
+- All 83 entries of `translations/ar.json` are `reviewed`. `reviewedBy` quotes the owner and names no reviewer, since none was named. The manifest's approval history records the change.
+- Gone from the pages: the inline draft labels and their tooltips; the draft notes on the home page, the section pages and the lab; the Arabic footer's «حالة الترجمة» line; the draft badge in search results and the graph; and the assistant's line about unreviewed drafts. The labelling code stays, so Arabic text added later as a draft is labelled again.
+- The Arabic footer keeps one sentence of that line, which is not about review: «عناوين المنشورات وأسماء الدوريات والأشخاص تبقى بلغتها الأصلية.»
+- The community section is now the first section after the hero, in both languages.
+- The install button reads "Download the app" / «حمّل التطبيق» next to its icon at every width.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages. `sw.js` VERSION `9631f55096eb` |
+| Unreviewed wording in the built site | Every built page, and the 3 JSON files the pages load (two search indexes and the assistant's knowledge), searched for «ترجمة مبدئية», «لم يراجع», «بانتظار المراجعة», «حالة الترجمة», "Draft translation" and "not yet reviewed", and the pages also for draft markup:<br>- `main`: the wording on 67 of 67 pages (the 34 English ones through the search and graph data), draft markup on 33, and the wording in 1 JSON file (the assistant's knowledge).<br>- This branch: 0 everywhere |
+| `npm test` | 107 tests, all pass, as many as on `main`: two rewritten, four updated.<br>- `routes-seo`: "no page says its text is unreviewed" replaces "Arabic draft text is labelled and the translation status is visible". It runs the scan above on every build, and checks that the Arabic footer keeps the original-language sentence and that English pages have no such line.<br>- `community`: the section comes right after the hero and before every other home section; the Arabic lead has no draft label.<br>- `governance`: every entry is reviewed, `reviewedBy` quotes the owner and says that the reviewer was not named, and the approval record exists.<br>- `data-quality`: the three entries edited for DQ-07, DQ-09 and DQ-13 are reviewed.<br>- `app`: each page's install label reads "Download the app" or «حمّل التطبيق» |
+| What the tests catch | Four deliberate faults, each built and tested, then restored byte for byte:<br>- One entry (the community summary) set back to `draft`: three tests fail (the community lead, governance and the scan). That build showed the label, the home page's note and the footer line again, with «(1 نصًّا مبدئيًا بانتظار المراجعة، و82 نصًّا رُوجع.)». So a real draft is still labelled.<br>- The community section put back after the metrics: the order test fails.<br>- The lab's draft note put back: the scan fails.<br>- The old Arabic label «ثبّت التطبيق»: the install-label test fails |
+| `npm run qa`, `npm run lab:verify` | Both pass: 67 pages, 152 files, 32 external links. The lab verified 15 states × 100 replicates |
+| Assistant knowledge | Regenerated: one line changed. It now says that the Arabic text of the site has been reviewed, and names no reviewer. 36,436 → 36,341 characters |
+| `E2E_REQUIRED=1 npm run test:e2e` | 204 checks, all pass on the final build: keyboard 37, motion 41, chat 39, app 87. Changed in `app`, all with a simulated `beforeinstallprompt` (the sandbox's Chromium sends none):<br>- English at 1280: "Download the app" next to the icon, a 181 px pill at the bottom left (16–197 px; the assistant at 1081–1264), level with the launcher, 16 px from the bottom.<br>- Arabic at 390: «حمّل التطبيق» next to the icon, 125 px, at 249–374 of 390 (bottom right), level with the launcher and not touching it.<br>- 320 px: the labelled button and the round launcher fit, overflow 0 px.<br>- At the end of a page the button stays below the footer's last line (text ends at 544 px, button starts at 576 px) |
+| axe-core 4.14.0 | 24 runs, all 0 violations, with the install button showing: `/`, `/ar/`, `/lab/`, `/ar/lab/`, `/ar/research/` and `/ar/about/`, each in light and dark at 1280 and 390 px |
+| Lighthouse 12.8.2 (`main` → this) | Default mobile settings, medians of 3 alternating runs, both builds on the same local server with gzip:<br>- `/`: performance 91 → 91, LCP 2.87 → 2.88 s, CLS 0.0183 → 0.0183, TBT 0 → 0, 424.0 → 423.8 KiB.<br>- `/ar/`: 78 → 77, LCP 4.10 → 4.14 s, CLS 0.0409 → 0.0458, TBT 0 → 0, 663.8 → 663.4 KiB. Single runs scored 74–78 on `main` and 76–77 here, so the difference is within the spread.<br>- The LCP element is the hero's text in both builds. Accessibility, best practices and SEO 100 on all four |
+| Screenshots | 10 in [`screenshots/review-and-install/`](screenshots/review-and-install/), all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers. A real install prompt: the sandbox's Chromium never offers one, so a simulated event stood in, as in the end-to-end tests |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
@@ -320,7 +345,7 @@ Mark each cell after checking it in a real browser.
 
 Per cell:
 
-1. **Home:** the hero figure draws once on load and then responds to the pointer and the arrow keys (the readout is exact at every step), identity tabs switch, the metric cards show the source and date, the community tiles open the Facebook page and group, the Telegram group and the WhatsApp group, and nothing else animates by itself.
+1. **Home:** the hero figure draws once on load and then responds to the pointer and the arrow keys (the readout is exact at every step), identity tabs switch, the metric cards show the source and date, the community section comes right after the hero and its tiles open the Facebook page and group, the Telegram group and the WhatsApp group, and nothing else animates by itself.
 2. **Search:** Ctrl/⌘ K and `/` open it, Escape closes it and focus returns. Try `ridge`, `الحرف`, `Abonazel ٢٠٢٣` and `ridge انحدار`.
 3. **Publications:**
    - filter by type and by a year bar; set a co-author and an area;
@@ -334,7 +359,7 @@ Per cell:
    - the methods panel opens;
    - the "not the published COM-Poisson method" statement is visible.
 7. **Contact:** each path prefills the subject, and a short message is refused. The mailto opens a draft and nothing claims to be "sent".
-8. **Arabic only:** draft labels are visible; DOIs, URLs and identifiers read left to right; ticks read −3 … 3; the footer shows «حالة الترجمة».
+8. **Arabic only:** no draft label, draft note or «حالة الترجمة» line anywhere (D-24); DOIs, URLs and identifiers read left to right; ticks read −3 … 3; the footer says that titles and names keep their original language.
 9. **Reduced motion** (OS setting): there are no transitions or entrances, and every element is visible on first paint; the hero, graph, explorer and lab still update to the same exact values.
 10. **Keyboard only:** every control is reachable, and the focus ring is visible on both themes.
 11. **Site assistant:**

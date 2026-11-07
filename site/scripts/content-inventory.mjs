@@ -69,14 +69,14 @@ if (process.argv.includes('--json')) {
     .join(', ');
   const rows = [
     ['Bibliography entries', `${inv.publications.total} (${typeList})`],
-    ['Research areas', `${inv.researchAreas.total} (approved Arabic: ${inv.researchAreas.approvedArabicTitles} titles, ${inv.researchAreas.approvedArabicSummaries} summaries; the rest show labelled drafts)`],
+    ['Research areas', `${inv.researchAreas.total} (approved Arabic: ${inv.researchAreas.approvedArabicTitles} titles, ${inv.researchAreas.approvedArabicSummaries} summaries; the rest from translations/ar.json)`],
     ['Projects', inv.projects],
     ['Courses (teaching)', inv.courses],
     ['Talks', inv.talks],
     ['Methods', inv.methods],
     ['Datasets', inv.datasets],
     ['Verified relationships', `${inv.relationships.total} (${Object.entries(kindPair).map(([k, n]) => `${n} ${k}`).join(', ')})`],
-    ['Arabic drafts', `${inv.arabicDrafts.total} (${inv.arabicDrafts.reviewed} reviewed)`],
+    ['Arabic translations (translations/ar.json)', `${inv.arabicDrafts.total}: ${inv.arabicDrafts.reviewed} reviewed, ${inv.arabicDrafts.total - inv.arabicDrafts.reviewed} drafts awaiting review`],
     ['Open data-quality issues', `${inv.openIssues.open} of ${inv.openIssues.total}`],
     ['Researcher approval', `${inv.approval.status}, ${inv.approval.date}`],
     ['Built HTML files', pages === null ? '(run npm run build)' : `${pages} (EN + AR pages and 404)`],

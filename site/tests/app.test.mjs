@@ -149,6 +149,9 @@ test('one install button per page, hidden in the HTML: without JS nothing shows'
     assert.equal(buttons.length, 1, `${route}: the floating button only`);
     assert.match(buttons[0], /\shidden[\s>]/, `${route}: ${buttons[0]}`);
     assert.match(buttons[0], /class="[^"]*\bapp-install\b/, `${route}: styled as the floating button`);
+    // the label next to the icon, in the owner's words (D-24)
+    const lang = html.match(/<html[^>]*\blang="([^"]+)"/)?.[1];
+    assert.equal(html.match(/class="app-install__label"[^>]*>([^<]+)</)?.[1], lang === 'ar' ? 'حمّل التطبيق' : 'Download the app', `${route}: label`);
     // the owner asked for one press to install: no instructions dialog, no menu or footer copies
     assert.ok(!/data-app-help|data-app-install-slot|site-footer__install/.test(html), `${route}: leftover install UI`);
   }

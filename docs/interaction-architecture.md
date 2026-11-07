@@ -76,12 +76,12 @@ The home page is made of these sections:
 - **Hero:** name, role and positioning, with CTAs to publications and research areas. The figure is a real standard normal density: pointer, touch or arrow keys move z, and Φ(z) is computed, not drawn.
   - On first view the figure draws itself once: axis, ticks, curve, then the area accumulates up to z and the marker settles. The readout is exact from the first frame.
   - After that nothing moves unless the reader moves z; the marker then glides, and every frame is exact.
+- **Community:** right after the hero; the owner moved it up on 2026-11-07 (D-24). The approved project's name and summary (in Arabic, its translation from `translations/ar.json`), a link to the project, and one tile per community link in `profile.community`: the platform and the kind of space in the page language, the platform's mark and the host. The links open in the same tab, like the site's other external links (D-23).
 - **Identity panel:** the approved portrait, then tabs (ARIA tabs, added by JS only) for affiliations, education, interests, academic profiles and contact.
 - **Research discovery:** one compact tile per area (its number, title and count of linked publications, from verified links) and the graph teaser. Area images, summaries and publication previews are on `/research/`, projects on `/projects/` (D-23).
 - **Selected publications:** three, compact: year, type, title, authors and venue. Citations, abstracts and links are on each publication's page.
 - **Lab teaser:** a chart drawn from the payload's computed spreads.
 - **Metric cards:** OpenAlex and ResearchGate, each with its own source, retrieval date and definitions, never combined.
-- **Community:** the approved project's name and summary (in Arabic, its labelled draft), a link to the project, and one tile per community link in `profile.community`: the platform and the kind of space in the page language, the platform's mark and the host. The links open in the same tab, like the site's other external links (D-23).
 - **Contact paths.** The header and the footer carry the site's contents; the home page's own contents index was removed in D-23.
 
 ## Site assistant (corner launcher, every page)
@@ -107,7 +107,7 @@ The home page is made of these sections:
 ## Install as an app (floating button, opposite the assistant)
 
 - **What it is:** the site installs from the browser as an app with its own window and icon: an English app starting at `/` and an Arabic one starting at `/ar/`. Pages already opened stay readable offline. Details: [`site/README.md`](../site/README.md#install-as-an-app); decision D-21.
-- **Where:** one floating "Install the app" / «ثبّت التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, at the same height and distance from the bottom. On screens up to 40rem it is a round icon button like the launcher, and its label stays for screen readers. The owner asked for it there on 2026-11-07, in place of the first version's footer and phone-menu buttons and written steps.
+- **Where:** one floating "Download the app" / «حمّل التطبيق» button in the bottom inline-start corner, opposite the assistant's launcher: bottom right in Arabic, bottom left in English, at the same height and distance from the bottom. Its label shows next to the download icon at every width, phones included, on one line: on 2026-11-07 the owner asked for «حمّل التطبيق» to be written next to the icon (D-24). Until then it was a round icon button on screens up to 40rem. The owner asked for it there on 2026-11-07, in place of the first version's footer and phone-menu buttons and written steps.
 - **When it shows:** only after a Chromium browser (Chrome, Edge) fires `beforeinstallprompt`, that is, when the browser itself can install the site. One press opens the browser's install prompt, and the button hides, since there is one prompt per event. The browser's own confirmation always remains: no site can install itself.
   - Safari (iPhone, iPad, Mac) and Firefox give pages no install prompt, so they get no button. Installing there goes through the browser's own menu (Safari: Share, then "Add to Home Screen").
   - Hidden inside the installed app (`display-mode: standalone` or `navigator.standalone`; the page then sets `html[data-app="standalone"]`), and without JavaScript, because the button is `hidden` in the HTML.
