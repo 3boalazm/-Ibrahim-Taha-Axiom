@@ -6,7 +6,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { DIST, ROOT, data, page, routes } from './helpers.mjs';
 import { BUILT_PATH, MODULE_PATH, renderKnowledgeModule } from '../scripts/chat-knowledge.mjs';
-import { DEFAULT_MODEL, LIMITS, buildContents, cleanKey, createRateLimiter, endpointsFor, handleChat, validateBody } from '../server/chat-core.mjs';
+import { DEFAULT_MODEL, FALLBACK_MODELS, LIMITS, buildContents, cleanKey, createRateLimiter, endpointsFor, handleChat, thinkingFor, validateBody } from '../server/chat-core.mjs';
 import knowledge from '../server/knowledge.mjs';
 
 const built = JSON.parse(readFileSync(BUILT_PATH, 'utf8'));
@@ -139,13 +139,42 @@ test('assistant server: sends the grounded prompt to the right Google endpoint, 
   assert.match(system, /reading the page \/ar\/talks\/ with the interface in Arabic/);
   assert.deepEqual(body.contents.map((c) => c.role), ['user', 'model', 'user']);
   assert.equal(body.contents.at(-1).parts[0].text, 'هل قدّم الأوراق بنفسه؟');
-  assert.deepEqual(body.generationConfig, { temperature: 0.2, maxOutputTokens: LIMITS.maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } });
+  assert.deepEqual(body.generationConfig, { temperature: 0.2, maxOutputTokens: LIMITS.maxOutputTokens, thinkingConfig: { thinkingLevel: 'MINIMAL' } });
 
   const studio = await chat(ask, { env: { GEMINI_API_KEY: FAKE_STUDIO, GEMINI_MODEL: 'gemini-test-model' } });
   assert.equal(studio.sent[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent');
-  assert.equal(studio.sent[0].body.generationConfig.thinkingConfig, undefined, 'the thinking budget is set only for Gemini 2.5 Flash');
+  assert.equal(studio.sent[0].body.generationConfig.thinkingConfig, undefined, 'thinking is set only for models known to accept it');
+  assert.deepEqual(thinkingFor('gemini-2.5-flash'), { thinkingBudget: 0 });
+  assert.deepEqual(thinkingFor('gemini-3.5-flash-lite'), { thinkingLevel: 'MINIMAL' });
+  assert.deepEqual(thinkingFor('gemini-3.8-flash'), { thinkingLevel: 'LOW' }, 'gemini-3.8-flash has no MINIMAL level');
+  assert.equal(thinkingFor('gemini-3.8-flash-lite'), null);
   assert.deepEqual(endpointsFor(FAKE_STUDIO).map((e) => e.provider), ['gemini-api']);
   assert.deepEqual(endpointsFor(FAKE_AQ).map((e) => e.provider), ['gemini-api', 'vertex-express']);
+});
+
+test('assistant server: a model Google no longer offers (404) falls back to the next current model', async () => {
+  const logged = [];
+  const original = console.error;
+  console.error = (...a) => logged.push(a.join(' '));
+  try {
+    const notFound = () => Response.json({ error: { code: 404, status: 'NOT_FOUND' } }, { status: 404 });
+    const modelOf = (url) => decodeURIComponent(url.match(/models\/([^:]+):/)[1]);
+    const [backup] = FALLBACK_MODELS;
+
+    const retired = await chat(ask, { env: { GEMINI_API_KEY: FAKE_STUDIO, GEMINI_MODEL: 'gemini-retired' }, upstream: (url) => (modelOf(url) === backup ? reply('from backup') : notFound()) });
+    assert.equal(retired.json.answer, 'from backup');
+    assert.deepEqual(retired.sent.map((s) => modelOf(s.url)), ['gemini-retired', DEFAULT_MODEL, backup], 'GEMINI_MODEL first, then the defaults in order');
+    assert.equal(retired.sent[2].body.generationConfig.thinkingConfig?.thinkingLevel, 'MINIMAL', 'each model gets its own request');
+
+    // An "AQ." key: a 404 moves to the next model, not to Vertex AI.
+    const aq = await chat(ask, { upstream: notFound });
+    assert.deepEqual(aq.sent.map((s) => [new URL(s.url).host, modelOf(s.url)]), [['generativelanguage.googleapis.com', DEFAULT_MODEL], ['generativelanguage.googleapis.com', backup]]);
+    assert.deepEqual(aq.json, { error: 'upstream_model' });
+    assert.equal(logged.filter((l) => l.includes('upstream status 404')).length, 2 + 2, 'one log line per attempt');
+    assert.ok(logged.some((l) => l.includes(`model=${backup}`)));
+  } finally {
+    console.error = original;
+  }
 });
 
 test('assistant server: an "AQ." key refused by the Gemini API is tried once on Vertex AI', async () => {

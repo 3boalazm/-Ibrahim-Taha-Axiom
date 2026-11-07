@@ -3,7 +3,7 @@
  * the site content it answers from is server/knowledge.mjs.
  *
  * Needs the GEMINI_API_KEY environment variable in the Vercel project (never in the code).
- * Optional: GEMINI_MODEL (default gemini-2.5-flash) and CHAT_ALLOWED_ORIGINS (comma-separated
+ * Optional: GEMINI_MODEL (tried first; default gemini-3.6-flash) and CHAT_ALLOWED_ORIGINS (comma-separated
  * extra origins, e.g. a custom domain). Without a key it answers 503 "not_configured".
  */
 import { handleChat } from '../server/chat-core.mjs';

@@ -154,7 +154,7 @@ Every page has a small chat panel; its launcher sits in the bottom corner ("Ask 
 
 **Setup (owner).** Add `GEMINI_API_KEY` in Vercel → Project → Settings → Environment Variables, for Production and Preview, then redeploy. Until then the panel says the assistant is not configured, and nothing else is affected.
 - **Optional variables:**
-  - `GEMINI_MODEL`: default `gemini-2.5-flash`.
+  - `GEMINI_MODEL`: tried first when set. The default is `gemini-3.6-flash`, then `gemini-3.5-flash-lite` if Google answers that a model is not found (retired), so a model retirement does not take the assistant down.
   - `CHAT_ALLOWED_ORIGINS`: comma-separated extra origins. The deployment's own host and the production address are always allowed, so a custom domain needs nothing.
 - **Key types:** any Google AI Studio key works, both the older `AIza…` keys and the newer `AQ.` keys. Every key is sent to the Gemini API first. A Vertex AI express-mode key also starts with `AQ.`, so an `AQ.` key that the Gemini API refuses is tried once on Vertex AI. `GOOGLE_API_KEY` is accepted as an alternative name.
 - **When it fails:** the panel shows a generic error. The Vercel runtime log has one line per attempt, for example `[chat] upstream status 403 provider=gemini-api google_status=PERMISSION_DENIED reason=SERVICE_DISABLED`. `SERVICE_DISABLED` means the API is not enabled in the key's Google Cloud project. `API_KEY_INVALID` means the key is wrong. After any change to the key in Vercel, redeploy.

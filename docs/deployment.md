@@ -62,7 +62,7 @@ The template is [`.env.example`](../.env.example). Real values go in a local `.e
 | `CONTACT_FORM_SECRET` | site (server route) | ✅ | ✅ | ✅ | Yes |
 | `PUBLIC_ANALYTICS_ID` | site | ✅ | ❌ | ❌ | No |
 | `GEMINI_API_KEY` | site assistant (`site/api/chat.mjs`) | ✅ | ✅ | optional | Yes |
-| `GEMINI_MODEL` | site assistant (default `gemini-2.5-flash`) | optional | optional | optional | No |
+| `GEMINI_MODEL` | site assistant (tried first; default `gemini-3.6-flash`, backup `gemini-3.5-flash-lite`) | optional | optional | optional | No |
 | `CHAT_ALLOWED_ORIGINS` | site assistant (extra origins, comma-separated; the deployment's own host and the production address are always allowed) | optional | optional | optional | No |
 | `OPENALEX_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`, `INGEST_CONTACT_EMAIL` | local ingestion scripts only | — | — | — | Yes (keys) |
 

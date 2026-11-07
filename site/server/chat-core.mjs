@@ -13,7 +13,13 @@
  * - Abuse limits: same-site Origin, a per-IP rate limit, size limits, a capped reply.
  */
 
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
+/**
+ * Current stable Gemini models (Google's deprecations page, November 2026). If Google answers
+ * 404 for a model (retired, or not offered to the key), the next one is tried, so a retirement
+ * does not take the assistant down. GEMINI_MODEL, when set, is tried first.
+ */
+export const DEFAULT_MODEL = 'gemini-3.6-flash';
+export const FALLBACK_MODELS = Object.freeze(['gemini-3.5-flash-lite']);
 export const CANONICAL_ORIGIN = 'https://ibrahim-taha-axiom.vercel.app';
 export const LIMITS = Object.freeze({
   body: 24_000, // bytes of request JSON
@@ -138,10 +144,23 @@ export function endpointsFor(key, model = DEFAULT_MODEL) {
   return key.startsWith('AIza') ? [geminiApi] : [geminiApi, vertex];
 }
 
+/**
+ * Thinking tokens count against maxOutputTokens, and these models think by default, so a
+ * long thought could leave no room for the answer. Answers here are lookups in the site
+ * content, so thinking is kept to the minimum each model allows. A model not listed keeps
+ * its default (setting the wrong field is an error from Google).
+ */
+export function thinkingFor(model) {
+  if (/^gemini-2\.5-flash/.test(model)) return { thinkingBudget: 0 };
+  if (/^gemini-3\.(5|6)-flash/.test(model)) return { thinkingLevel: 'MINIMAL' };
+  if (/^gemini-3\.8-flash(?!-lite)/.test(model)) return { thinkingLevel: 'LOW' };
+  return null;
+}
+
 export function buildRequest({ knowledge, lang, page, question, history, model = DEFAULT_MODEL }) {
   const generationConfig = { temperature: 0.2, maxOutputTokens: LIMITS.maxOutputTokens };
-  // Gemini 2.5 Flash "thinks" by default, and thinking tokens count against the reply cap.
-  if (/^gemini-2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  const thinkingConfig = thinkingFor(model);
+  if (thinkingConfig) generationConfig.thinkingConfig = thinkingConfig;
   return {
     systemInstruction: { parts: [{ text: systemInstruction({ knowledge, lang, page }) }] },
     contents: buildContents(history, question),
@@ -224,38 +243,42 @@ export async function handleChat(request, { env = {}, knowledge, fetch: fetchImp
   if (!key) return json({ error: 'not_configured' }, 503);
   if (!knowledge?.text) return json({ error: 'knowledge_unavailable' }, 503);
 
-  const model = env.GEMINI_MODEL || DEFAULT_MODEL;
-  const endpoints = endpointsFor(key, model);
-  const payload = JSON.stringify(buildRequest({ knowledge: knowledge.text, model, ...checked.value }));
-  // One deadline for the whole request, fallback included.
+  const models = [...new Set([env.GEMINI_MODEL?.trim(), DEFAULT_MODEL, ...FALLBACK_MODELS].filter(Boolean))];
+  // One deadline for the whole request, fallbacks included.
   const signal = AbortSignal.timeout(LIMITS.timeoutMs);
   let res;
-  for (const [i, { url, provider }] of endpoints.entries()) {
-    try {
-      res = await fetchImpl(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-        body: payload,
-        signal,
-      });
-    } catch (e) {
-      const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
-      console.error(`[chat] upstream ${timedOut ? 'timeout' : 'network error'} provider=${provider}`);
-      return json({ error: timedOut ? 'upstream_timeout' : 'upstream_unreachable' }, timedOut ? 504 : 502);
+  attempts: for (const [m, model] of models.entries()) {
+    const endpoints = endpointsFor(key, model);
+    const payload = JSON.stringify(buildRequest({ knowledge: knowledge.text, model, ...checked.value }));
+    for (const [i, { url, provider }] of endpoints.entries()) {
+      try {
+        res = await fetchImpl(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+          body: payload,
+          signal,
+        });
+      } catch (e) {
+        const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+        console.error(`[chat] upstream ${timedOut ? 'timeout' : 'network error'} provider=${provider} model=${model}`);
+        return json({ error: timedOut ? 'upstream_timeout' : 'upstream_unreachable' }, timedOut ? 504 : 502);
+      }
+      if (res.ok) break attempts;
+      // Logged: the HTTP status, which Google endpoint and model were used, and Google's fixed
+      // error codes (never its message text, the key or the question). This names the cause in
+      // one look, e.g. "status 403 provider=gemini-api ... reason=SERVICE_DISABLED".
+      const info = await upstreamErrorInfo(res);
+      console.error(
+        `[chat] upstream status ${res.status} provider=${provider} model=${model} google_status=${info.status ?? '-'} reason=${info.reason ?? '-'}${rawKey !== key ? ' key_cleaned=yes' : ''}`,
+      );
+      const refused = res.status === 401 || res.status === 403;
+      // Refused: the key may belong to the next endpoint. Model not found: try the next model.
+      if (refused && i < endpoints.length - 1) continue;
+      if (res.status === 404 && m < models.length - 1) continue attempts;
+      if (res.status === 429) return json({ error: 'busy' }, 429, { 'retry-after': '60' });
+      const error = refused ? 'upstream_auth' : res.status === 404 ? 'upstream_model' : res.status === 400 ? 'upstream_rejected' : 'upstream_error';
+      return json(info.reason ? { error, reason: info.reason } : { error }, 502);
     }
-    if (res.ok) break;
-    // Logged: the HTTP status, which Google endpoint was used, and Google's fixed error codes
-    // (never its message text, the key or the question). This names the cause in one look,
-    // e.g. "status 403 provider=gemini-api google_status=PERMISSION_DENIED reason=SERVICE_DISABLED".
-    const info = await upstreamErrorInfo(res);
-    console.error(
-      `[chat] upstream status ${res.status} provider=${provider} model=${model} google_status=${info.status ?? '-'} reason=${info.reason ?? '-'}${rawKey !== key ? ' key_cleaned=yes' : ''}`,
-    );
-    const refused = res.status === 401 || res.status === 403;
-    if (refused && i < endpoints.length - 1) continue;
-    if (res.status === 429) return json({ error: 'busy' }, 429, { 'retry-after': '60' });
-    const error = refused ? 'upstream_auth' : res.status === 404 ? 'upstream_model' : res.status === 400 ? 'upstream_rejected' : 'upstream_error';
-    return json(info.reason ? { error, reason: info.reason } : { error }, 502);
   }
   let data;
   try {
