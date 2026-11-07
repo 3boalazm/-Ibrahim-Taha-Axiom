@@ -60,7 +60,7 @@ The template is [`.env.example`](../.env.example). Real values go in a local `.e
 | `PUBLIC_SITE_URL` | site | ✅ | optional | optional | No |
 | `CONTACT_FORM_TO` | site (server route) | ✅ | ✅ (test inbox) | ✅ (test inbox) | Yes |
 | `CONTACT_FORM_SECRET` | site (server route) | ✅ | ✅ | ✅ | Yes |
-| `PUBLIC_ANALYTICS_ID` | site | ✅ | ❌ | ❌ | No |
+| _(none for analytics)_ | Vercel Web Analytics (`@vercel/analytics`, enabled in Vercel → Project → Analytics) needs no variable | — | — | — | — |
 | `GEMINI_API_KEY` | site assistant (`site/api/chat.mjs`) | ✅ | ✅ | optional | Yes |
 | `GEMINI_MODEL` | site assistant (tried first; default `gemini-3.6-flash`, backup `gemini-3.5-flash-lite`) | optional | optional | optional | No |
 | `CHAT_ALLOWED_ORIGINS` | site assistant (extra origins, comma-separated; the deployment's own host and the production address are always allowed) | optional | optional | optional | No |

@@ -13,6 +13,7 @@
  *   .json (search index)    network first, saved copy offline
  *   other same-origin GETs  stale-while-revalidate (images, icons, manifests)
  *   never touched           other origins, non-GET requests, /api/ (the site assistant),
+ *                           /_vercel/ (Vercel Web Analytics),
  *                           Range requests and this file
  */
 const VERSION = '__VERSION__';
@@ -33,7 +34,8 @@ const isArabic = (pathname) => pathname === '/ar/' || pathname.startsWith('/ar/'
 const pageKey = (url) => url.origin + url.pathname;
 const usable = (response) => Boolean(response) && response.ok && response.type === 'basic' && !response.redirected;
 const isHtml = (response) => (response.headers.get('content-type') || '').includes('text/html');
-const skipped = (url) => url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname === '/sw.js';
+const skipped = (url) =>
+  url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/_vercel/') || url.pathname === '/sw.js';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

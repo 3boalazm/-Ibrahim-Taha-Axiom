@@ -13,7 +13,7 @@
 | 4b | Arabic versions of the biography, role, summary, research areas, teaching and CV (confirmed text, not machine translation) | researcher | ⏳ |
 | 5 | Canonical domain decided and connected in Vercel (D-07a) | project owner | ⏳ Indexing started on `ibrahim-taha-axiom.vercel.app` meanwhile (owner's decision, 2026-11-05) |
 | 6 | Contact channel (D-08) | project owner | ✅ Direct e-mail and phone published (approved 2026-11-05). A contact form remains optional and is not built |
-| 7 | Visitor analytics decision (D-10). None is installed | project owner | ⏳ |
+| 7 | Visitor analytics decision (D-10) | project owner | ✅ 2026-11-07: Vercel Web Analytics (no cookies), installed in the base layout |
 | 8 | Final review of the English and Arabic copy in `site/src/content/` | researcher + owner | ⏳ |
 | 9 | Visual review of the redesigned pages (home, about, research, publications, teaching, contact, 404) on a phone and a laptop, in both languages and both themes | project owner | ⏳ |
 | 10 | A short-launch note for social sharing: confirm the share image `site/public/images/og.jpg` and the wording of the home title/lead | project owner | ⏳ |

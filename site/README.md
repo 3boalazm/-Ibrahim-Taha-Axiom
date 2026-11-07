@@ -169,7 +169,7 @@ Every page has a small chat panel; its launcher sits in the bottom corner ("Ask 
 - Questions go to Google to be answered. The panel says so above the conversation, and asks visitors not to include personal information.
 - The function stores nothing. It logs only upstream status codes and Google's fixed error codes, never the question, the answer or the key.
 - The conversation stays in the visitor's tab (`sessionStorage`), and "New chat" deletes it.
-- No cookies, no analytics.
+- No cookies. Visits are counted with Vercel Web Analytics (`<Analytics />` in `BaseLayout.astro`), which sets no cookies and counts page views without identifying visitors. The numbers are in Vercel → Project → Analytics. Enable it there; until it is enabled the script sends nothing.
 
 **Limits:**
 - a question of up to 1,000 characters;
