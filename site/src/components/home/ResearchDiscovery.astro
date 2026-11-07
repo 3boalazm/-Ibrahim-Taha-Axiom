@@ -1,18 +1,16 @@
 ---
 /**
- * Research discovery: one card per approved research area (abstract image,
- * summary that expands, publication previews and project links — all from
- * verified manifest relationships), a knowledge-graph teaser and projects.
+ * Research discovery, kept light: one compact tile per approved research area
+ * (its number, title and count of linked publications, from verified manifest
+ * relationships) and the knowledge-graph teaser. Images, summaries, publication
+ * previews and projects live on /research/, /publications/ and /projects/.
  */
 import { arNoun } from '../../lib/text.mjs';
 import LangText from '../shared/LangText.astro';
-import Picture from '../media/Picture.astro';
-import { methods, pick, projects, researchAreas } from '../../utils/content';
-import { areaPicture } from '../../utils/imagery';
+import { methods, projects, researchAreas } from '../../utils/content';
 import { getPublication, publications } from '../../utils/publications';
-import { publicationsOfArea, publicationsOfProject, relations } from '../../utils/relations';
+import { publicationsOfArea, relations } from '../../utils/relations';
 import { localePath } from '../../utils/paths';
-import { formatPeriod } from '../../utils/format';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
 
@@ -23,12 +21,11 @@ const { lang } = Astro.props;
 const ui = t(lang);
 const ar = lang === 'ar';
 const research = localePath(lang, '/research/');
-const cards = researchAreas.map((a) => {
-  const pubs = publicationsOfArea(a.id)
-    .flatMap((k) => getPublication(k) ?? [])
-    .sort((x, y) => (y.year ?? 0) - (x.year ?? 0));
-  return { a, pubs, picture: areaPicture(a.id) };
-});
+const cards = researchAreas.map((a, i) => ({
+  a,
+  number: String(i + 1).padStart(2, '0'),
+  n: publicationsOfArea(a.id).filter((k) => getPublication(k)).length,
+}));
 const linkedPubs = new Set(relations.filter((r) => r.from.kind === 'publication').map((r) => r.from.id)).size;
 const counts = [
   { n: researchAreas.length, label: ar ? arNoun(researchAreas.length, { one: 'مجال', two: 'مجالان', few: 'مجالات', many: 'مجالًا' }) : researchAreas.length === 1 ? 'area' : 'areas' },
@@ -51,95 +48,41 @@ const counts = [
     </a>
   </div>
 
-  <ul class="disc__grid" role="list" data-stagger>
+  <ol class="disc__grid" role="list" data-stagger>
     {
-      cards.map(({ a, pubs, picture }) => {
-        const summary = pick(a.summary, lang);
-        return (
-          <li class="dcard">
-            {picture && (
-              <div class="dcard__media">
-                <Picture picture={picture} lang={lang} ratio="16 / 9" sizes="(max-width: 48rem) 100vw, 33vw" />
-              </div>
-            )}
-            <div class="dcard__body">
-              <h3 class="dcard__title">
-                <a href={`${research}#${a.id}`}>
-                  <LangText value={a.title} lang={lang} />
-                </a>
-              </h3>
-              <p class="dcard__meta">{pubs.length ? ui.results(pubs.length) : ar ? 'لا منشورات مرتبطة بعد' : 'No linked publications yet'}</p>
-              {summary && (
-                <details class="disclosure disclosure--marked dcard__more">
-                  <summary>{ar ? 'نبذة' : 'Summary'}</summary>
-                  <p>
-                    <LangText value={a.summary} lang={lang} />
-                  </p>
-                </details>
-              )}
-              {pubs.length > 0 && (
-                <ul class="dcard__pubs" role="list">
-                  {pubs.slice(0, 2).map((p) => (
-                    <li>
-                      <a href={localePath(lang, `/publications/${p.key}/`)} lang={p.titleLang ?? undefined} dir="auto">
-                        {p.title}
-                      </a>
-                      <span class="ltr dcard__year">{p.year}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <a class="dcard__explore" href={`${research}?focus=area:${a.id}#knowledge-graph`}>
-                {ar ? 'اعرضه في خريطة الترابط' : 'See it in the knowledge graph'}
-              </a>
-            </div>
-          </li>
-        );
-      })
+      cards.map(({ a, number, n }) => (
+        <li>
+          <a class="dcard" href={`${research}#${a.id}`}>
+            <span class="dcard__num ltr" aria-hidden="true">{number}</span>
+            <span class="dcard__title">
+              <LangText value={a.title} lang={lang} />
+            </span>{' '}
+            <span class="dcard__meta">{n ? ui.results(n) : ar ? 'لا منشورات مرتبطة بعد' : 'No linked publications yet'}</span>
+          </a>
+        </li>
+      ))
     }
-  </ul>
+  </ol>
 
-  <div class="disc__row">
-    <a class="gteaser" href={`${research}#knowledge-graph`}>
-      <span class="gteaser__kicker">{ar ? 'خريطة الترابط' : 'Knowledge graph'}</span>
-      <span class="gteaser__title">{ar ? 'كيف تتصل المجالات بالمنشورات والمشروعات' : 'How areas, publications and projects connect'}</span>
-      <span class="gteaser__counts">
-        {
-          counts.map((c) => (
-            <span>
-              <b class="ltr">{c.n}</b> {c.label}
-            </span>
-          ))
-        }
-      </span>
-      <svg class="gteaser__art" viewBox="0 0 220 90" aria-hidden="true">
-        {[14, 38, 62].map((y) => <circle cx="20" cy={y + 6} r="5" />)}
-        {[8, 23, 38, 53, 68, 83].map((y) => <rect x="102" y={y - 3} width="16" height="6" rx="2" />)}
-        {[22, 50, 74].map((y) => <circle cx="200" cy={y} r="5" />)}
-        <path d="M25 20C60 20 65 5 102 5M25 20C60 20 65 35 102 35M25 44C60 44 65 50 102 50M25 68C60 68 65 80 102 80M118 20C150 20 160 22 195 22M118 50C150 50 160 50 195 50M118 65C150 65 160 74 195 74" />
-      </svg>
-    </a>
-    {
-      projects.length > 0 && (
-        <div class="disc__projects">
-          <h3 class="label">{ar ? 'المشروعات' : 'Projects'}</h3>
-          <ul role="list">
-            {projects.map((p) => (
-              <li>
-                <a href={`${localePath(lang, '/projects/')}#${p.id}`}>
-                  <LangText value={p.title} lang={lang} />
-                </a>
-                <span class="disc__pmeta">
-                  {p.period && <span dir={ar ? 'auto' : 'ltr'}>{formatPeriod(p.period, lang)}</span>}
-                  {publicationsOfProject(p.id).length > 0 && <span> · {ui.results(publicationsOfProject(p.id).length)}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )
-    }
-  </div>
+  <a class="gteaser" href={`${research}#knowledge-graph`}>
+    <span class="gteaser__kicker">{ar ? 'خريطة الترابط' : 'Knowledge graph'}</span>
+    <span class="gteaser__title">{ar ? 'كيف تتصل المجالات بالمنشورات والمشروعات' : 'How areas, publications and projects connect'}</span>
+    <span class="gteaser__counts">
+      {
+        counts.map((c) => (
+          <span>
+            <b class="ltr">{c.n}</b> {c.label}
+          </span>
+        ))
+      }
+    </span>
+    <svg class="gteaser__art" viewBox="0 0 220 90" aria-hidden="true">
+      {[14, 38, 62].map((y) => <circle cx="20" cy={y + 6} r="5" />)}
+      {[8, 23, 38, 53, 68, 83].map((y) => <rect x="102" y={y - 3} width="16" height="6" rx="2" />)}
+      {[22, 50, 74].map((y) => <circle cx="200" cy={y} r="5" />)}
+      <path d="M25 20C60 20 65 5 102 5M25 20C60 20 65 35 102 35M25 44C60 44 65 50 102 50M25 68C60 68 65 80 102 80M118 20C150 20 160 22 195 22M118 50C150 50 160 50 195 50M118 65C150 65 160 74 195 74" />
+    </svg>
+  </a>
   {publications.length === 0 && <p>{ui.awaitingReview}</p>}
 </section>
 
@@ -165,99 +108,53 @@ const counts = [
   .disc__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
-    gap: var(--space-4);
+    gap: var(--space-3);
     margin: 0;
     padding: 0;
   }
   .dcard {
     display: grid;
-    grid-template-rows: auto 1fr;
-    overflow: hidden;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'num title' 'num meta';
+    gap: 0.2rem var(--space-3);
+    align-items: baseline;
+    block-size: 100%;
+    padding: var(--space-4);
     border: var(--border-hairline);
     border-radius: var(--radius-4);
     background: var(--color-surface-1);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: border-color var(--dur-2) var(--ease-out);
   }
-  .dcard__media :global(img) {
-    display: block;
-    inline-size: 100%;
-    block-size: auto;
+  .dcard:hover {
+    border-color: var(--color-accent);
   }
-  .dcard__body {
-    display: grid;
-    gap: var(--space-2);
-    align-content: start;
-    padding: var(--space-4);
+  .dcard:hover .dcard__title {
+    text-decoration: underline;
+  }
+  .dcard:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  .dcard__num {
+    grid-area: num;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--color-brass-ink);
   }
   .dcard__title {
+    grid-area: title;
     font-family: var(--font-serif);
     font-size: var(--step-1);
     font-weight: 500;
     line-height: 1.25;
   }
-  .dcard__title a {
-    color: var(--color-ink);
-    text-decoration: none;
-  }
-  .dcard__title a:hover {
-    text-decoration: underline;
-  }
   .dcard__meta {
+    grid-area: meta;
     font-family: var(--font-ui);
     font-size: var(--step--2);
     color: var(--color-brass-ink);
-  }
-  .dcard__more summary {
-    font-family: var(--font-ui);
-    font-size: var(--step--1);
-    color: var(--color-ink-2);
-    cursor: pointer;
-    min-block-size: 2.25rem;
-    display: flex;
-    align-items: center;
-  }
-  .dcard__more p {
-    font-family: var(--font-body);
-    font-size: var(--step--1);
-    line-height: 1.6;
-    color: var(--color-ink-2);
-  }
-  .dcard__pubs {
-    display: grid;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0;
-  }
-  .dcard__pubs li {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-2);
-    align-items: baseline;
-  }
-  .dcard__pubs a {
-    font-family: var(--font-serif);
-    font-size: var(--step--1);
-    line-height: 1.4;
-    color: var(--color-ink);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .dcard__year {
-    flex: none;
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
-  }
-  .dcard__explore {
-    margin-block-start: var(--space-1);
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-  }
-  .disc__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: var(--space-4);
   }
   .gteaser {
     position: relative;
@@ -324,34 +221,14 @@ const counts = [
     stroke: var(--color-accent);
     stroke-width: 1;
   }
-  .disc__projects {
-    padding: var(--space-5);
-    border: var(--border-hairline);
-    border-radius: var(--radius-4);
-  }
-  .disc__projects ul {
-    display: grid;
-    gap: var(--space-3);
-    margin: var(--space-3) 0 0;
-    padding: 0;
-  }
-  .disc__projects a {
-    font-family: var(--font-serif);
-    font-size: var(--step-0);
-    color: var(--color-ink);
-  }
-  .disc__pmeta {
-    display: block;
-    font-family: var(--font-ui);
-    font-size: var(--step--2);
-    color: var(--color-ink-3);
-  }
   @media (max-width: 56rem) {
-    .disc__row {
-      grid-template-columns: minmax(0, 1fr);
-    }
     .gteaser__art {
       display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dcard {
+      transition: none;
     }
   }
 </style>

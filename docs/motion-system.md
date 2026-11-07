@@ -66,8 +66,8 @@ The JS easings (`EASE` in `motion.mjs`) are the same control points as the CSS t
 
 | Pattern | Mechanism | Where |
 | --- | --- | --- |
-| reveal-once | `[data-reveal]` gets `.is-revealed` the first time it enters view (`IntersectionObserver`, once) | Home sections below the fold: identity panel, research discovery, lab teaser |
-| stagger-group | `[data-stagger]`: children get `--i` (capped at 8); delay = `--i × 45 ms` | Home: research area cards, selected works, contents index |
+| reveal-once | `[data-reveal]` gets `.is-revealed` the first time it enters view (`IntersectionObserver`, once) | Home sections below the fold: identity panel, research discovery, lab teaser, community |
+| stagger-group | `[data-stagger]`: children get `--i` (capped at 8); delay = `--i × 45 ms` | Home: research area tiles, selected works, community links |
 | settle-group | `[data-settle]`: CSS only, transform only. Readable from the first frame with or without JS | Section pages' main lists (`SectionRoute`, `EntryList`) |
 | page-title settle | `.reveal`: transform only, so the heading is readable from the first frame | Page headers (`PageHeader`), the empty state |
 | line-draw | `motion-draw` keyframes on `pathLength="1"` strokes. For strokes that use dash patterns or non-scaling strokes, `drawStrokes()` animates measured on-screen lengths | Hero axis, ticks and curve; journey line; brand mark; graph edges (`drawStrokes`) |

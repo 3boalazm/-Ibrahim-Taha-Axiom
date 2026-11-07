@@ -26,7 +26,7 @@ The site shows **only** what is approved. A researcher-specific item appears onl
 - the CV, and a dated metrics snapshot;
 - 42 evidence-backed relationships.
 
-Run `npm run inventory` for the current figures rather than trusting this paragraph. Arabic: 81 AI-assisted drafts, none reviewed yet, each shown with a visible draft label ([`../docs/translation-status.md`](../docs/translation-status.md)). Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
+Run `npm run inventory` for the current figures rather than trusting this paragraph. Arabic: 83 AI-assisted drafts, none reviewed yet, each shown with a visible draft label ([`../docs/translation-status.md`](../docs/translation-status.md)). Full rules: [`../docs/public-content-policy.md`](../docs/public-content-policy.md). Search indexing is controlled by `src/data/public-settings/launch.json`: [`../docs/website-launch-checklist.md`](../docs/website-launch-checklist.md).
 
 ## Structure
 
@@ -34,7 +34,7 @@ Run `npm run inventory` for the current figures rather than trusting this paragr
 src/
 ├── components/
 │   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots), StudioCredit (the studio's section, right before the footer)
-│   ├── home/          HomeHero (normal-density figure), IdentityPanel, MetricCards, ResearchDiscovery, LabTeaser
+│   ├── home/          HomeHero (normal-density figure), IdentityPanel, ResearchDiscovery (compact area tiles), LabTeaser, MetricCards, CommunitySection (the community's links)
 │   ├── search/        SearchDialog (Ctrl/⌘ K, combobox + listbox)
 │   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
 │   ├── research/      KnowledgeGraph (verified relationships), EntryList

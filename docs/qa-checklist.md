@@ -286,6 +286,27 @@ The owner asked to move it: «ليه تحت الفوتر انا عاوزها س�
 | Screenshots | The 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/) retaken with the section in the middle of the viewport, all viewed |
 | Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
 
+## Run for the community section and a lighter home page (2026-11-07)
+
+The owner asked: «اعتقد انتا مش ضايف جروب الواتساب ضيفه وعاوزك تحط سيكشن للكوميونتي بالتحديد في الهوم وتخفف الهوم شوية» ("I think you haven't added the WhatsApp group: add it. And I want a section for the community on the home page itself, and the home page made a bit lighter"). The message came with the links of the Facebook page, the Telegram group and the WhatsApp group (decision D-23). Environment: the sandbox's Node 22 and Chromium 153, on the built site.
+
+The work started from `main` at `fb9289f`. Meanwhile the owner's three commits for the assistant reached `main` (`d9cc67b`, `c5299da`, `f077c5c`). The branch was moved onto `f077c5c` before the final runs; it had no conflicts. Those commits do not change the built site: `main` at `f077c5c` builds to the same files as `fb9289f` (0 differences, VERSION `841fa583c88d`), so the comparisons with `main` below hold for both.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages. `sw.js` VERSION `56e28d9172c7` |
+| Content gate | It accepts the four community links with their kinds. With the WhatsApp link given the kind `telegram-group`, the build fails with "community: the link's host does not match its kind"; restored, it passes with the same VERSION |
+| `npm test` | 107 tests, all pass: the 102 on `main` (which pass there too) and 5 new in `community.test.mjs`:<br>- the data: links, kinds, the Telegram group, the audit trail;<br>- the section on both home pages: links in order, names in each language, same tab and `noopener`, after the metrics and before the invitation to write, a space between name and host;<br>- the Arabic lead as a labelled draft;<br>- no "channel" and no superseded Facebook link on any page;<br>- the light home: compact tiles and publications; no area images, inline citations or contents index; the detail still on the section pages.<br>Mutations: dropping the WhatsApp tile, moving the section after the invitation, bringing back a contents index, un-compacting the publications and calling Telegram a channel again each fail the test meant for it; restored, all pass |
+| `npm run qa`, `npm run lab:verify` | Both pass: 67 pages, 152 files, 32 external links. The new link is the WhatsApp group; the Facebook page link was replaced, not added. The lab verified 15 states × 100 replicates |
+| Assistant knowledge | Regenerated: two lines changed, the community links and the project summary. `chat.test.mjs` checks that the committed module matches the build |
+| `E2E_REQUIRED=1 npm run test:e2e` | 204 checks, all pass on the final tree: keyboard 37, motion 41, chat 39, app 87. The 10 new ones:<br>- at 1280 px, the four links in one row, each 68 px tall, with their names and hosts and the WhatsApp link;<br>- Tab from "About the project" to the first link, with a solid 2 px ring;<br>- Arabic at 390 px: one column, the icons at the right, the host under the name from the right edge (Δ 0.0 px), the Arabic names;<br>- no overflow at 320 px in either language;<br>- the section without JavaScript |
+| What the tests caught | The first e2e run failed 3 checks:<br>- Two were real faults. Compressed HTML had dropped the space between each tile's name and host ("Facebook pagefacebook.com"), and between each research tile's title and count ("…regression6 publications"). An explicit space fixed both.<br>- The third was the test's own fault: the entrance animation moves the tiles, so rows are now read from `offsetTop`.<br>The screenshots showed one more fault: in Arabic the host sat at the tile's far left. With `justify-self: start` it sits under the name. Removing that line from the built CSS makes its e2e check fail (Δ −165 to −256 px); restored, it passes |
+| axe-core 4.14.0 | 24 runs, after scrolling through each page, all 0 violations. Pages: `/`, `/ar/`, `/contact/`, `/ar/contact/`, `/projects/` and `/ar/projects/`, each in light and dark at 1280 and 390 px |
+| Home page anatomy (`main` → this) | Page length:<br>- `/`: 6736 → 5536 px at 1280 (8.4 → 6.9 screens), 11860 → 8790 px at 390 (14.1 → 10.4).<br>- `/ar/`: 7030 → 5770 px at 1280, 11990 → 8833 px at 390.<br>Blocks at 1280 px: research 1496 → 645 px, selected publications 1126 → 680, contents index 307 → 0, community 0 → 404.<br>`/` page weight and DOM:<br>- DOM 975 → 734 elements; links in `<main>` 77 → 37.<br>- HTML 101.2 → 76.7 KiB (22.3 → 19.5 KiB gzip).<br>- After scrolling through: 1055 → 598 KiB loaded; images 7 (530 KiB) → 1 (97 KiB, the portrait) |
+| Lighthouse 12.8.2 (`main` → this) | Default mobile settings, medians of 3 runs each, base first. Both builds ran on the same local server with gzip, so the absolute scores run higher than in the uncompressed runs above.<br>- `/`: performance 89 → 92, LCP 3.24 → 2.87 s, CLS 0.0183 → 0.0183, TBT 0 → 0, 763.7 → 423.3 KiB, best practices 96 → 100.<br>- `/ar/`: 74 → 77, LCP 4.62 → 4.17 s, CLS 0.0460 → 0.0458, TBT 0 → 0, 1040.8 → 662.9 KiB, best practices 96 → 100.<br>- Accessibility and SEO 100 on all four |
+| Screenshots | 8 in [`screenshots/home-community/`](screenshots/home-community/), all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers. Also the Facebook and WhatsApp links themselves: Facebook is behind a login and is not fetched by policy, and the WhatsApp invite page refuses automated requests. Telegram's public preview was read once, on 2026-11-07 |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
@@ -299,7 +320,7 @@ Mark each cell after checking it in a real browser.
 
 Per cell:
 
-1. **Home:** the hero figure draws once on load and then responds to the pointer and the arrow keys (the readout is exact at every step), identity tabs switch, the metric cards show the source and date, and nothing else animates by itself.
+1. **Home:** the hero figure draws once on load and then responds to the pointer and the arrow keys (the readout is exact at every step), identity tabs switch, the metric cards show the source and date, the community tiles open the Facebook page and group, the Telegram group and the WhatsApp group, and nothing else animates by itself.
 2. **Search:** Ctrl/⌘ K and `/` open it, Escape closes it and focus returns. Try `ridge`, `الحرف`, `Abonazel ٢٠٢٣` and `ridge انحدار`.
 3. **Publications:**
    - filter by type and by a year bar; set a co-author and an area;

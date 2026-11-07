@@ -16,13 +16,14 @@
     "id": "statistical-analysis-egypt",
     "title": { "en": "Statistical Analysis – Egypt", "ar": null },
     "summary": {
-      "en": "An Arabic-language community for statistics education on Facebook and Telegram, founded to make advanced statistics accessible across the Arab world. The Telegram channel had 46,523 members on 5 November 2026.",
+      "en": "An Arabic-language community for statistics education on Facebook, Telegram and WhatsApp, founded to make advanced statistics accessible across the Arab world. The Telegram group had 46,523 members on 5 November 2026.",
       "ar": null
     },
     "links": [
       { "label": { "en": null, "ar": "الإحصاء وتطبيقاته (تيليجرام)" }, "url": "https://t.me/StatisticalAnalysisEgypt" },
-      { "label": { "en": "Facebook page", "ar": null }, "url": "https://www.facebook.com/share/1B3DbXjPh7/" },
-      { "label": { "en": "Facebook group", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" }
+      { "label": { "en": "Facebook page", "ar": null }, "url": "https://www.facebook.com/share/1bgFz5pT2C/" },
+      { "label": { "en": "Facebook group", "ar": null }, "url": "https://www.facebook.com/share/g/1biRB3jfwp/" },
+      { "label": { "en": "WhatsApp group", "ar": null }, "url": "https://chat.whatsapp.com/JPc3Xs3WTeXHnjdUYnHWXd" }
     ]
   },
   {

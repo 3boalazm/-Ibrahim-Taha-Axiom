@@ -212,10 +212,10 @@ test('visible labels say Conference Papers / أوراق المؤتمرات, and 
     // Search categories travel in the dialog's data-i18n attribute.
     const i18n = JSON.parse(unescapeHtml(html.match(/data-i18n="([^"]*)"/)[1]));
     assert.equal(i18n.categories.talks, c.label, `${c.lang} search category`);
-    // Every section link to the page, in the header, footer and home contents, uses the new label.
+    // Every section link to the page, in the header and footer, uses the new label.
     for (const r of routes().filter((x) => (c.lang === 'ar') === x.startsWith('/ar/'))) {
       for (const label of sectionLinks(page(r), c.home)) {
-        // The home contents wrap the label with its section number and count ("06 … 2 entries").
+        // A numbered contents list ("06 … 2 entries", the home page's until D-23) may wrap the label.
         assert.ok(label === c.label || new RegExp(`^\\d{2} ${escapeRe(c.label)} `).test(label), `${r}: link to ${c.home} reads “${label}”`);
       }
     }

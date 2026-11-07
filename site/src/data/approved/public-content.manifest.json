@@ -53,6 +53,13 @@
       "by": "Ibrahim Mohamed Taha (researcher), Data Quality Review; clarifications by the project owner",
       "scope": "Answers to DQ-01 to DQ-16 in src/data/review/open-issues.json: 15 decided and applied, DQ-13 still open. Includes the approved Arabic name and the official full Arabic name (profile field officialName).",
       "note": "Review completed 2026-11-06 at 18:22, 16 of 16 questions answered. In the project chat the project owner then chose the short Arabic form for headings, the target area of the two DQ-14 links, and gave the co-author's full name for DQ-11."
+    },
+    {
+      "date": "2026-11-07",
+      "status": "community links updated",
+      "by": "The project owner, in the project chat",
+      "scope": "profile.community and projects.statistical-analysis-egypt.links: adds the community's WhatsApp group (https://chat.whatsapp.com/JPc3Xs3WTeXHnjdUYnHWXd); replaces the Facebook page link with the one the owner supplied (https://www.facebook.com/share/1bgFz5pT2C/, previously https://www.facebook.com/share/1B3DbXjPh7/); corrects the Telegram link from channel to group. The project summary now names WhatsApp and says group.",
+      "note": "The owner sent the three links on 2026-11-07 and asked for a community section on the home page. Telegram's public preview of t.me/StatisticalAnalysisEgypt describes a group (\"هذه المجموعة\", members and online counts). The WhatsApp invite page refused an automated request (HTTP 403), so no name or member count is published for it. The Facebook group link is unchanged. See research/data-source-register.md and decision D-23."
     }
   ],
   "profile": {
