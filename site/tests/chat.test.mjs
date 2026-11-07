@@ -6,14 +6,15 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { DIST, ROOT, data, page, routes } from './helpers.mjs';
 import { BUILT_PATH, MODULE_PATH, renderKnowledgeModule } from '../scripts/chat-knowledge.mjs';
-import { DEFAULT_MODEL, LIMITS, buildContents, cleanKey, createRateLimiter, endpointFor, handleChat, validateBody } from '../server/chat-core.mjs';
+import { DEFAULT_MODEL, LIMITS, buildContents, cleanKey, createRateLimiter, endpointsFor, handleChat, validateBody } from '../server/chat-core.mjs';
 import knowledge from '../server/knowledge.mjs';
 
 const built = JSON.parse(readFileSync(BUILT_PATH, 'utf8'));
 const REPO = join(ROOT, '..');
 const SITE = 'https://ibrahim-taha-axiom.vercel.app';
 // Deliberately short placeholders, so they can never look like a real key.
-const FAKE_VERTEX = 'AQ.fake-test';
+// An "AQ." key: a Google AI Studio auth key or a Vertex AI express-mode key.
+const FAKE_AQ = 'AQ.fake-test';
 const FAKE_STUDIO = 'AIzaFakeTest';
 
 function request(body, { origin = SITE, method = 'POST', ip = '203.0.113.7', type = 'application/json' } = {}) {
@@ -23,7 +24,7 @@ function request(body, { origin = SITE, method = 'POST', ip = '203.0.113.7', typ
 }
 const reply = (text, finishReason = 'STOP') => Response.json({ candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason }] });
 /** Runs the handler with a fake upstream; returns the response, its JSON and what was sent upstream. */
-async function chat(body, { env = { GEMINI_API_KEY: FAKE_VERTEX }, upstream = () => reply('ok'), origin, limiter = () => true } = {}) {
+async function chat(body, { env = { GEMINI_API_KEY: FAKE_AQ }, upstream = () => reply('ok'), origin, limiter = () => true } = {}) {
   const sent = [];
   const fetch = async (url, init) => (sent.push({ url, init, body: JSON.parse(init.body) }), upstream(url, init));
   const res = await handleChat(request(body, { origin }), { env, knowledge, fetch, limiter });
@@ -92,11 +93,11 @@ test('no API key or other secret anywhere in the code, docs or build', () => {
 
 // ------------------------------------------------------------------------ server
 test('assistant server: refuses what it should', async () => {
-  const get = await handleChat(request(null, { method: 'GET' }), { env: { GEMINI_API_KEY: FAKE_VERTEX }, knowledge, limiter: () => true });
+  const get = await handleChat(request(null, { method: 'GET' }), { env: { GEMINI_API_KEY: FAKE_AQ }, knowledge, limiter: () => true });
   assert.equal(get.status, 405);
   assert.equal((await chat(ask, { origin: 'https://elsewhere.example' })).res.status, 403);
   assert.equal((await chat(ask, { origin: null })).res.status, 403, 'a request without an Origin is refused');
-  const wrongType = await handleChat(request(ask, { type: 'text/plain' }), { env: { GEMINI_API_KEY: FAKE_VERTEX }, knowledge, limiter: () => true });
+  const wrongType = await handleChat(request(ask, { type: 'text/plain' }), { env: { GEMINI_API_KEY: FAKE_AQ }, knowledge, limiter: () => true });
   assert.equal(wrongType.status, 415);
   assert.equal((await chat('{not json')).res.status, 400);
   assert.equal((await chat({ ...ask, question: '   ' })).json.error, 'empty_question');
@@ -124,9 +125,9 @@ test('assistant server: sends the grounded prompt to the right Google endpoint, 
   assert.equal(res.headers.get('cache-control'), 'no-store');
   assert.equal(sent.length, 1);
   const [{ url, init, body }] = sent;
-  assert.equal(url, `https://aiplatform.googleapis.com/v1/publishers/google/models/${DEFAULT_MODEL}:generateContent`);
-  assert.equal(init.headers['x-goog-api-key'], FAKE_VERTEX);
-  assert.ok(!url.includes(FAKE_VERTEX), 'the key is never put in the URL');
+  assert.equal(url, `https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent`);
+  assert.equal(init.headers['x-goog-api-key'], FAKE_AQ);
+  assert.ok(!url.includes(FAKE_AQ), 'the key is never put in the URL');
   const system = body.systemInstruction.parts[0].text;
   assert.ok(system.includes(knowledge.text), 'the whole site content goes with the question');
   assert.match(system, /come ONLY from the SITE CONTENT below/);
@@ -143,7 +144,48 @@ test('assistant server: sends the grounded prompt to the right Google endpoint, 
   const studio = await chat(ask, { env: { GEMINI_API_KEY: FAKE_STUDIO, GEMINI_MODEL: 'gemini-test-model' } });
   assert.equal(studio.sent[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent');
   assert.equal(studio.sent[0].body.generationConfig.thinkingConfig, undefined, 'the thinking budget is set only for Gemini 2.5 Flash');
-  assert.equal(endpointFor(FAKE_VERTEX).provider, 'vertex-express');
+  assert.deepEqual(endpointsFor(FAKE_STUDIO).map((e) => e.provider), ['gemini-api']);
+  assert.deepEqual(endpointsFor(FAKE_AQ).map((e) => e.provider), ['gemini-api', 'vertex-express']);
+});
+
+test('assistant server: an "AQ." key refused by the Gemini API is tried once on Vertex AI', async () => {
+  const logged = [];
+  const original = console.error;
+  console.error = (...a) => logged.push(a.join(' '));
+  try {
+    const refused = () => Response.json({ error: { code: 403, status: 'PERMISSION_DENIED', details: [{ reason: 'SERVICE_DISABLED' }] } }, { status: 403 });
+    const geminiApi = /^https:\/\/generativelanguage\.googleapis\.com\//;
+    const vertex = /^https:\/\/aiplatform\.googleapis\.com\//;
+
+    // A Vertex AI express key: the Gemini API refuses it, Vertex AI answers.
+    const express = await chat(ask, { upstream: (url) => (geminiApi.test(url) ? refused() : reply('from vertex')) });
+    assert.equal(express.res.status, 200);
+    assert.equal(express.json.answer, 'from vertex');
+    assert.deepEqual(express.sent.map((s) => [geminiApi.test(s.url), vertex.test(s.url)]), [[true, false], [false, true]]);
+    assert.ok(express.sent.every((s) => s.init.headers['x-goog-api-key'] === FAKE_AQ));
+
+    // A Google AI Studio "AQ." key: answered by the Gemini API, Vertex AI is never called.
+    const studio = await chat(ask, { upstream: (url) => (geminiApi.test(url) ? reply('from gemini api') : refused()) });
+    assert.equal(studio.json.answer, 'from gemini api');
+    assert.equal(studio.sent.length, 1);
+
+    // Refused by both: one log line per endpoint, and the last reason is returned.
+    logged.length = 0;
+    const both = await chat(ask, { upstream: refused });
+    assert.equal(both.sent.length, 2);
+    assert.deepEqual(both.json, { error: 'upstream_auth', reason: 'SERVICE_DISABLED' });
+    assert.equal(logged.filter((l) => l.includes('provider=gemini-api')).length, 1);
+    assert.equal(logged.filter((l) => l.includes('provider=vertex-express')).length, 1);
+
+    // Other failures are not retried elsewhere, and "AIza" keys never leave the Gemini API.
+    const busy = await chat(ask, { upstream: () => new Response('{}', { status: 429 }) });
+    assert.equal(busy.sent.length, 1);
+    const aiza = await chat(ask, { env: { GEMINI_API_KEY: FAKE_STUDIO }, upstream: refused });
+    assert.equal(aiza.sent.length, 1);
+    assert.match(aiza.sent[0].url, geminiApi);
+  } finally {
+    console.error = original;
+  }
 });
 
 test('assistant server: upstream failures become clear errors and never echo the key', async () => {
@@ -153,7 +195,7 @@ test('assistant server: upstream failures become clear errors and never echo the
   try {
     const cases = [
       [() => new Response('{}', { status: 429 }), 429, 'busy'],
-      [() => new Response(`{"error":"bad key ${FAKE_VERTEX}"}`, { status: 403 }), 502, 'upstream_auth'],
+      [() => new Response(`{"error":"bad key ${FAKE_AQ}"}`, { status: 403 }), 502, 'upstream_auth'],
       [() => new Response('{}', { status: 404 }), 502, 'upstream_model'],
       [() => new Response('{}', { status: 400 }), 502, 'upstream_rejected'],
       [() => new Response('{}', { status: 500 }), 502, 'upstream_error'],
@@ -166,11 +208,11 @@ test('assistant server: upstream failures become clear errors and never echo the
       const { res, json, text } = await chat(ask, { upstream });
       assert.equal(res.status, status, error);
       assert.equal(json.error, error);
-      assert.ok(!text.includes(FAKE_VERTEX), `${error}: the response does not contain the key`);
+      assert.ok(!text.includes(FAKE_AQ), `${error}: the response does not contain the key`);
     }
     assert.ok(logged.length > 0);
     for (const line of logged) {
-      assert.ok(!line.includes(FAKE_VERTEX), 'logs never contain the key');
+      assert.ok(!line.includes(FAKE_AQ), 'logs never contain the key');
       assert.ok(!line.includes(ask.question), 'logs never contain the question');
     }
   } finally {

@@ -156,7 +156,8 @@ Every page has a small chat panel; its launcher sits in the bottom corner ("Ask 
 - **Optional variables:**
   - `GEMINI_MODEL`: default `gemini-2.5-flash`.
   - `CHAT_ALLOWED_ORIGINS`: comma-separated extra origins. The deployment's own host and the production address are always allowed, so a custom domain needs nothing.
-- **Key types:** the function accepts Google AI Studio keys and Vertex AI express-mode keys, and picks the matching endpoint. `GOOGLE_API_KEY` is accepted as an alternative name.
+- **Key types:** any Google AI Studio key works, both the older `AIza…` keys and the newer `AQ.` keys. Every key is sent to the Gemini API first. A Vertex AI express-mode key also starts with `AQ.`, so an `AQ.` key that the Gemini API refuses is tried once on Vertex AI. `GOOGLE_API_KEY` is accepted as an alternative name.
+- **When it fails:** the panel shows a generic error. The Vercel runtime log has one line per attempt, for example `[chat] upstream status 403 provider=gemini-api google_status=PERMISSION_DENIED reason=SERVICE_DISABLED`. `SERVICE_DISABLED` means the API is not enabled in the key's Google Cloud project. `API_KEY_INVALID` means the key is wrong. After any change to the key in Vercel, redeploy.
 - **Where the key lives:** only in the environment. It never appears in the code, the browser, a response or a log line, and a test fails if anything key-shaped appears in the code, the docs or the build.
 - **In Google Cloud:** restrict the key to the Gemini API and set a budget alert.
 
@@ -166,7 +167,7 @@ Every page has a small chat panel; its launcher sits in the bottom corner ("Ask 
 
 **Privacy.**
 - Questions go to Google to be answered. The panel says so above the conversation, and asks visitors not to include personal information.
-- The function stores nothing and logs only upstream status codes.
+- The function stores nothing. It logs only upstream status codes and Google's fixed error codes, never the question, the answer or the key.
 - The conversation stays in the visitor's tab (`sessionStorage`), and "New chat" deletes it.
 - No cookies, no analytics.
 

@@ -124,11 +124,18 @@ export async function upstreamErrorInfo(res) {
  * Where a key is sent. Keys starting "AIza" are Gemini API (Google AI Studio) keys; other
  * keys, such as the "AQ." keys of Vertex AI express mode, go to Vertex AI.
  */
-export function endpointFor(key, model = DEFAULT_MODEL) {
+/**
+ * The Google endpoints to try for a key, in order.
+ * - Google AI Studio issues "AIza…" keys and, since 2026, "AQ." auth keys. Both belong to the
+ *   Gemini API, so every key is tried there first.
+ * - A Vertex AI express-mode key also starts with "AQ.", so a non-"AIza" key that the Gemini
+ *   API refuses (401/403) is tried once on Vertex AI.
+ */
+export function endpointsFor(key, model = DEFAULT_MODEL) {
   const m = encodeURIComponent(model);
-  return key.startsWith('AIza')
-    ? { provider: 'gemini-api', url: `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent` }
-    : { provider: 'vertex-express', url: `https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent` };
+  const geminiApi = { provider: 'gemini-api', url: `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent` };
+  const vertex = { provider: 'vertex-express', url: `https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent` };
+  return key.startsWith('AIza') ? [geminiApi] : [geminiApi, vertex];
 }
 
 export function buildRequest({ knowledge, lang, page, question, history, model = DEFAULT_MODEL }) {
@@ -218,21 +225,25 @@ export async function handleChat(request, { env = {}, knowledge, fetch: fetchImp
   if (!knowledge?.text) return json({ error: 'knowledge_unavailable' }, 503);
 
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;
-  const { url, provider } = endpointFor(key, model);
+  const endpoints = endpointsFor(key, model);
+  const payload = JSON.stringify(buildRequest({ knowledge: knowledge.text, model, ...checked.value }));
+  // One deadline for the whole request, fallback included.
+  const signal = AbortSignal.timeout(LIMITS.timeoutMs);
   let res;
-  try {
-    res = await fetchImpl(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify(buildRequest({ knowledge: knowledge.text, model, ...checked.value })),
-      signal: AbortSignal.timeout(LIMITS.timeoutMs),
-    });
-  } catch (e) {
-    const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
-    console.error(`[chat] upstream ${timedOut ? 'timeout' : 'network error'}`);
-    return json({ error: timedOut ? 'upstream_timeout' : 'upstream_unreachable' }, timedOut ? 504 : 502);
-  }
-  if (!res.ok) {
+  for (const [i, { url, provider }] of endpoints.entries()) {
+    try {
+      res = await fetchImpl(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: payload,
+        signal,
+      });
+    } catch (e) {
+      const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+      console.error(`[chat] upstream ${timedOut ? 'timeout' : 'network error'} provider=${provider}`);
+      return json({ error: timedOut ? 'upstream_timeout' : 'upstream_unreachable' }, timedOut ? 504 : 502);
+    }
+    if (res.ok) break;
     // Logged: the HTTP status, which Google endpoint was used, and Google's fixed error codes
     // (never its message text, the key or the question). This names the cause in one look,
     // e.g. "status 403 provider=gemini-api google_status=PERMISSION_DENIED reason=SERVICE_DISABLED".
@@ -240,8 +251,10 @@ export async function handleChat(request, { env = {}, knowledge, fetch: fetchImp
     console.error(
       `[chat] upstream status ${res.status} provider=${provider} model=${model} google_status=${info.status ?? '-'} reason=${info.reason ?? '-'}${rawKey !== key ? ' key_cleaned=yes' : ''}`,
     );
+    const refused = res.status === 401 || res.status === 403;
+    if (refused && i < endpoints.length - 1) continue;
     if (res.status === 429) return json({ error: 'busy' }, 429, { 'retry-after': '60' });
-    const error = res.status === 401 || res.status === 403 ? 'upstream_auth' : res.status === 404 ? 'upstream_model' : res.status === 400 ? 'upstream_rejected' : 'upstream_error';
+    const error = refused ? 'upstream_auth' : res.status === 404 ? 'upstream_model' : res.status === 400 ? 'upstream_rejected' : 'upstream_error';
     return json(info.reason ? { error, reason: info.reason } : { error }, 502);
   }
   let data;
