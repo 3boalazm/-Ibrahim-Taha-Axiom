@@ -20,6 +20,7 @@ import SearchDialog from '../components/search/SearchDialog.astro';
 import ChatWidget from '../components/chat/ChatWidget.astro';
 import AppInstall from '../components/app/AppInstall.astro';
 import Seo from '../components/layout/Seo.astro';
+import { inject } from '@vercel/analytics';
 // Validates every manifest relationship (both ends exist, quotes found verbatim) on each build.
 import '../utils/relations';
 import { dirOf } from '../utils/paths';
@@ -41,6 +42,8 @@ interface Props {
 const { lang, path, title, description, ogType = 'website', jsonLd = [], head = [], switchPath } = Astro.props;
 const navPath = switchPath ?? path;
 const ui = t(lang);
+
+inject();
 ---
 
 <!doctype html>
