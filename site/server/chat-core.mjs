@@ -91,6 +91,36 @@ export function buildContents(history, question) {
 }
 
 /**
+ * A key as pasted into the Vercel dashboard can carry spaces, a trailing newline or a pair of
+ * quotes. Any of these would send it to the wrong Google endpoint (or make Google refuse it),
+ * so they are removed. The key itself is never logged or returned.
+ */
+export function cleanKey(raw) {
+  if (typeof raw !== 'string') return '';
+  let k = raw.trim();
+  if (/^(['"`]).*\1$/s.test(k)) k = k.slice(1, -1).trim();
+  return k;
+}
+
+/**
+ * Google's machine-readable error codes from a failed reply, e.g. status PERMISSION_DENIED and
+ * reason SERVICE_DISABLED or API_KEY_SERVICE_BLOCKED. Only these fixed codes are kept, never
+ * the message text (which can mention the project), so they are safe to log and to return.
+ */
+export async function upstreamErrorInfo(res) {
+  try {
+    const data = await res.json();
+    const err = data?.error ?? (Array.isArray(data) ? data[0]?.error : null);
+    if (!err || typeof err !== 'object') return { status: null, reason: null };
+    const code = (v, max) => (typeof v === 'string' && new RegExp(`^[A-Z0-9_]{3,${max}}$`).test(v) ? v : null);
+    const reason = (Array.isArray(err.details) ? err.details : []).map((d) => code(d?.reason, 64)).find(Boolean) ?? null;
+    return { status: code(err.status, 40), reason };
+  } catch {
+    return { status: null, reason: null };
+  }
+}
+
+/**
  * Where a key is sent. Keys starting "AIza" are Gemini API (Google AI Studio) keys; other
  * keys, such as the "AQ." keys of Vertex AI express mode, go to Vertex AI.
  */
@@ -182,12 +212,13 @@ export async function handleChat(request, { env = {}, knowledge, fetch: fetchImp
   const checked = validateBody(body);
   if (checked.error) return json({ error: checked.error }, 400);
 
-  const key = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
+  const rawKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
+  const key = cleanKey(rawKey);
   if (!key) return json({ error: 'not_configured' }, 503);
   if (!knowledge?.text) return json({ error: 'knowledge_unavailable' }, 503);
 
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;
-  const { url } = endpointFor(key, model);
+  const { url, provider } = endpointFor(key, model);
   let res;
   try {
     res = await fetchImpl(url, {
@@ -202,11 +233,16 @@ export async function handleChat(request, { env = {}, knowledge, fetch: fetchImp
     return json({ error: timedOut ? 'upstream_timeout' : 'upstream_unreachable' }, timedOut ? 504 : 502);
   }
   if (!res.ok) {
-    // Only the status is logged: an upstream error body can echo the request.
-    console.error(`[chat] upstream status ${res.status}`);
+    // Logged: the HTTP status, which Google endpoint was used, and Google's fixed error codes
+    // (never its message text, the key or the question). This names the cause in one look,
+    // e.g. "status 403 provider=gemini-api google_status=PERMISSION_DENIED reason=SERVICE_DISABLED".
+    const info = await upstreamErrorInfo(res);
+    console.error(
+      `[chat] upstream status ${res.status} provider=${provider} model=${model} google_status=${info.status ?? '-'} reason=${info.reason ?? '-'}${rawKey !== key ? ' key_cleaned=yes' : ''}`,
+    );
     if (res.status === 429) return json({ error: 'busy' }, 429, { 'retry-after': '60' });
     const error = res.status === 401 || res.status === 403 ? 'upstream_auth' : res.status === 404 ? 'upstream_model' : res.status === 400 ? 'upstream_rejected' : 'upstream_error';
-    return json({ error }, 502);
+    return json(info.reason ? { error, reason: info.reason } : { error }, 502);
   }
   let data;
   try {

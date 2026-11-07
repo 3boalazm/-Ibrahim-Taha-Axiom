@@ -6,7 +6,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { DIST, ROOT, data, page, routes } from './helpers.mjs';
 import { BUILT_PATH, MODULE_PATH, renderKnowledgeModule } from '../scripts/chat-knowledge.mjs';
-import { DEFAULT_MODEL, LIMITS, buildContents, createRateLimiter, endpointFor, handleChat, validateBody } from '../server/chat-core.mjs';
+import { DEFAULT_MODEL, LIMITS, buildContents, cleanKey, createRateLimiter, endpointFor, handleChat, validateBody } from '../server/chat-core.mjs';
 import knowledge from '../server/knowledge.mjs';
 
 const built = JSON.parse(readFileSync(BUILT_PATH, 'utf8'));
@@ -195,4 +195,47 @@ test('assistant server: rate limit, history shaping and input clean-up', () => {
   assert.equal(v.page, '/', 'an unexpected page path is replaced');
   assert.equal(v.history.length, LIMITS.turns);
   assert.equal(v.history[0].text, 'm4', 'only the latest turns are kept');
+});
+
+test('assistant server: a pasted key with spaces or quotes is cleaned before use', async () => {
+  assert.equal(cleanKey(`  ${FAKE_STUDIO}\n`), FAKE_STUDIO);
+  assert.equal(cleanKey(`"${FAKE_STUDIO}"`), FAKE_STUDIO);
+  assert.equal(cleanKey(`' ${FAKE_STUDIO} '`), FAKE_STUDIO);
+  assert.equal(cleanKey(undefined), '');
+  // A quoted Google AI Studio key must still go to the Gemini API, not to Vertex AI.
+  const quoted = ` "${FAKE_STUDIO}" `;
+  const { sent, json } = await chat(ask, { env: { GEMINI_API_KEY: quoted } });
+  assert.equal(json.answer, 'ok');
+  assert.match(sent[0].url, /^https:\/\/generativelanguage\.googleapis\.com\//);
+  assert.equal(sent[0].init.headers['x-goog-api-key'], FAKE_STUDIO);
+});
+
+test("assistant server: Google's error reason is logged and returned, never its message or the key", async () => {
+  const logged = [];
+  const original = console.error;
+  console.error = (...a) => logged.push(a.join(' '));
+  try {
+    const body = {
+      error: {
+        code: 403,
+        message: `Generative Language API has not been used in project 123 before or it is disabled. Key ${FAKE_STUDIO}`,
+        status: 'PERMISSION_DENIED',
+        details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'SERVICE_DISABLED', domain: 'googleapis.com' }],
+      },
+    };
+    const padded = `${FAKE_STUDIO} `;
+    const { res, json, text } = await chat(ask, { env: { GEMINI_API_KEY: padded }, upstream: () => Response.json(body, { status: 403 }) });
+    assert.equal(res.status, 502);
+    assert.deepEqual(json, { error: 'upstream_auth', reason: 'SERVICE_DISABLED' });
+    assert.ok(!text.includes(FAKE_STUDIO) && !text.includes('project 123'));
+    const line = logged.find((l) => l.includes('[chat] upstream status 403'));
+    assert.ok(line, 'the failure is logged');
+    assert.match(line, /provider=gemini-api/);
+    assert.match(line, /google_status=PERMISSION_DENIED/);
+    assert.match(line, /reason=SERVICE_DISABLED/);
+    assert.match(line, /key_cleaned=yes/);
+    assert.ok(!line.includes(FAKE_STUDIO) && !line.includes('project 123') && !line.includes(ask.question));
+  } finally {
+    console.error = original;
+  }
 });
