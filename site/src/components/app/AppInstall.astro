@@ -124,8 +124,8 @@ const ui = t(lang);
       white-space: nowrap;
     }
   }
-  /* Room under the footer so the button never covers its last line. */
-  :global(html:has(.app-install:not([hidden])) .site-footer) {
-    padding-block-end: 4.5rem;
+  /* Room at the end of the page's last band (the studio credit), so the button never covers it. */
+  :global(html:has(.app-install:not([hidden]))) {
+    --floating-clearance: 4.5rem;
   }
 </style>

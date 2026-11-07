@@ -1,0 +1,170 @@
+---
+/**
+ * Studio credit (site/README.md#studio-credit): the last band of every page, inside the
+ * site footer. It says the website was developed by Aboalazm OS Studio and links to the
+ * studio's website.
+ *
+ * It wears the studio's identity, not the site's. The values are the studio's design
+ * tokens (its "semantic monochrome" system):
+ * - the obsidian canvas #080710 (also the studio app's theme colour);
+ * - one text colour at fixed opacities, and the 8 % white "spec line";
+ * - the studio accent #F5A623, which that system keeps for focus rings and critical calls
+ *   to action: here, the one button;
+ * - the studio's typefaces (Montserrat, JetBrains Mono for labels; IBM Plex Sans Arabic
+ *   in Arabic) and its signature easing.
+ * None of the site's colour or font tokens are used (tests/studio-credit.test.mjs).
+ *
+ * content-visibility: auto keeps the band, and so its two web fonts, from being laid out
+ * until it nears the viewport.
+ */
+import '@fontsource/montserrat/latin-700.css';
+import '@fontsource/jetbrains-mono/latin-500.css';
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const STUDIO_URL = 'https://aboalazm-os.vercel.app/';
+---
+
+<div class="studio-credit" data-studio-credit>
+  <div class="container studio-credit__inner">
+    <div>
+      <p class="studio-credit__by">
+        <span class="studio-credit__label">{ui.studioCreditLabel}</span>{' '}
+        <span class="studio-credit__name"><bdi lang="en">Aboalazm OS Studio</bdi></span>
+      </p>
+      <p class="studio-credit__meta">{ui.studioCreditMeta}</p>
+    </div>
+    <a class="studio-credit__cta" href={STUDIO_URL} target="_blank" rel="noopener">
+      <span>{ui.studioCreditCta}</span>
+      <svg class="icon-flip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8.5 7H17v8.5"></path></svg>
+      <span class="visually-hidden">{` ${ui.studioCreditNewTab}`}</span>
+    </a>
+  </div>
+</div>
+
+<style>
+  .studio-credit {
+    /* Aboalazm OS design tokens: the studio's identity, not the site's */
+    --os-obsidian: #080710;
+    --os-line: rgb(255 255 255 / 0.08); /* the spec line */
+    --os-text: rgb(248 248 250);
+    --os-text-2: rgb(248 248 250 / 0.68);
+    --os-accent: #f5a623;
+    --os-accent-hover: #f7b84f; /* the accent with 20 % white */
+    --os-ease: cubic-bezier(0.16, 1, 0.3, 1); /* the studio's signature curve */
+    --os-fast: 200ms;
+    --os-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --os-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+    --os-arabic: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+
+    background: var(--os-obsidian);
+    color: var(--os-text);
+    border-block-start: 1px solid var(--os-line);
+    font-family: var(--os-sans);
+    /* The floating buttons (assistant, install) set --floating-clearance, so at the end of
+       the page they never cover the band. */
+    padding-block: 2.5rem calc(2.5rem + var(--floating-clearance, 0rem));
+    content-visibility: auto;
+    contain-intrinsic-size: auto 11rem;
+  }
+  .studio-credit__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem 2.5rem;
+  }
+  .studio-credit__by,
+  .studio-credit__meta {
+    margin: 0;
+  }
+  .studio-credit__label,
+  .studio-credit__meta {
+    font-family: var(--os-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--os-text-2);
+  }
+  .studio-credit__label {
+    display: block;
+  }
+  .studio-credit__name {
+    display: block;
+    margin-block-start: 0.4rem;
+    font-family: var(--os-sans);
+    font-size: clamp(1.3rem, 1.05rem + 1vw, 1.65rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--os-text);
+  }
+  .studio-credit__meta {
+    margin-block-start: 0.65rem;
+  }
+  .studio-credit__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    min-block-size: 3rem;
+    padding-inline: 1.4rem;
+    border-radius: 999px;
+    background: var(--os-accent);
+    color: var(--os-obsidian);
+    font-family: var(--os-sans);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: background-color var(--os-fast) var(--os-ease);
+  }
+  .studio-credit__cta:hover {
+    background: var(--os-accent-hover);
+    color: var(--os-obsidian);
+  }
+  /* the studio's ring: amber, at once (not the site's closing-in focus animation, motion.css) */
+  .studio-credit__cta:focus-visible {
+    outline: 2px solid var(--os-accent);
+    outline-offset: 3px;
+    animation: none;
+  }
+  .studio-credit__cta svg {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Arabic: the studio's Arabic face, without the tracking and capitals of its Latin labels
+     (tracking breaks the joins of Arabic letters); 600 is the heaviest weight the site loads. */
+  .studio-credit__label:lang(ar),
+  .studio-credit__meta:lang(ar),
+  .studio-credit__cta:lang(ar) {
+    font-family: var(--os-arabic);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .studio-credit__label:lang(ar),
+  .studio-credit__meta:lang(ar) {
+    font-size: 0.8125rem;
+  }
+  .studio-credit__cta:lang(ar) {
+    font-weight: 600;
+  }
+  @media (max-width: 30rem) {
+    .studio-credit__cta {
+      inline-size: 100%;
+      justify-content: center;
+    }
+  }
+</style>

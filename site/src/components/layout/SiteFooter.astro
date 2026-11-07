@@ -7,6 +7,7 @@ import { publications, selectedPublications } from '../../utils/publications';
 import { localePath, otherLang } from '../../utils/paths';
 import { t } from '../../i18n/ui';
 import type { Lang } from '../../utils/schema';
+import StudioCredit from './StudioCredit.astro';
 
 interface Props {
   lang: Lang;
@@ -135,6 +136,7 @@ const headline =
       {lang === 'ar' ? arNoun(researchAreas.length, { one: 'مجال بحثي', two: 'مجالان بحثيان', few: 'مجالات بحثية', many: 'مجالًا بحثيًا' }) : 'research areas'}
     </p>
   </div>
+  <StudioCredit lang={lang} />
 </footer>
 
 <style>

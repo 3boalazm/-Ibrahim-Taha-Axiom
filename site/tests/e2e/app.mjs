@@ -12,6 +12,9 @@
  *   English, bottom right in Arabic). One press opens the browser's install prompt (a
  *   simulated beforeinstallprompt, plus a probe for a real one); no button in Safari or
  *   Firefox, which give pages no way to install, in the installed app, or without JS.
+ * - The studio credit at the end of every page: its fonts wait until it nears the
+ *   viewport; the studio's colours, typefaces and focus ring; its button not covered by the
+ *   floating buttons, in English, Arabic, at 320 px and without JS.
  *
  *   CHROME_PATH=/usr/bin/google-chrome node tests/e2e/app.mjs
  *
@@ -335,6 +338,104 @@ for (const [label, ua, touchPoints] of [
   await p.setJavaScriptEnabled(false);
   await p.goto(`${B}/`, { waitUntil: 'networkidle0' });
   ok((await shown(p, '[data-app-install]'))[0] === false, 'without JavaScript there is no install button');
+  await p.close();
+}
+
+// --------------------------------------------- the studio credit, at the end of every page
+/** The credit band at the end of the page: where it sits, how it is styled, what it covers. */
+const credit = (p) =>
+  p.evaluate(() => {
+    const q = (sel) => document.querySelector(sel);
+    const cta = q('.studio-credit__cta');
+    const r = cta.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    const floating = ['[data-chat-toggle]', '[data-app-install]'].map((sel) => q(sel)).filter((el) => el && !el.hidden).map((el) => el.getBoundingClientRect());
+    const cs = (sel) => getComputedStyle(q(sel));
+    return {
+      inView: r.top >= 0 && r.bottom <= innerHeight,
+      reachable: cta.contains(hit),
+      clear: floating.every((f) => f.right <= r.left || r.right <= f.left || f.bottom <= r.top || r.bottom <= f.top),
+      floating: floating.length,
+      band: cs('.studio-credit').backgroundColor,
+      button: cs('.studio-credit__cta').backgroundColor,
+      name: cs('.studio-credit__name').fontFamily,
+      label: cs('.studio-credit__label').fontFamily,
+      labelSpacing: cs('.studio-credit__label').letterSpacing,
+      arrow: getComputedStyle(cta.querySelector('svg')).transform,
+      text: cta.textContent.replace(/\s+/g, ' ').trim(),
+      href: cta.getAttribute('href'),
+      target: cta.getAttribute('target'),
+      rel: cta.getAttribute('rel'),
+      cta: { left: r.left, right: r.right, width: r.width },
+      labelBox: q('.studio-credit__label').getBoundingClientRect().toJSON(),
+      vw: document.documentElement.clientWidth,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+const toEnd = (p) => p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+
+{
+  const { page: p } = await open();
+  const fonts = new Set();
+  p.on('request', (r) => {
+    const m = r.url().match(/(montserrat|jetbrains-mono)-latin-\d+-normal/);
+    if (m) fonts.add(m[1]);
+  });
+  await go(p, '/publications/');
+  ok(fonts.size === 0, `a long page does not fetch the studio's two fonts before the credit nears the viewport (${fonts.size} fetched)`);
+  await fakePrompt(p);
+  await toEnd(p);
+  for (let i = 0; i < 50 && fonts.size < 2; i++) await new Promise((r) => setTimeout(r, 100));
+  ok(fonts.size === 2, `at the end of the page they load (${[...fonts].join(', ') || 'none'})`);
+  await p.evaluate(() => document.fonts.ready);
+  const c = await credit(p);
+  ok(c.inView && c.band === 'rgb(8, 7, 16)' && c.button === 'rgb(245, 166, 35)', `the band shows in the studio's identity: obsidian ${c.band}, amber button ${c.button}`);
+  ok(c.name.startsWith('Montserrat') && c.label.startsWith('"JetBrains Mono"'), `in the studio's typefaces (name: ${c.name.split(',')[0]}; label: ${c.label.split(',')[0]})`);
+  ok(c.floating === 2 && c.clear && c.reachable, `with the assistant and install buttons showing, neither covers the button (${c.floating} floating)`);
+  ok(c.href === 'https://aboalazm-os.vercel.app/' && c.target === '_blank' && /\bnoopener\b/.test(c.rel ?? ''), `the button goes to the studio's site in a new tab (${c.href}, ${c.target}, ${c.rel})`);
+  ok(c.text === 'Visit the studio (opens in a new tab)', `its name says where it goes and how ("${c.text}")`);
+  // the keyboard reaches it after the footer, and the studio's amber ring shows
+  await p.evaluate(() => {
+    const all = [...document.querySelectorAll('a[href], button:not([hidden]), input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => el.getClientRects().length);
+    all[all.indexOf(document.querySelector('.studio-credit__cta')) - 1].focus();
+  });
+  await p.keyboard.press('Tab');
+  const focus = await p.evaluate(() => {
+    const el = document.activeElement;
+    const cs = getComputedStyle(el);
+    return { on: el.classList.contains('studio-credit__cta'), ring: `${cs.outlineStyle} ${cs.outlineColor}` };
+  });
+  ok(focus.on && focus.ring === 'solid rgb(245, 166, 35)', `Tab from the footer reaches the button, with the studio's focus ring (${focus.ring})`);
+  await p.close();
+}
+{
+  const { page: p } = await open({ width: 390, height: 844 });
+  await go(p, '/ar/');
+  await fakePrompt(p);
+  await toEnd(p);
+  await p.evaluate(() => document.fonts.ready);
+  const c = await credit(p);
+  ok(c.labelBox.right > c.vw - 40 && c.cta.width > c.vw * 0.8, `Arabic phone: the text starts at the right, the button spans the width (${Math.round(c.cta.width)} of ${c.vw} px)`);
+  ok(c.arrow.startsWith('matrix(-1') && (c.labelSpacing === 'normal' || c.labelSpacing === '0px'), `the arrow points the reading way and Arabic labels are not tracked (${c.arrow}, ${c.labelSpacing})`);
+  ok(c.text === 'زيارة الاستوديو (يفتح في علامة تبويب جديدة)' && c.clear && c.reachable, `the Arabic button, not covered by the floating buttons ("${c.text}")`);
+  await p.close();
+}
+{
+  const { page: p } = await open({ width: 320, height: 640 });
+  await go(p, '/research/');
+  await fakePrompt(p);
+  await toEnd(p);
+  const c = await credit(p);
+  ok(c.overflow <= 0 && c.cta.left >= 0 && c.cta.right <= c.vw && c.clear, `320 px: the band fits without horizontal overflow (${c.overflow} px) and the button stays clear`);
+  await p.close();
+}
+{
+  const p = await browser.newPage();
+  await p.setJavaScriptEnabled(false);
+  await p.goto(`${B}/ar/teaching/`, { waitUntil: 'networkidle0' });
+  await toEnd(p);
+  const c = await credit(p);
+  ok(c.inView && c.reachable && c.href === 'https://aboalazm-os.vercel.app/', 'without JavaScript the credit and its button are there too');
   await p.close();
 }
 

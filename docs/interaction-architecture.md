@@ -118,6 +118,18 @@ The home page is made of these sections:
   - The assistant needs the network and shows its normal error notice offline; its requests are never answered from a cache.
 - **Motion:** none.
 
+## Studio credit (end of every page)
+
+- **What it is:** the last band inside the footer: "Developed by Aboalazm OS Studio" / «من تطوير Aboalazm OS Studio», plus one button, "Visit the studio" / «زيارة الاستوديو». The button opens <https://aboalazm-os.vercel.app/> in a new tab; screen readers hear "(opens in a new tab)". Details: [`site/README.md`](../site/README.md#studio-credit); decision D-22.
+- **Look:** the studio's identity, not the site's. It keeps the same look in both of the site's themes.
+- **Layout:**
+  - wide screens: text at the inline start, the button at the inline end;
+  - up to 30rem: stacked, with the button full width;
+  - Arabic: mirrored, and the arrow points the reading way.
+- **Focus:** the button comes after the footer links and before the floating buttons in the tab order. It shows the studio's amber ring at once, instead of the site's closing-in focus animation.
+- **With the floating buttons:** they set `--floating-clearance`, and the band keeps that much room at its end, so at the end of a page they never cover the button.
+- **Motion:** only a 200 ms background change on hover, with the studio's easing; none under reduced motion.
+
 ## Motion and accessibility rules
 
 - Motion follows [motion-system.md](motion-system.md):

@@ -154,3 +154,9 @@ The site can be installed as an app (decision D-21, 2026-11-07). How it works: [
   - A device that never comes back online keeps what it saved, and no website can reach it.
 - **The assistant is never cached.** `/api/` requests always go to the network, so questions and answers never enter the cache. Offline, the assistant shows its normal error notice.
 - **No tracking.** The worker and the install button send no analytics and no install statistics. `appinstalled` only shows a message on the page.
+
+## 9. Developer credit
+
+The last band of every page credits the website's developer, Aboalazm OS Studio, and links to the studio's site (decision D-22, 2026-11-07). How it works: [`site/README.md`](../site/README.md#studio-credit).
+- **About the website, not the researcher.** It names who built the site. It makes no claim about Ibrahim, his work or any affiliation, and it stays out of the site search (the footer is `data-pagefind-ignore`).
+- **No tracking.** The link carries no campaign or referral parameters and opens in a new tab with `rel="noopener"`.

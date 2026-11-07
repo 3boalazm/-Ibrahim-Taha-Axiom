@@ -33,7 +33,7 @@ Run `npm run inventory` for the current figures rather than trusting this paragr
 ```
 src/
 ├── components/
-│   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots)
+│   ├── layout/        BaseLayout pieces: SiteHeader (search button), SiteFooter (translation status), Seo (meta, hreflang, JSON-LD, robots), StudioCredit (the studio's band at the end of the footer)
 │   ├── home/          HomeHero (normal-density figure), IdentityPanel, MetricCards, ResearchDiscovery, LabTeaser
 │   ├── search/        SearchDialog (Ctrl/⌘ K, combobox + listbox)
 │   ├── publications/  PublicationExplorer (search, filters, sorts, views, URL state), PublicationItem, CiteBlock, AuthorList
@@ -252,6 +252,36 @@ Further details:
 **Not included:**
 - **Google Play:** an app could be published from this PWA later, as a Trusted Web Activity built with PWABuilder or Bubblewrap. It needs a Play developer account in the owner's name and a `/.well-known/assetlinks.json` file on the site.
 - **App Store:** Apple's review guideline 4.2 (minimum functionality) rejects apps that are only a repackaged website. On iPhone and iPad the Home Screen web app is the way in.
+
+## Studio credit
+
+The last band of every page, inside the site footer (`src/components/layout/StudioCredit.astro`), says the website was developed by **Aboalazm OS Studio**. It links to the studio's site, <https://aboalazm-os.vercel.app/>, with "Visit the studio" / «زيارة الاستوديو»; the link opens in a new tab, and screen readers are told so. The owner asked for it on 2026-11-07 (decision D-22).
+
+**The studio's identity, not the site's.** The band uses none of the site's colour, font, spacing or motion tokens; `tests/studio-credit.test.mjs` checks this. Its values come from the studio:
+- **Canvas:** obsidian `#080710`, the theme colour of the studio's own app manifest (`https://aboalazm-os.vercel.app/manifest.webmanifest`).
+- **Token layer ("semantic monochrome"):** taken from `app/globals.css` in `3boalazm/Youssefguba-os`, a site built on the studio's system with the same `#080710`. It gives:
+  - one text colour at fixed opacities;
+  - the 8 % white "spec line";
+  - the studio accent `#F5A623`, which that layer keeps "ONLY for focus rings & critical CTAs" (here, the one button and its focus ring);
+  - the signature curve `cubic-bezier(0.16, 1, 0.3, 1)`.
+- **Typefaces:**
+  - Montserrat 700 and JetBrains Mono 500, Latin only, from `@fontsource` (OFL);
+  - IBM Plex Sans Arabic in Arabic, which the site already loads;
+  - the studio's display faces (GC EPICPRO, Thmanyah Serif Display) are not copied, because their licence for this site is not known.
+- **Label:** the bracketed mono label "[Brand & web · Cairo / Remote]", from the studio's home page.
+
+**Arabic.** Labels drop the Latin tracking and capitals, which would break the joins of Arabic letters. The studio's name stays in Latin, isolated with `<bdi lang="en">`. The button's arrow points the reading way.
+
+**Cost.** `content-visibility: auto` keeps the band from being laid out until it nears the viewport, so its two fonts (18.8 KB and 21.8 KB) load only then. Lighthouse saw neither font during page load, and the Performance score stayed the same (`docs/qa-checklist.md`).
+
+**The floating buttons.** While they show, the assistant's launcher and the install button set `--floating-clearance` on `<html>`. The band adds it to its bottom padding, so at the end of a page they never cover it. This room used to be under the footer.
+
+**The site header.** With the band, the dark footer can now scroll under the condensed header on wide screens. The header's paper share went from 92 % to 96 %, so the small brass "AXIOM" keeps 4.5:1 (axe measured 4.4:1 before).
+
+**Tests:** `tests/studio-credit.test.mjs` covers every page, the link, the identity and the clearance. The studio-credit block of `tests/e2e/app.mjs` covers the rest:
+- the fonts wait until the band nears the viewport;
+- the rendered colours, typefaces and focus ring are the studio's;
+- the button stays clear of the floating buttons in English and Arabic, at 320 px, and without JS.
 
 ## Deployment
 Vercel project `ibrahim-taha-axiom`, Root Directory `site/`, Node 26.x. `vercel.json` skips builds when a commit does not touch `site/`. Everything is static except one Vercel Function, `api/chat.mjs` (30 s maximum duration, set in `vercel.json`), which needs `GEMINI_API_KEY` (see the site assistant above). The service worker `/sw.js` and the two manifests are static files written by the build, and need no setting (see "Install as an app" above). See [`../docs/deployment.md`](../docs/deployment.md).

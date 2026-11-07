@@ -336,9 +336,10 @@ const i18n = { you: ui.chatYou, bot: ui.chatBot, thinking: ui.chatThinking, trun
       white-space: nowrap;
     }
   }
-  /* Room under the footer so the launcher never covers its last line. */
-  :global(html:has(.chat:not([hidden])) .site-footer) {
-    padding-block-end: 4.5rem;
+  /* Room at the end of the page's last band (the studio credit, StudioCredit.astro), so the
+     launcher never covers it. */
+  :global(html:has(.chat:not([hidden]))) {
+    --floating-clearance: 4.5rem;
   }
 
   .chat__panel[open] {

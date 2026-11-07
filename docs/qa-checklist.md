@@ -249,6 +249,23 @@ The same tree had passed in run `42330354600` on `3bcdb64`. The job could not be
 | `E2E_REQUIRED=1 npm run test:e2e` | 175 checks, all pass: keyboard 37, motion 41, chat 39, app 58. Page transition `ran`; language switch `none`. `motion.mjs` alone 3 more times: 41/41 each |
 | Not tested | Chrome 156 locally (CI covers it), Safari 18.2+ (the other browser with cross-document view transitions) |
 
+## Run for the studio credit (2026-11-07)
+
+The owner asked for a section at the end of the site saying it was developed by Aboalazm OS Studio, with a redirect button, in the studio's identity rather than the site's (decision D-22). Environment: the sandbox's Node 22 and Chromium 153, on the built site.
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | 67 pages, each ending its footer with the credit. `sw.js` VERSION `aa5606b109e1` |
+| `npm test` | 97 tests, all pass. 4 new in `studio-credit.test.mjs`: every page, the link (new tab, `noopener`), the identity, the floating-button clearance. With `var(--color-ink)` put in the band, the identity test fails and names it; restored byte-identical, it passes |
+| `npm run qa`, `npm run lab:verify` | Both pass. 152 files: 4 new, the two fonts in woff2 and woff. 31 external links: 1 new, the studio. The assistant's knowledge file is byte-identical |
+| `E2E_REQUIRED=1 npm run test:e2e` | 188 checks, all pass: keyboard 37, motion 41, chat 39, app 71. The 13 new ones:<br>- A long page (`/publications/`) fetched neither studio font before the band neared the viewport; both loaded at the end.<br>- Band `rgb(8, 7, 16)`, button `rgb(245, 166, 35)`, Montserrat and JetBrains Mono.<br>- With both floating buttons showing, neither covers the button.<br>- Tab from the footer reaches it with a solid amber ring.<br>- Arabic at 390 px: starts at the right, the button spans 353 of 390 px, the arrow is mirrored, no tracking.<br>- 320 px: overflow 0.<br>- No JS: the credit and its button are there. |
+| axe-core 4.14.0, first run | 22 runs at the end of pages (EN/AR × light/dark × 1280/390, 320 px, the button hovered and focused): **4 violations**, all `color-contrast` on the header's small brass "AXIOM" (`#7e632f` on `#e5e3dd`, 4.4:1), light theme at 1280 px. The band made the page long enough for the dark footer to scroll under the 92 % condensed header. With the band hidden, the same scroll positions passed |
+| Fix and re-run | The condensed header went from 92 % to 96 % paper. Then 22 runs, 0 violations, and the header probe passed in all three positions |
+| Contrast in the band | Label and line 8.75:1, name 18.89:1, button 9.88:1, hovered 11.38:1, focus ring against the band 9.88:1 (needs 3:1) |
+| Lighthouse 12.8.2 (`main` `8f02cc5` → this) | Medians of 3 alternating runs:<br>- `/`: 80 → 80; LCP 4.06 → 4.06 s, TBT 0 → 0, CLS 0.018 → 0.018.<br>- `/ar/`: 67 → 67; LCP 5.49 → 5.41 s, TBT 0 → 0, CLS 0.046 → 0.042.<br>- +4 KiB per page.<br>- Neither studio font was fetched during page load in any of the 12 runs. One `/ar/` branch run scored 93, an outlier from the hero image's usual LCP spread. |
+| Screenshots | 4 in [`screenshots/studio-credit/`](screenshots/studio-credit/), all viewed |
+| Not tested | Real devices, Safari and Firefox engines, screen readers, the studio's site itself (not reachable from the sandbox) |
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
