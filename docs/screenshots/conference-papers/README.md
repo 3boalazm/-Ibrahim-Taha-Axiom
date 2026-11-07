@@ -2,6 +2,8 @@
 
 All images come from the built site (`site/dist`) in headless Chromium 153, served locally, taken after fonts loaded, with reduced motion and animations paused. They are full pages of `/talks/` after the 2018 and 2019 records were relabelled as conference papers and DQ-13 was narrowed to oral-presentation attribution; the question and its sources are in [`../../data-quality-register.md`](../../data-quality-register.md#dq-13--classification--open), and the test and audit results in [`../../qa-checklist.md`](../../qa-checklist.md#run-for-the-conference-paper-reclassification-2026-11-07).
 
+These were taken before the site assistant was added on the same branch, so its corner launcher does not appear in them; see [`../site-assistant/`](../site-assistant/README.md).
+
 The file name gives the language, the viewport width in px and the theme.
 
 | File | What it shows |

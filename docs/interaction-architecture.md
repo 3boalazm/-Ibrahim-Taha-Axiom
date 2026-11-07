@@ -1,6 +1,6 @@
 # Interaction architecture (Phase 4, motion in Phase 5)
 
-The site is static-first Astro: every page is complete HTML at build time, and each interactive feature is a small inline script that enhances HTML already on the page. There is no framework runtime and no client-side routing. No interactive feature calls a server. All data comes from `site/src/data/approved/` through the same build-time utilities the pages use, so an interactive view can never show something a static page would not.
+The site is static-first Astro: every page is complete HTML at build time, and each interactive feature is a small inline script that enhances HTML already on the page. There is no framework runtime and no client-side routing. Only one feature calls a server: the site assistant sends a visitor's question to `POST /api/chat` ([below](#site-assistant-corner-launcher-every-page)). All data comes from `site/src/data/approved/` through the same build-time utilities the pages use, so an interactive view can never show something a static page would not. The assistant's answers are the one designed exception: they are generated per question and presented as AI answers.
 
 Shared, framework-free logic lives in `site/src/lib/*.mjs`. Both the build and the browser import it, and `node --test` tests it directly:
 
@@ -83,6 +83,26 @@ The home page is made of these sections:
 - **Metric cards:** OpenAlex and ResearchGate, each with its own source, retrieval date and definitions, never combined.
 - **Contents index and contact paths.**
 
+## Site assistant (corner launcher, every page)
+
+- **What it is:** a launcher in the bottom inline-end corner opens a small chat panel. It is labelled "Ask about this site" / «اسأل عن الموقع», and below 40rem it becomes a round icon button that keeps its accessible name.
+  - Answers come from `POST /api/chat`, a Vercel Function that sends the question, the last 8 messages and the site's approved content to Google Gemini.
+  - Details: [`site/README.md`](../site/README.md#site-assistant-apichat). Content rules: [public-content-policy.md](public-content-policy.md#7-site-assistant-ai-answers) §7.
+- **UI:** a non-modal `<dialog>`, so the page behind stays usable.
+  - Opening moves focus to the question box. Enter sends, and Shift+Enter starts a new line. Escape or the close button closes the panel, and focus returns to the launcher.
+  - The conversation is a focusable `role="log"` region, so screen readers announce new messages.
+  - Four example questions are offered until the first question. "New chat" clears the conversation.
+- **Rendering:** answers are text with a small Markdown subset: paragraphs, "- " lists, bold, and links to site paths or https URLs.
+  - The script builds them with DOM nodes, never `innerHTML`, so HTML inside an answer shows as text.
+  - Links open in the same tab.
+- **State:** the conversation is kept in `sessionStorage` (`axiom-chat:en` / `axiom-chat:ar`, the last 30 messages), so it follows the visitor across pages in the same tab. Error notices are shown but not stored.
+- **Layout:** at every width the panel sits between the sticky site header and the launcher, so its title and close button are never covered. On phones it spans the width.
+  - In Arabic the layout mirrors: launcher and panel on the left.
+  - The footer gets extra bottom padding, so the launcher never covers its last line.
+- **Errors:** if the server is not configured, busy or unreachable, or the question is too long, the panel shows a clear notice, never an invented answer.
+- **Without JavaScript:** the widget is `hidden` in the HTML and appears only when its script runs, so there is no dead button.
+- **Motion:** none.
+
 ## Motion and accessibility rules
 
 - Motion follows [motion-system.md](motion-system.md):
@@ -95,4 +115,5 @@ The home page is made of these sections:
 - In Arabic, identifiers (DOIs, URLs, ORCID) and numbers are isolated left-to-right runs, while separators such as " · " stay outside the isolate in the page direction. SVG figures use `direction: ltr`, so mathematical axes are not mirrored.
 - JavaScript budget:
   - **Every page:** the search dialog script (about 6 KB, 2.5 KB gzip; its index is lazy-loaded) and the motion boot with the shared motion module (about 5 KB, 2.3 KB gzip, cached across pages and reused by the feature scripts). The motion module is new in Phase 5.
+  - **Every page, from this change on:** the assistant widget's inline script (about 3.9 KB, 1.7 KB gzip). It makes a network request only when a question is sent.
   - **Feature scripts:** each loads only on the pages that use it.

@@ -9,8 +9,8 @@ Runs on every pull request and every push to `main` that touches `site/`:
 | Build | `npm run build` | Content schemas; every manifest relationship resolves and quoted evidence is found; 67 HTML files |
 | QA | `npm run qa` | One h1 per page, internal links, language switch, approved mailto/tel only, forbidden files (raw .bib, manifest, profile JSON) and client-side model code absent, lab payload, colour contrast of token pairs, sitemap (66 URLs) |
 | Lab | `npm run lab:verify` | Recomputes all 15 states × 100 replicates from the seed, checks convergence, and checks every number quoted in EN/AR text (see [lab-methodology.md](lab-methodology.md)) |
-| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`) |
-| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. No JS errors in either suite |
+| Unit and build tests | `npm test` | `node:test` suites in `site/tests/`: routes, `lang`/`dir`, headings, canonical/hreflang/robots/sitemap, JSON-LD, citation meta, search (Arabic, author, mixed, DOI), explorer state/filters/sorts/facets, manifest integrity, consent record, translation status, lab payload, normal-curve maths, motion tokens, gating and loops (`motion.test.mjs`), the site assistant (`chat.test.mjs`: knowledge in sync with the build, secret scan, request handling against a fake Google endpoint) |
+| Browser tests | `npm run test:e2e` | Headless Chrome. `keyboard.mjs`: search keyboard flow and focus return, explorer URL state, section navigation after a jump, graph roving focus, focus preview and RTL columns, hero slider, identity tabs, journey, contact `?path=`, Arabic separators outside LTR isolates. `motion.mjs`: first-frame opacity of above-the-fold text, hero glide, reveal-once, page transitions, explorer clickable while moving, lab values exact, graph entry and selection, journey; then the same pages under reduced motion and without JavaScript. `chat.mjs`: the site assistant with `/api/chat` intercepted: keyboard and focus, rendering, persistence, error notices, Arabic layout, the panel clear of the sticky header, no JavaScript. No JS errors in any suite |
 
 ## Run during Phase 4 (2026-11-06)
 
@@ -130,6 +130,42 @@ Run in the development sandbox (Node 22, headless Chromium 153) on the final tre
 
 **Evidence, as checked on 2026-11-07.** Fetched and read: the 2019 full text on ResearchGate (running header of the 54th conference, 9–11 December 2019, first page 35, the three authors); the Crossref records of the two Wiley papers (`10.1002/cpe.6685` reference 29 and `10.1002/cpe.7045` reference 2, both citing the papers in the conference proceedings); the conference site, which announces the 53rd conference for 3–5 December 2018. Not opened: the official 2018 proceedings PDF returned HTTP 500 to the sandbox's fetcher twice over HTTPS and failed over HTTP, so its page range (49–66) is as reported by the project owner. No source examined says who presented either paper.
 
+## Run for the site assistant (2026-11-07)
+
+Run in the development sandbox (Node 22, headless Chromium 153) on the final tree of the change that adds the site assistant ([site/README.md](../site/README.md#site-assistant-apichat)):
+
+| Check | Result |
+| --- | --- |
+| `npm ci` → `npm run build` | 67 HTML files; `/chat/knowledge.json` holds 36,254 characters |
+| `npm run chat:knowledge` | Regenerated `site/server/knowledge.mjs`; byte-identical to the committed copy |
+| `npm run qa` | All QA checks passed (67 pages, 144 files, 30 external links). The new file is `/chat/knowledge.json`; QA scans it like every other build file |
+| `npm run lab:verify` | Unchanged: ✓ 15 states × 100 replicates, ML spread 11.3× ridge at ρ = 0.995, VIF 264.5, max \|score\| 9.9e-14, 25 claims |
+| `npm test` | 83 tests, 83 pass, 0 fail (before: 75). The 8 new tests in `chat.test.mjs`:<br>1. the committed knowledge matches the build;<br>2. the knowledge holds approved content and the site's rules;<br>3. the widget is on every page, hidden until its script runs, in the page language;<br>4. nothing key-shaped appears in the code, the docs or the build;<br>5. the server refuses wrong methods, foreign or missing origins, wrong content types, malformed, empty, oversized or too-long input and invented history roles; it answers 503 without a key and 429 when rate-limited, without sending anything upstream;<br>6. it sends the grounded prompt to the right Google endpoint, with the key in a header only;<br>7. upstream failures become clear errors that never echo the key;<br>8. rate limit, history shaping and input clean-up |
+| Negative checks | Each of these failed its test, and the test passed again after the file was restored (`cmp` identical):<br>- a key-shaped string added under `site/src` (secret scan);<br>- an edited server copy of the knowledge (sync test);<br>- the key moved into the request URL (endpoint test);<br>- answers rendered with `insertAdjacentHTML` (the e2e check "HTML in an answer is shown as text").<br>Of the 5 new layout checks, 4 failed on the build before the fixes below: unstyled messages in English and Arabic, and a gap of −29 px at 1280 × 700 and −65 px at 320 × 640. The fifth, at 1280 × 900, passed there, because at that height the old panel already cleared the header |
+| `E2E_REQUIRED=1 npm run test:e2e` | 117 checks, all pass, no JavaScript errors: `keyboard.mjs` 37, `motion.mjs` 41, and the new `chat.mjs` 39. `chat.mjs` intercepts `/api/chat` and checks:<br>- the launcher and the panel; focus and keyboard (Enter, Tab, Escape, focus return); the request body;<br>- Markdown links and lists; HTML shown as text; styled messages;<br>- persistence across pages, and earlier turns sent as context;<br>- error notices (not configured, failed request, rate limit), and that they are not stored; "New chat";<br>- Arabic: left side, right to left, Arabic links;<br>- the panel clear of the sticky header at 1280 × 900, 1280 × 700 and 320 × 640, with the close button topmost at its centre;<br>- the fit at 320 px, the icon-only launcher's name, and no button without JavaScript |
+| axe-core 4.14.0 | 0 violations in 24 runs (the 12 pages of the previous run × light/dark), and in 8 runs with the panel open and an answer shown (`/`, `/ar/`, `/talks/`, `/ar/talks/` × light/dark) |
+| Overflow | 0 px at 320 and 375 px in the same 24 page × width runs; the open panel fits in 8 more |
+| Hovered-button contrast | Found by axe on the hovered launcher, but older than this change: `.button:hover` replaced the background of solid and accent buttons with the page's hover colour, so hovered text nearly disappeared.<br>**Before** (`main`, 7bac99d): the home CTA, the lab teaser button and the contact composer button measured 1.13:1 light and 1.18:1 dark; the footer CTA 13.07:1 light and 1.10:1 dark. 1 of 8 passed.<br>**After** (`global.css`: the variant hover rules set their own background): 13.92:1 light and 14.59:1 dark; the footer CTA 11.66:1 and 8.85:1; the launcher the same as the solid buttons. 12 of 12 pass |
+| Lighthouse 12.8.2 | Table below |
+| Visual review | The two screenshots in [`screenshots/site-assistant/`](screenshots/site-assistant/README.md) were reviewed by eye. The first review found two bugs that the checks above had missed:<br>- **Unstyled messages.** Astro's scoped CSS does not reach nodes that a script creates; the rules now hang off the log with `:global()`.<br>- **The panel under the sticky header** on phones and short desktop screens. At 320 px in Arabic, the close button was also pushed off the left edge by an example question that could not wrap.<br>Both are fixed, and the new e2e checks cover them |
+
+Lighthouse 12.8.2, simulated mobile, median of 3 runs, against a local static server with Brotli and Vercel-like caching (the sandbox cannot reach `vercel.app`). Use the numbers to compare the builds, not as field data.
+
+| Page | Performance main → branch | LCP main → branch | CLS main → branch |
+| --- | --- | --- | --- |
+| `/` | 90 → 89 | 3.2 s → 3.2 s | 0.018 → 0.018 |
+| `/ar/` | 75 → 75 | 4.5 s → 4.5 s | 0.046 → 0.027 |
+| `/publications/` | 91 → 92 | 2.9 s → 2.9 s | 0 → 0 |
+| `/talks/` | 93 → 93 | 2.7 s → 2.7 s | 0 → 0.017 |
+
+- **TBT, accessibility, SEO:** total blocking time is 0 ms everywhere, and accessibility and SEO score 100 on all four pages in both builds.
+- **Best Practices:** unchanged: 96 on `/`, `/ar/` and `/publications/`, 100 on `/talks/`. The cause is the font-size audit described in the Phase 5 run.
+- **What "main" and "branch" are:** "main" is `7bac99d`. "Branch" includes this pull request's earlier conference-paper commits.
+- **The assistant on its own:** `/talks/` and `/` were also measured on `f59b074` (this branch before the assistant) against the final tree. Performance went 93 → 93 and 90 → 89, LCP was unchanged, and CLS went 0.017 → 0.017 and 0.018 → 0.018. The assistant adds no layout shift.
+- **The `/talks/` shift** came with the longer conference-paper text. Lighthouse attributes it to a web-font swap on the page container. A direct trace in Chromium shows no shift, because the fonts arrive before the first paint. It is below the 0.1 "good" threshold and was not changed.
+
+**Not run:** a live request to Google (the sandbox cannot reach it, and the key belongs only in Vercel), real devices and screen readers.
+
 ## Manual matrix (before a release)
 
 Mark each cell after checking it in a real browser.
@@ -160,3 +196,7 @@ Per cell:
 8. **Arabic only:** draft labels are visible; DOIs, URLs and identifiers read left to right; ticks read −3 … 3; the footer shows «حالة الترجمة».
 9. **Reduced motion** (OS setting): there are no transitions or entrances, and every element is visible on first paint; the hero, graph, explorer and lab still update to the same exact values.
 10. **Keyboard only:** every control is reachable, and the focus ring is visible on both themes.
+11. **Site assistant:**
+    - the launcher sits in the bottom corner (left in Arabic) and opens the panel below the header;
+    - Escape closes it, and focus returns to the launcher.
+    - Once `GEMINI_API_KEY` is set, ask three questions: one about the site (the answer cites a page), one general statistics question (it starts "General explanation (not from the site):"), and "Did Ibrahim present the 2018 paper?" (the answer must not say he did).

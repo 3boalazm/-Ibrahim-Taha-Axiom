@@ -1,0 +1,532 @@
+---
+/**
+ * Site assistant: a launcher in the corner of every page that opens a small chat panel.
+ * Answers come from POST /api/chat (api/chat.mjs → server/chat-core.mjs), which answers from
+ * the site's approved content only, plus general statistics explanations marked as such.
+ *
+ * - Progressive enhancement: the widget is `hidden` in the HTML and appears only when its
+ *   script runs, so without JavaScript there is no dead button.
+ * - The panel is a non-modal dialog: the page stays usable. Escape or the close button
+ *   closes it and focus returns to the launcher. No animation.
+ * - Answers are rendered as text with a tiny Markdown subset (paragraphs, "- " lists,
+ *   **bold**, links to site paths or https URLs), built with DOM nodes, never innerHTML.
+ * - The conversation lives in sessionStorage (this tab only) so it follows the visitor
+ *   across pages; "New chat" clears it. Nothing else is stored or sent.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../utils/schema';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+const i18n = { you: ui.chatYou, bot: ui.chatBot, thinking: ui.chatThinking, truncated: ui.chatTruncated, errors: ui.chatErrors };
+---
+
+<div class="chat" data-chat data-lang={lang} data-i18n={JSON.stringify(i18n)} hidden>
+  <dialog class="chat__panel" id="site-chat" aria-labelledby="site-chat-title" data-chat-panel>
+    <div class="chat__head">
+      <h2 class="chat__title" id="site-chat-title">{ui.chatTitle}</h2>
+      <button type="button" class="chat__new" data-chat-new>{ui.chatNew}</button>
+      <button type="button" class="chat__close" aria-label={ui.chatClose} data-chat-close>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </button>
+    </div>
+    <p class="chat__note">{ui.chatDisclaimer}</p>
+    <div class="chat__log" role="log" aria-labelledby="site-chat-title" tabindex="0" data-chat-log>
+      <div class="chat__intro" data-chat-intro>
+        <p>{ui.chatIntro}</p>
+        <p class="chat__suggest-label" id="site-chat-suggest">{ui.chatSuggestionsLabel}</p>
+        <ul class="chat__suggest" role="list" aria-labelledby="site-chat-suggest">
+          {
+            ui.chatSuggestions.map((q) => (
+              <li>
+                <button type="button" class="chip" data-chat-suggest>
+                  {q}
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+    <form class="chat__form" data-chat-form>
+      <label class="visually-hidden" for="site-chat-input">{ui.chatInputLabel}</label>
+      <textarea id="site-chat-input" class="chat__input" rows="2" maxlength="1000" placeholder={ui.chatPlaceholder} data-chat-input></textarea>
+      <button type="submit" class="button button--solid chat__send" data-chat-send>{ui.chatSend}</button>
+    </form>
+  </dialog>
+  <button type="button" class="button button--solid chat__launcher" aria-controls="site-chat" aria-expanded="false" data-chat-toggle>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9.5L4 20z"></path></svg>
+    <span class="chat__launcher-label">{ui.chatLauncher}</span>
+  </button>
+</div>
+
+<script>
+  type Turn = { role: 'user' | 'assistant'; text: string };
+  type I18n = { you: string; bot: string; thinking: string; truncated: string; errors: Record<'not_configured' | 'busy' | 'network' | 'too_long' | 'generic', string> };
+
+  const MAX_QUESTION = 1000;
+  const SENT_TURNS = 8; // earlier messages sent back for context (the server keeps at most 8)
+  const KEPT_TURNS = 30;
+
+  /** A site path or an https URL; anything else is not linked. */
+  function safeHref(u: string): string | null {
+    if (/^\/(?!\/)[\w\-/.#%?=&]*$/.test(u)) return u;
+    try {
+      const url = new URL(u);
+      return url.protocol === 'https:' ? url.href : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Appends text with [label](url) links and **bold** to `el`, as DOM nodes. */
+  function inline(el: HTMLElement, s: string) {
+    const re = /\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*([^*\n]+)\*\*/g;
+    let last = 0;
+    for (let m = re.exec(s); m; m = re.exec(s)) {
+      if (m.index > last) el.append(s.slice(last, m.index));
+      if (m[1] !== undefined) {
+        const href = safeHref(m[2]);
+        if (href) {
+          const a = document.createElement('a');
+          a.href = href;
+          a.textContent = m[1];
+          if (href.startsWith('https:')) a.rel = 'noopener';
+          el.append(a);
+        } else {
+          el.append(m[1]);
+        }
+      } else {
+        const b = document.createElement('strong');
+        b.textContent = m[3];
+        el.append(b);
+      }
+      last = re.lastIndex;
+    }
+    if (last < s.length) el.append(s.slice(last));
+  }
+
+  /** Paragraphs and "- " / "1." lists. */
+  function blocks(text: string): HTMLElement[] {
+    const out: HTMLElement[] = [];
+    let list: HTMLUListElement | null = null;
+    let para: string[] = [];
+    const flush = () => {
+      if (!para.length) return;
+      const p = document.createElement('p');
+      inline(p, para.join(' '));
+      out.push(p);
+      para = [];
+    };
+    for (const raw of text.replace(/\r/g, '').split('\n')) {
+      const line = raw.trim();
+      const item = line.match(/^(?:[-*•]|\d+[.)])\s+(.+)$/);
+      if (item) {
+        flush();
+        if (!list) out.push((list = document.createElement('ul')));
+        const li = document.createElement('li');
+        inline(li, item[1]);
+        list.append(li);
+        continue;
+      }
+      list = null;
+      if (line) para.push(line);
+      else flush();
+    }
+    flush();
+    return out;
+  }
+
+  function init(root: HTMLElement) {
+    const lang = root.dataset.lang === 'ar' ? 'ar' : 'en';
+    const i18n = JSON.parse(root.dataset.i18n ?? '{}') as I18n;
+    const panel = root.querySelector<HTMLDialogElement>('[data-chat-panel]')!;
+    const toggle = root.querySelector<HTMLButtonElement>('[data-chat-toggle]')!;
+    const log = root.querySelector<HTMLElement>('[data-chat-log]')!;
+    const intro = root.querySelector<HTMLElement>('[data-chat-intro]')!;
+    const form = root.querySelector<HTMLFormElement>('[data-chat-form]')!;
+    const input = root.querySelector<HTMLTextAreaElement>('[data-chat-input]')!;
+    const send = root.querySelector<HTMLButtonElement>('[data-chat-send]')!;
+    const storeKey = `axiom-chat:${lang}`;
+    let busy = false;
+
+    const load = (): Turn[] => {
+      try {
+        const v = JSON.parse(sessionStorage.getItem(storeKey) ?? '[]');
+        return Array.isArray(v) ? v.filter((x) => (x?.role === 'user' || x?.role === 'assistant') && typeof x.text === 'string') : [];
+      } catch {
+        return [];
+      }
+    };
+    let turns = load();
+    const save = () => {
+      try {
+        sessionStorage.setItem(storeKey, JSON.stringify(turns.slice(-KEPT_TURNS)));
+      } catch {
+        /* storage full or blocked: the conversation still works on this page */
+      }
+    };
+    const scrollToEnd = () => (log.scrollTop = log.scrollHeight);
+    const syncIntro = () => (intro.hidden = turns.length > 0);
+
+    /** One message: a visually hidden speaker label, then the content. */
+    function bubble(kind: 'user' | 'bot' | 'notice', content: HTMLElement[]) {
+      const el = document.createElement('div');
+      el.className = `chat__msg chat__msg--${kind}`;
+      el.dir = 'auto';
+      if (kind !== 'notice') {
+        const who = document.createElement('span');
+        who.className = 'visually-hidden';
+        who.textContent = `${kind === 'user' ? i18n.you : i18n.bot}: `;
+        el.append(who);
+      }
+      el.append(...content);
+      log.append(el);
+      scrollToEnd();
+      return el;
+    }
+    const para = (text: string) => {
+      const p = document.createElement('p');
+      p.textContent = text;
+      return p;
+    };
+    const render = (turn: Turn) => bubble(turn.role === 'user' ? 'user' : 'bot', turn.role === 'user' ? [para(turn.text)] : blocks(turn.text));
+    const notice = (text: string) => bubble('notice', [para(text)]);
+
+    function errorText(status: number, code: unknown) {
+      if (code === 'not_configured' || code === 'knowledge_unavailable' || status === 404) return i18n.errors.not_configured;
+      if (code === 'question_too_long') return i18n.errors.too_long;
+      if (status === 429) return i18n.errors.busy;
+      return i18n.errors.generic;
+    }
+
+    async function ask(raw: string) {
+      const question = raw.trim();
+      if (!question || busy) return;
+      if (question.length > MAX_QUESTION) return void notice(i18n.errors.too_long);
+      busy = true;
+      send.disabled = true;
+      const history = turns.slice(-SENT_TURNS);
+      turns.push({ role: 'user', text: question });
+      save();
+      render(turns[turns.length - 1]);
+      syncIntro();
+      input.value = '';
+      const pending = bubble('bot', [para(i18n.thinking)]);
+      pending.classList.add('chat__msg--pending');
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lang, page: location.pathname, question, history }),
+        });
+        const data = await res.json().catch(() => ({}));
+        pending.remove();
+        if (res.ok && typeof data.answer === 'string' && data.answer.trim()) {
+          turns.push({ role: 'assistant', text: data.answer });
+          save();
+          render(turns[turns.length - 1]);
+          if (data.truncated) notice(i18n.truncated);
+        } else {
+          notice(errorText(res.status, data.error));
+        }
+      } catch {
+        pending.remove();
+        notice(i18n.errors.network);
+      } finally {
+        busy = false;
+        send.disabled = false;
+        if (panel.open) input.focus();
+      }
+    }
+
+    const open = () => {
+      panel.show();
+      toggle.setAttribute('aria-expanded', 'true');
+      input.focus();
+      scrollToEnd();
+    };
+    const close = () => {
+      panel.close();
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    };
+
+    turns.forEach(render);
+    syncIntro();
+    root.hidden = false;
+
+    toggle.addEventListener('click', () => (panel.open ? close() : open()));
+    root.querySelector('[data-chat-close]')!.addEventListener('click', close);
+    root.querySelector('[data-chat-new]')!.addEventListener('click', () => {
+      turns = [];
+      save();
+      log.querySelectorAll('.chat__msg').forEach((n) => n.remove());
+      syncIntro();
+      input.focus();
+    });
+    panel.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      }
+    });
+    root.querySelectorAll<HTMLButtonElement>('[data-chat-suggest]').forEach((b) => b.addEventListener('click', () => ask(b.textContent ?? '')));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      ask(input.value);
+    });
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-chat]');
+  if (root) init(root);
+</script>
+
+<style>
+  /* The panel sits between the sticky site header (77 px tall, z-index 50) and the
+     launcher, so its own header and close button are never covered. */
+  .chat {
+    --chat-top: 5.25rem;
+    --chat-bottom: calc(var(--space-4) + 3.75rem);
+  }
+  @media (max-width: 30rem) {
+    .chat {
+      --chat-bottom: 4.5rem;
+    }
+  }
+  .chat__launcher {
+    position: fixed;
+    inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+    inset-inline-end: var(--space-4);
+    z-index: 40;
+    min-block-size: 3rem;
+  }
+  .chat__launcher svg,
+  .chat__close svg {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  /* On narrow screens the launcher is a round icon button; the label stays for screen readers. */
+  @media (max-width: 40rem) {
+    .chat__launcher {
+      inline-size: 3rem;
+      padding: 0;
+    }
+    .chat__launcher-label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+  /* Room under the footer so the launcher never covers its last line. */
+  :global(html:has(.chat:not([hidden])) .site-footer) {
+    padding-block-end: 4.5rem;
+  }
+
+  .chat__panel[open] {
+    position: fixed;
+    inset: auto;
+    inset-block-end: var(--chat-bottom);
+    inset-inline-end: var(--space-4);
+    z-index: 45;
+    display: grid;
+    /* minmax(0, 1fr): one long unbreakable line must not widen the panel; in Arabic the
+       overflow would push the close button off the left edge. */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    inline-size: min(25rem, calc(100vw - 2 * var(--space-4)));
+    block-size: min(36rem, calc(100dvh - var(--chat-top) - var(--chat-bottom)));
+    margin: 0;
+    padding: 0;
+    border: var(--border-hairline);
+    border-radius: var(--radius-3);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-float);
+    overflow: hidden;
+  }
+  @media (max-width: 30rem) {
+    .chat__panel[open] {
+      inset-inline: var(--space-2);
+      inline-size: auto;
+      block-size: calc(100dvh - var(--chat-top) - var(--chat-bottom));
+    }
+  }
+  .chat__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+    padding-inline: var(--space-4) var(--space-3);
+    border-block-end: var(--border-hairline);
+  }
+  .chat__title {
+    flex: 1;
+    min-inline-size: 0;
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+  }
+  .chat__new,
+  .chat__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.25rem;
+    min-inline-size: 2.25rem;
+    padding-inline: var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+  .chat__new:hover,
+  .chat__close:hover {
+    background: var(--color-surface-2);
+    color: var(--color-ink);
+  }
+  .chat__note {
+    margin: 0;
+    padding: var(--space-2) var(--space-4);
+    border-block-end: var(--border-hairline);
+    background: var(--color-surface-1);
+    color: var(--color-ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.45;
+  }
+  .chat__log {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-family: var(--font-ui);
+    font-size: var(--step--1);
+    line-height: 1.55;
+  }
+  .chat__log:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+  .chat__intro p {
+    margin: 0 0 var(--space-3);
+    color: var(--color-ink-2);
+  }
+  .chat__suggest-label {
+    font-weight: 600;
+  }
+  .chat__suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* Chips are one-line by default (white-space: nowrap); example questions must wrap. */
+  .chat__suggest .chip {
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--step--1);
+    letter-spacing: 0;
+    white-space: normal;
+    text-align: start;
+  }
+  /* Messages are created by the script, so they carry no Astro scope attribute: their
+     rules hang off the (scoped) log with :global(). */
+  .chat__log :global(.chat__msg) {
+    max-inline-size: 92%;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-2);
+    overflow-wrap: anywhere;
+  }
+  .chat__log :global(.chat__msg p) {
+    margin: 0;
+  }
+  .chat__log :global(.chat__msg p + p),
+  .chat__log :global(.chat__msg p + ul),
+  .chat__log :global(.chat__msg ul + p) {
+    margin-block-start: var(--space-2);
+  }
+  .chat__log :global(.chat__msg ul) {
+    margin: 0;
+    padding-inline-start: 1.2em;
+  }
+  .chat__log :global(.chat__msg a) {
+    color: var(--color-accent-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+  .chat__log :global(.chat__msg--user) {
+    align-self: flex-end;
+    background: var(--color-surface-2);
+  }
+  .chat__log :global(.chat__msg--bot) {
+    align-self: flex-start;
+    border: var(--border-hairline);
+  }
+  .chat__log :global(.chat__msg--pending) {
+    color: var(--color-ink-2);
+  }
+  .chat__log :global(.chat__msg--notice) {
+    align-self: stretch;
+    max-inline-size: none;
+    border: 1px dashed var(--color-rule-strong);
+    color: var(--color-ink-2);
+  }
+  .chat__form {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-block-start: var(--border-hairline);
+  }
+  .chat__input {
+    flex: 1;
+    min-inline-size: 0;
+    min-block-size: 2.75rem;
+    max-block-size: 8rem;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-2);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    line-height: 1.4;
+    resize: none;
+  }
+  .chat__input:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+  .chat__send[disabled] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+</style>

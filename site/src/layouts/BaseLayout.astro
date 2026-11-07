@@ -16,6 +16,7 @@ import '../styles/global.css';
 import SiteHeader from '../components/layout/SiteHeader.astro';
 import SiteFooter from '../components/layout/SiteFooter.astro';
 import SearchDialog from '../components/search/SearchDialog.astro';
+import ChatWidget from '../components/chat/ChatWidget.astro';
 import Seo from '../components/layout/Seo.astro';
 // Validates every manifest relationship (both ends exist, quotes found verbatim) on each build.
 import '../utils/relations';
@@ -92,6 +93,7 @@ const ui = t(lang);
     </main>
     <SiteFooter lang={lang} path={navPath} />
     <SearchDialog lang={lang} />
+    <ChatWidget lang={lang} />
     <script>
       import { initMotion } from '../lib/motion.mjs';
       initMotion();
